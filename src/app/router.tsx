@@ -1,4 +1,11 @@
 import { createBrowserRouter, type RouteObject } from 'react-router';
+import {
+  loadForgotPasswordPage,
+  loadResetPasswordPage,
+  loadSignInPage,
+  loadSignUpPage,
+  loadVerifyCodePage,
+} from '@/features/auth';
 import { SessionRoot } from './providers';
 import { RouteErrorBoundary } from './RouteErrorBoundary';
 
@@ -21,38 +28,23 @@ export function createAppRoutes(): RouteObject[] {
           children: [
             {
               path: '/sign-in',
-              lazy: async () => {
-                const { SignInPage } = await import('@/features/auth');
-                return { Component: SignInPage };
-              },
+              lazy: loadSignInPage,
             },
             {
               path: '/sign-up',
-              lazy: async () => {
-                const { SignUpPage } = await import('@/features/auth');
-                return { Component: SignUpPage };
-              },
+              lazy: loadSignUpPage,
             },
             {
               path: '/forgot-password',
-              lazy: async () => {
-                const { ForgotPasswordPage } = await import('@/features/auth');
-                return { Component: ForgotPasswordPage };
-              },
+              lazy: loadForgotPasswordPage,
             },
             {
               path: '/verify-code',
-              lazy: async () => {
-                const { VerifyCodePage } = await import('@/features/auth');
-                return { Component: VerifyCodePage };
-              },
+              lazy: loadVerifyCodePage,
             },
             {
               path: '/reset-password',
-              lazy: async () => {
-                const { ResetPasswordPage } = await import('@/features/auth');
-                return { Component: ResetPasswordPage };
-              },
+              lazy: loadResetPasswordPage,
             },
           ],
         },

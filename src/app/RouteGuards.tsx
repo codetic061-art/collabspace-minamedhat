@@ -1,12 +1,16 @@
 import { AlertCircle } from 'lucide-react';
-import { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { Navigate, Outlet, useLocation, useSearchParams } from 'react-router';
 import { useSession } from '@/features/auth';
 import { getErrorMessage } from '@/shared/api';
 import { sanitizeReturnPath } from '@/shared/lib';
 import { Button, PageStatusState } from '@/shared/ui';
-import { AppShell } from './AppShell';
 import { NeutralLoadingShell } from './NeutralLoadingShell';
+
+const LazyAppShell = lazy(async () => {
+  const { AppShell } = await import('./AppShell');
+  return { default: AppShell };
+});
 
 /** Protects authenticated routes with a neutral loading shell on reload and safe return paths. */
 export function ProtectedRoute() {
@@ -43,7 +47,11 @@ export function ProtectedRoute() {
     return <Navigate to={target} replace />;
   }
 
-  return <AppShell />;
+  return (
+    <Suspense fallback={<NeutralLoadingShell />}>
+      <LazyAppShell />
+    </Suspense>
+  );
 }
 
 /** Guards public auth routes: holds neutral shell during `unknown` and redirects signed-in users. */
