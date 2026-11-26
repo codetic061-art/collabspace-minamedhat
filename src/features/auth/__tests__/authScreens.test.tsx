@@ -61,7 +61,7 @@ describe('Auth screens (Layer 2 + Layer 5)', () => {
 
   it('renders Sign in without excluded UI and handles 401/422/429 + double submit', async () => {
     const user = userEvent.setup();
-    let resolveSlowLogin: (() => void) | null = null;
+    const slowLoginGate = { resolve: () => {} };
     let loginCallCount = 0;
 
     mswServer.use(
@@ -90,7 +90,7 @@ describe('Auth screens (Layer 2 + Layer 5)', () => {
           );
         }
         await new Promise<void>((resolve) => {
-          resolveSlowLogin = resolve;
+          slowLoginGate.resolve = resolve;
         });
         return HttpResponse.json({
           success: true,
@@ -165,7 +165,7 @@ describe('Auth screens (Layer 2 + Layer 5)', () => {
 
     await waitFor(() => expect(loginCallCount).toBe(4));
     expect(slowRender.getByRole('button', { name: 'Signing in...' })).toBeDisabled();
-    resolveSlowLogin?.();
+    slowLoginGate.resolve();
     await slowRender.findByRole('heading', { level: 1, name: 'Dashboard' });
   });
 

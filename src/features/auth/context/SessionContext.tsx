@@ -102,11 +102,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      setState((prev) => ({
-        ...prev,
-        status: 'unknown',
-        startupError: null,
-      }));
+      setState((prev) => ({ ...prev, status: 'unknown', startupError: null }));
 
       try {
         const me = await profileService.getMe(signal);

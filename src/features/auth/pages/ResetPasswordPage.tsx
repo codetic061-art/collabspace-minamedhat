@@ -134,9 +134,7 @@ export function ResetPasswordPage() {
           >
             <p>{serverError}</p>
             {rateLimit.isRateLimited ? (
-              <p className="mt-1 text-xs">
-                Try again in {rateLimit.remainingSeconds}s.
-              </p>
+              <p className="mt-1 text-xs">Try again in {rateLimit.remainingSeconds}s.</p>
             ) : null}
           </div>
         ) : null}

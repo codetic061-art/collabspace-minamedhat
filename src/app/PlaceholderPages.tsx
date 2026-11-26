@@ -1,13 +1,12 @@
 import { Link, useParams } from 'react-router';
 import { Card, NotFoundState } from '@/shared/ui';
 
-function SlicePlaceholder({
-  title,
-  description,
-}: {
+interface SlicePlaceholderProps {
   title: string;
   description: string;
-}) {
+}
+
+function SlicePlaceholder({ title, description }: SlicePlaceholderProps) {
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-bold text-ink">{title}</h1>

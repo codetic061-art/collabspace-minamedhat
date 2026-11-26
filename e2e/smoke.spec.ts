@@ -33,9 +33,7 @@ test('renders the root scaffold cleanly with zero console or WCAG AA errors', as
 
   await page.getByRole('link', { name: 'Forgot password?' }).click();
   await expect(page).toHaveURL(/\/forgot-password$/);
-  const referrerPolicy = await page
-    .locator('meta[name="referrer"]')
-    .getAttribute('content');
+  const referrerPolicy = await page.locator('meta[name="referrer"]').getAttribute('content');
   expect(referrerPolicy).toBe('no-referrer');
 
   expect(pageErrors).toEqual([]);
