@@ -13,16 +13,32 @@ declare global {
   }
 }
 
+// Disable trace recording here so protection bypass headers are never written to trace artifacts.
+test.use({ trace: 'off' });
+
 test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y', async ({
   page,
   request,
 }) => {
-  test.skip(
-    !process.env.PLAYWRIGHT_BASE_URL,
-    'Requires PLAYWRIGHT_BASE_URL pointing to a Vercel Preview deployment.',
-  );
+  const previewBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
+  if (!previewBaseUrl) {
+    test.skip(true, 'Requires PLAYWRIGHT_BASE_URL pointing to a Vercel Preview deployment.');
+    return;
+  }
 
-  const rootResponse = await request.get('/');
+  const previewOrigin = new URL(previewBaseUrl).origin;
+  const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim() ?? '';
+  const previewBypassHeaders: Record<string, string> = bypassSecret
+    ? { 'x-vercel-protection-bypass': bypassSecret }
+    : {};
+
+  if (bypassSecret) {
+    // Confirm Vercel Deployment Protection stays enforced for unauthenticated requests.
+    const unauthenticatedResponse = await request.get('/', { maxRedirects: 0 });
+    expect([302, 307, 401, 403]).toContain(unauthenticatedResponse.status());
+  }
+
+  const rootResponse = await request.get('/', { headers: previewBypassHeaders });
   expect(rootResponse.status()).toBe(200);
 
   const rootHeaders = rootResponse.headers();
@@ -40,11 +56,26 @@ test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y',
   expect(cspReportOnly).toContain("script-src 'self'");
   expect(cspReportOnly).toContain("connect-src 'self' https://collabspace.huma-volve.com");
 
-  const recoveryResponse = await request.get('/forgot-password');
+  const recoveryResponse = await request.get('/forgot-password', { headers: previewBypassHeaders });
   expect(recoveryResponse.status()).toBe(200);
   const recoveryHeaders = recoveryResponse.headers();
   expect(recoveryHeaders['content-type'] ?? '').toContain('text/html');
   expect(recoveryHeaders['referrer-policy']).toBe('no-referrer');
+
+  if (bypassSecret) {
+    // Scope the bypass header strictly to the Vercel Preview origin so it never reaches third-party APIs.
+    await page.route(
+      (url) => url.origin === previewOrigin,
+      async (route) => {
+        await route.continue({
+          headers: {
+            ...route.request().headers(),
+            'x-vercel-protection-bypass': bypassSecret,
+          },
+        });
+      },
+    );
+  }
 
   await page.addInitScript(() => {
     const violations: CspViolationEntry[] = [];
