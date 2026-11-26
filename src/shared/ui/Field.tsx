@@ -91,7 +91,7 @@ export function Field({
         labelVariant === 'top' && 'block text-sm font-semibold text-heading',
         labelVariant === 'notch' &&
           'pointer-events-none absolute -top-2.5 left-3 z-10 rounded-input bg-surface-input px-1.5 text-xs font-medium',
-        labelVariant === 'notch' && (hasError ? 'text-danger' : 'text-body'),
+        labelVariant === 'notch' && (hasError ? 'text-danger' : 'text-gray-500'),
       )}
     >
       <span>{label}</span>
@@ -119,7 +119,7 @@ export function Field({
         )}
 
         {hint ? (
-          <p id={hintId} className="text-xs text-body">
+          <p id={hintId} className="text-xs text-gray-500">
             {hint}
           </p>
         ) : null}
