@@ -14,6 +14,36 @@ export interface BreadcrumbProps {
   className?: string;
 }
 
+const LINK_CLASS = 'inline-flex min-h-touch items-center text-body hover:text-ink hover:underline';
+
+function renderCrumb(item: BreadcrumbItem, isCurrent: boolean): ReactNode {
+  if (isCurrent) {
+    return (
+      <span aria-current="page" className="font-medium text-ink">
+        {item.label}
+      </span>
+    );
+  }
+  if (item.renderLink) {
+    return item.renderLink(item.label, LINK_CLASS);
+  }
+  if (item.href) {
+    return (
+      <a href={item.href} className={LINK_CLASS}>
+        {item.label}
+      </a>
+    );
+  }
+  if (item.onClick) {
+    return (
+      <button type="button" onClick={item.onClick} className={cn(LINK_CLASS, 'cursor-pointer')}>
+        {item.label}
+      </button>
+    );
+  }
+  return <span className="text-body">{item.label}</span>;
+}
+
 /** Semantic breadcrumb navigation matching Figma muted-parent > active-ink hierarchy. */
 export function Breadcrumb({ items, className }: BreadcrumbProps) {
   return (
@@ -21,36 +51,12 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
       <ol className="flex flex-wrap items-center gap-1.5">
         {items.map((item, index) => {
           const isCurrent = index === items.length - 1;
-          const linkClass =
-            'inline-flex min-h-touch items-center text-body hover:text-ink hover:underline';
-
           return (
             <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1.5">
               {index > 0 ? (
                 <ChevronRight className="h-4 w-4 text-body" aria-hidden="true" />
               ) : null}
-
-              {isCurrent ? (
-                <span aria-current="page" className="font-medium text-ink">
-                  {item.label}
-                </span>
-              ) : item.renderLink ? (
-                item.renderLink(item.label, linkClass)
-              ) : item.href ? (
-                <a href={item.href} className={linkClass}>
-                  {item.label}
-                </a>
-              ) : item.onClick ? (
-                <button
-                  type="button"
-                  onClick={item.onClick}
-                  className={cn(linkClass, 'cursor-pointer')}
-                >
-                  {item.label}
-                </button>
-              ) : (
-                <span className="text-body">{item.label}</span>
-              )}
+              {renderCrumb(item, isCurrent)}
             </li>
           );
         })}
