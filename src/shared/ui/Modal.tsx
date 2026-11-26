@@ -4,44 +4,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from './Button';
 import { cn } from './cn';
-
-const FOCUSABLE_SELECTORS = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-] as const;
-
-const FOCUSABLE_SELECTOR = FOCUSABLE_SELECTORS.join(', ');
-
-const NON_INERT_TAGS = new Set(['SCRIPT', 'STYLE', 'DIALOG']);
-
-function isVisibleFocusable(node: Element): node is HTMLElement {
-  if (!(node instanceof HTMLElement)) {
-    return false;
-  }
-  if (node.hasAttribute('disabled') || node.closest('[hidden]')) {
-    return false;
-  }
-  return node.getAttribute('aria-hidden') !== 'true';
-}
-
-function getFocusableElements(container: HTMLElement): HTMLElement[] {
-  const nodes = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR));
-  return nodes.filter(isVisibleFocusable);
-}
-
-function isInertCandidate(el: Element, dialog: HTMLDialogElement): el is HTMLElement {
-  if (!(el instanceof HTMLElement) || el === dialog) {
-    return false;
-  }
-  if (el.hasAttribute('data-toast-region') || NON_INERT_TAGS.has(el.tagName)) {
-    return false;
-  }
-  return !el.inert;
-}
+import { applyBackgroundInert, getFocusableElements } from './modalFocus';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -75,6 +38,7 @@ const HEADER_CLASSES = cn(
 );
 
 const TITLE_CLASSES = 'text-xl md:text-2xl font-medium text-ink';
+const DESC_CLASSES = 'mt-1 text-sm text-body';
 const BODY_CLASSES = 'flex-1 overflow-y-auto px-5 py-5 md:px-modal';
 
 const FOOTER_CLASSES = cn(
@@ -105,9 +69,7 @@ function ModalHeader({
     <div className={HEADER_CLASSES}>
       <div className="min-w-0">
         <h2 id={titleId} className={TITLE_CLASSES}>{title}</h2>
-        {description ? (
-          <p id={descriptionId} className="mt-1 text-sm text-body">{description}</p>
-        ) : null}
+        {description ? <p id={descriptionId} className={DESC_CLASSES}>{description}</p> : null}
       </div>
       <Button
         variant="outline"
@@ -154,15 +116,7 @@ export function Modal({
 
     const active = document.activeElement;
     const previousFocus = active instanceof HTMLElement ? active : null;
-
-    const inertedElements: HTMLElement[] = [];
-    for (const child of Array.from(document.body.children)) {
-      if (isInertCandidate(child, dialogEl)) {
-        child.inert = true;
-        child.setAttribute('inert', '');
-        inertedElements.push(child);
-      }
-    }
+    const restoreInert = applyBackgroundInert(dialogEl);
 
     if (!dialogEl.open) {
       dialogEl.showModal?.();
@@ -176,10 +130,7 @@ export function Modal({
       if (dialogEl.open) {
         dialogEl.close?.();
       }
-      for (const el of inertedElements) {
-        el.inert = false;
-        el.removeAttribute('inert');
-      }
+      restoreInert();
       if (previousFocus && previousFocus.isConnected) {
         previousFocus.focus();
       }
