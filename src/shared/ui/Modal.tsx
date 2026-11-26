@@ -1,26 +1,20 @@
-import {
-  useEffect,
-  useId,
-  useRef,
-  type KeyboardEvent,
-  type MouseEvent,
-  type ReactNode,
-  type RefObject,
-  type SyntheticEvent,
-} from 'react';
+import { useEffect, useId, useRef } from 'react';
+import type { KeyboardEvent, MouseEvent, ReactNode, RefObject, SyntheticEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from './Button';
 import { cn } from './cn';
 
-const FOCUSABLE_SELECTOR = [
+const FOCUSABLE_SELECTORS = [
   'a[href]',
   'button:not([disabled])',
   'input:not([disabled])',
   'select:not([disabled])',
   'textarea:not([disabled])',
   '[tabindex]:not([tabindex="-1"])',
-].join(', ');
+] as const;
+
+const FOCUSABLE_SELECTOR = FOCUSABLE_SELECTORS.join(', ');
 
 const NON_INERT_TAGS = new Set(['SCRIPT', 'STYLE', 'DIALOG']);
 
@@ -39,14 +33,14 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
   return nodes.filter(isVisibleFocusable);
 }
 
-function isInertCandidate(child: Element, dialogEl: HTMLDialogElement): child is HTMLElement {
-  if (!(child instanceof HTMLElement) || child === dialogEl) {
+function isInertCandidate(el: Element, dialog: HTMLDialogElement): el is HTMLElement {
+  if (!(el instanceof HTMLElement) || el === dialog) {
     return false;
   }
-  if (child.hasAttribute('data-toast-region') || NON_INERT_TAGS.has(child.tagName)) {
+  if (el.hasAttribute('data-toast-region') || NON_INERT_TAGS.has(el.tagName)) {
     return false;
   }
-  return !child.inert;
+  return !el.inert;
 }
 
 export interface ModalProps {
@@ -80,10 +74,15 @@ const HEADER_CLASSES = cn(
   'px-5 py-4 md:px-modal md:pt-modal md:pb-4',
 );
 
+const TITLE_CLASSES = 'text-xl md:text-2xl font-medium text-ink';
+const BODY_CLASSES = 'flex-1 overflow-y-auto px-5 py-5 md:px-modal';
+
 const FOOTER_CLASSES = cn(
   'sticky bottom-0 flex flex-col-reverse gap-3 border-t border-border-subtle',
   'bg-surface px-5 py-4 sm:flex-row sm:justify-end md:px-modal md:pb-modal',
 );
+
+const CLOSE_BTN_CLASSES = 'border-transparent bg-transparent hover:bg-surface-input shrink-0';
 
 interface ModalHeaderProps {
   titleId: string;
@@ -105,7 +104,7 @@ function ModalHeader({
   return (
     <div className={HEADER_CLASSES}>
       <div className="min-w-0">
-        <h2 id={titleId} className="text-xl md:text-2xl font-medium text-ink">{title}</h2>
+        <h2 id={titleId} className={TITLE_CLASSES}>{title}</h2>
         {description ? (
           <p id={descriptionId} className="mt-1 text-sm text-body">{description}</p>
         ) : null}
@@ -114,10 +113,11 @@ function ModalHeader({
         variant="outline"
         size="sm"
         iconOnly
+        type="button"
         disabled={isSubmitting}
         aria-label="Close dialog"
         onClick={onClose}
-        className="border-transparent bg-transparent hover:bg-surface-input shrink-0"
+        className={CLOSE_BTN_CLASSES}
       >
         <X className="h-5 w-5" aria-hidden="true" />
       </Button>
@@ -237,14 +237,15 @@ export function Modal({
   };
 
   const dialogClass = cn(DIALOG_LAYOUT_CLASSES, MODAL_SIZE_CLASSES[size], className);
+  const describedBy = description ? descriptionId : undefined;
 
-  return createPortal(
+  const modalDialog = (
     <dialog
       ref={dialogRef}
       tabIndex={-1}
       aria-modal="true"
       aria-labelledby={titleId}
-      aria-describedby={description ? descriptionId : undefined}
+      aria-describedby={describedBy}
       onKeyDown={handleKeyDown}
       onCancel={handleCancel}
       onClick={handleBackdropClick}
@@ -259,10 +260,11 @@ export function Modal({
         onClose={onClose}
       />
 
-      <div className="flex-1 overflow-y-auto px-5 py-5 md:px-modal">{children}</div>
+      <div className={BODY_CLASSES}>{children}</div>
 
       {footer ? <div className={FOOTER_CLASSES}>{footer}</div> : null}
-    </dialog>,
-    document.body,
+    </dialog>
   );
+
+  return createPortal(modalDialog, document.body);
 }
