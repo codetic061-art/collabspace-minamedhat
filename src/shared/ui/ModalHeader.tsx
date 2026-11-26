@@ -26,7 +26,11 @@ function ModalDescription({ id, description }: ModalDescriptionProps) {
     return null;
   }
 
-  return <p id={id} className={DESC_CLASSES}>{description}</p>;
+  return (
+    <p id={id} className={DESC_CLASSES}>
+      {description}
+    </p>
+  );
 }
 
 /** Header bar for `Modal` with title, optional description, and close control. */
@@ -41,7 +45,9 @@ export function ModalHeader({
   return (
     <div className={HEADER_CLASSES}>
       <div className="min-w-0">
-        <h2 id={titleId} className={TITLE_CLASSES}>{title}</h2>
+        <h2 id={titleId} className={TITLE_CLASSES}>
+          {title}
+        </h2>
         <ModalDescription id={descriptionId} description={description} />
       </div>
       <Button
