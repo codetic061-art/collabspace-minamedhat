@@ -88,9 +88,27 @@ test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y',
     });
   });
 
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  const assetErrors: string[] = [];
   const bundleBodies: string[] = [];
+
+  page.on('pageerror', (error) => {
+    pageErrors.push(error.message);
+  });
+
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      consoleErrors.push(message.text());
+    }
+  });
+
   page.on('response', async (response) => {
-    if (response.url().includes('/assets/') && response.url().endsWith('.js')) {
+    const url = response.url();
+    if (url.startsWith(previewOrigin) && response.status() >= 400) {
+      assetErrors.push(`${response.status()} ${new URL(url).pathname}`);
+    }
+    if (url.includes('/assets/') && url.endsWith('.js')) {
       try {
         bundleBodies.push(await response.text());
       } catch {
@@ -100,7 +118,11 @@ test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y',
   });
 
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+  const gotoResponse = await page.goto('/', { waitUntil: 'networkidle' });
+  expect(gotoResponse?.status()).toBe(200);
+  expect(assetErrors, 'Failed same-origin asset responses').toEqual([]);
+  expect(pageErrors, 'Uncaught page errors on Preview').toEqual([]);
+  expect(consoleErrors, 'Console errors on Preview').toEqual([]);
 
   await expect(page.getByRole('main')).toBeVisible();
   await expect(page.getByText('https://collabspace.huma-volve.com/api/v1')).toBeVisible();
