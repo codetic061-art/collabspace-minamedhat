@@ -144,7 +144,10 @@ export function Modal({
       return;
     }
 
-    if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) {
+    if (
+      event.shiftKey &&
+      (document.activeElement === first || document.activeElement === dialogRef.current)
+    ) {
       event.preventDefault();
       last.focus();
     } else if (!event.shiftKey && document.activeElement === last) {

@@ -40,7 +40,11 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
                   {item.label}
                 </a>
               ) : item.onClick ? (
-                <button type="button" onClick={item.onClick} className={cn(linkClass, 'cursor-pointer')}>
+                <button
+                  type="button"
+                  onClick={item.onClick}
+                  className={cn(linkClass, 'cursor-pointer')}
+                >
                   {item.label}
                 </button>
               ) : (

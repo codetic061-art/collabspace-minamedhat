@@ -126,7 +126,12 @@ export function PageStatusState({
   className,
 }: PageStatusStateProps) {
   return (
-    <Card className={cn('mx-auto flex max-w-lg flex-col items-center px-6 py-12 text-center', className)}>
+    <Card
+      className={cn(
+        'mx-auto flex max-w-lg flex-col items-center px-6 py-12 text-center',
+        className,
+      )}
+    >
       <IconCircle tone={tone} size="lg">
         {icon}
       </IconCircle>

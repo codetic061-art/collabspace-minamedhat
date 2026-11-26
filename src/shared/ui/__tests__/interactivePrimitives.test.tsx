@@ -64,7 +64,7 @@ describe('Select and NativeSelect', () => {
 });
 
 describe('DropdownMenu', () => {
-  it('navigates menu items with arrow keys, activates items, and restores focus on Escape', async () => {
+  it('navigates menu items with arrow keys and restores focus on Escape', async () => {
     const user = userEvent.setup();
     const onEdit = vi.fn();
     const onDelete = vi.fn();
@@ -105,7 +105,7 @@ describe('DropdownMenu', () => {
 });
 
 describe('Tabs', () => {
-  it('supports underline and segmented modes with roving ArrowLeft/ArrowRight keyboard navigation', async () => {
+  it('supports underline and segmented modes with ArrowLeft/ArrowRight navigation', async () => {
     const user = userEvent.setup();
 
     function TabsHarness() {
@@ -166,7 +166,7 @@ describe('Tabs', () => {
 });
 
 describe('Modal and ConfirmDialog', () => {
-  it('traps focus, blocks Escape when submitting, makes background inert, and restores trigger focus', async () => {
+  it('traps focus, blocks Escape while submitting, makes background inert, and restores focus', async () => {
     const user = userEvent.setup();
 
     function ModalHarness({ submitting = false }: { submitting?: boolean }) {
@@ -249,7 +249,7 @@ describe('Modal and ConfirmDialog', () => {
 });
 
 describe('ToastProvider and ToastRegion', () => {
-  it('renders a polite live status toast that pauses on hover and focus and self-dismisses', async () => {
+  it('renders polite live toast that pauses on hover/focus and self-dismisses', async () => {
     function Trigger() {
       const { showToast } = useToast();
       return (

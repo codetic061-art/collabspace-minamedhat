@@ -69,4 +69,11 @@ export { TabPanel, Tabs } from './Tabs';
 export type { TabItem, TabPanelProps, TabsProps } from './Tabs';
 
 export { ToastProvider, ToastRegion, useToast } from './Toast';
-export type { ToastContextValue, ToastInput, ToastItem, ToastProviderProps, ToastRegionProps, ToastTone } from './Toast';
+export type {
+  ToastContextValue,
+  ToastInput,
+  ToastItem,
+  ToastProviderProps,
+  ToastRegionProps,
+  ToastTone,
+} from './Toast';

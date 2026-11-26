@@ -100,7 +100,8 @@ export function Tabs({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        variant === 'underline' && 'flex flex-wrap items-center gap-4 border-b border-border-neutral',
+        variant === 'underline' &&
+          'flex flex-wrap items-center gap-4 border-b border-border-neutral',
         variant === 'segmented' &&
           'inline-flex flex-wrap items-center gap-1 rounded-pill bg-surface-label p-1',
         className,
@@ -128,7 +129,9 @@ export function Tabs({
               variant === 'underline' &&
                 'border-b-2 px-1 pb-2.5 pt-2 -mb-px font-medium',
               variant === 'underline' &&
-                (isActive ? 'border-primary text-primary' : 'border-transparent text-body hover:text-ink'),
+                (isActive
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-body hover:text-ink'),
               variant === 'segmented' && 'rounded-pill px-4 py-2 font-medium',
               variant === 'segmented' &&
                 (isActive ? 'bg-surface text-ink shadow-segment' : 'text-body hover:text-ink'),

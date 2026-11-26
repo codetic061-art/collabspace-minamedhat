@@ -35,14 +35,7 @@ export interface AvatarProps {
 }
 
 /** Circular user avatar with lazy loading, explicit dimensions, initials fallback, and optional corner badge. */
-export function Avatar({
-  name,
-  src,
-  alt,
-  size = 'sm',
-  badge,
-  className,
-}: AvatarProps) {
+export function Avatar({ name, src, alt, size = 'sm', badge, className }: AvatarProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const spec = SIZE_DIMENSIONS[size];
   const normalizedSrc = src && src.trim().length > 0 ? src : null;
@@ -101,7 +94,10 @@ export function AvatarStack({ items, max = 3, size = 'xs', className }: AvatarSt
   const spec = SIZE_DIMENSIONS[size];
 
   return (
-    <div className={cn('flex items-center -space-x-2', className)} aria-label={`${items.length} members`}>
+    <div
+      className={cn('flex items-center -space-x-2', className)}
+      aria-label={`${items.length} members`}
+    >
       {visible.map((member) => (
         <Avatar key={member.id} name={member.name} src={member.src} size={size} />
       ))}

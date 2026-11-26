@@ -79,9 +79,7 @@ describe('Field, Input, Textarea, Checkbox', () => {
     const describedBy = emailInput.getAttribute('aria-describedby') ?? '';
     expect(describedBy).toContain('-hint');
     expect(describedBy).toContain('-error');
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'The email must be a valid email address.',
-    );
+    expect(screen.getByRole('alert')).toHaveTextContent('The email must be a valid email address.');
     expect(screen.getByLabelText('Project Name')).toBeRequired();
     expect(screen.getByRole('checkbox', { name: 'Remember Me' })).toBeChecked();
 
@@ -90,7 +88,7 @@ describe('Field, Input, Textarea, Checkbox', () => {
 });
 
 describe('Card, Badge, StatusText, Avatar, Breadcrumb, Progress, Gauge', () => {
-  it('renders surface, priority/status/completion badges, avatars, progress, and gauge cleanly', async () => {
+  it('renders surface, priority/status/completion badges, avatars, progress, and gauge', async () => {
     expect(getInitials('Mina Medhat')).toBe('MM');
     expect(getInitials('Admin')).toBe('A');
     expect(getInitials('   ')).toBe('?');
@@ -147,7 +145,7 @@ describe('Card, Badge, StatusText, Avatar, Breadcrumb, Progress, Gauge', () => {
 });
 
 describe('State primitives and BlockErrorBoundary', () => {
-  it('renders skeleton, empty, block error, access denied, not found, and isolates child throws', async () => {
+  it('renders skeleton, empty, error, access denied, not found, and isolates child throws', async () => {
     const onRetry = vi.fn();
     let shouldThrow = true;
 

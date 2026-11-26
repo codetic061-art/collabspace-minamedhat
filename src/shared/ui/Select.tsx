@@ -143,7 +143,12 @@ export function Select({
     if (disabled) {
       return;
     }
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter' || event.key === ' ') {
+    if (
+      event.key === 'ArrowDown' ||
+      event.key === 'ArrowUp' ||
+      event.key === 'Enter' ||
+      event.key === ' '
+    ) {
       if (!isOpen) {
         event.preventDefault();
         setIsOpen(true);

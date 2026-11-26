@@ -1,6 +1,13 @@
 import { cn } from './cn';
 
-export type ProgressTone = 'primary' | 'success' | 'warning' | 'orange' | 'danger' | 'violet' | 'teal';
+export type ProgressTone =
+  | 'primary'
+  | 'success'
+  | 'warning'
+  | 'orange'
+  | 'danger'
+  | 'violet'
+  | 'teal';
 
 const TRACK_CLASSES: Record<ProgressTone, string> = {
   primary: 'bg-primary-tint',
