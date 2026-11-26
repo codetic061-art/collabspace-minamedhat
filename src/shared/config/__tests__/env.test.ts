@@ -48,6 +48,7 @@ describe('parsePublicEnv', () => {
       VITE_API_BASE_URL: 'https://collabspace.huma-volve.com/api/v1',
       VITE_VERCEL_ENV: 'preview',
       VITE_VERCEL_BRANCH_URL: 'example-git-feat-branch.vercel.app',
+      VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG: '{}',
     });
 
     expect(env).toEqual({
