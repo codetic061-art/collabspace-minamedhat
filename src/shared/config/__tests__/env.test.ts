@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { parsePublicEnv } from '@/shared/config';
+import { parsePublicEnv, zodSecurityConfig } from '@/shared/config';
 
 describe('parsePublicEnv', () => {
+  it('enables Zod jitless mode so strict CSP without unsafe-eval never fails', () => {
+    expect(zodSecurityConfig.jitless).toBe(true);
+  });
   it('accepts a valid HTTPS VITE_API_BASE_URL and defaults Turnstile to false', () => {
     const env = parsePublicEnv({
       VITE_API_BASE_URL: 'https://collabspace.huma-volve.com/api/v1',

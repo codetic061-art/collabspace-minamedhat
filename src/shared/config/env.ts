@@ -1,3 +1,4 @@
+import './zod';
 import { z } from 'zod';
 
 const TEST_DEFAULT_API_BASE_URL = 'https://collabspace.huma-volve.com/api/v1';

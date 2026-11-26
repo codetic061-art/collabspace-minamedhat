@@ -1,3 +1,4 @@
+import '@/shared/config';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@/shared/tokens/tokens.css';
