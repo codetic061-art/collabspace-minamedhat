@@ -22,7 +22,7 @@ test('renders the root scaffold cleanly with zero console or WCAG AA errors', as
   await expect(page.getByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
   await expect(page.getByText('CollabSpace', { exact: true })).toBeVisible();
   await expect(page.getByLabel(/Email Address/i)).toBeVisible();
-  await expect(page.getByLabel('Password')).toBeVisible();
+  await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: /Google/i })).toHaveCount(0);
 
   const axeResults = await new AxeBuilder({ page })
