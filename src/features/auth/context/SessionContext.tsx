@@ -154,11 +154,41 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
 
     const controller = new AbortController();
-    void restoreSession({ signal: controller.signal });
+    void profileService.getMe(controller.signal).then(
+      (me) => {
+        queryClient.setQueryData(profileKeys.me(), me);
+        resetUnauthorizedGuard();
+        setState({
+          status: 'authenticated',
+          me,
+          role: normalizeSystemRole(me.user.roles),
+          startupError: null,
+        });
+      },
+      (error: unknown) => {
+        const appError = toAppError(error);
+        if (appError.kind === 'aborted') {
+          return;
+        }
+        if (appError.kind === 'unauthorized') {
+          clearAuthToken();
+          queryClient.clear();
+          setState(ANONYMOUS_STATE);
+          return;
+        }
+        // Preserve stored token on transient startup errors so user can retry (ADR-01 §3).
+        setState({
+          status: 'unknown',
+          me: null,
+          role: null,
+          startupError: appError,
+        });
+      },
+    );
     return () => {
       controller.abort();
     };
-  }, [restoreSession]);
+  }, [queryClient]);
 
   useEffect(() => {
     const unregister = registerUnauthorizedHandler(() => {
