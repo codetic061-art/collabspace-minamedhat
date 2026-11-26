@@ -62,7 +62,9 @@ function main() {
   const indexHtml = readFileSync(INDEX_HTML_PATH, 'utf8');
   const { errors, entryFiles, preloadFiles } = checkIndexHtml(indexHtml);
 
-  const assetNames = readdirSync(ASSETS_DIR).filter((name) => name.endsWith('.js')).sort();
+  const assetNames = readdirSync(ASSETS_DIR)
+    .filter((name) => name.endsWith('.js'))
+    .sort();
 
   if (assetNames.length === 0) {
     errors.push('No JS bundles found under dist/assets/.');

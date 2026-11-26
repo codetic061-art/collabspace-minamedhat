@@ -1,9 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
-test('renders the root scaffold cleanly with zero console or WCAG AA errors', async ({
-  page,
-}) => {
+test('renders the root scaffold cleanly with zero console or WCAG AA errors', async ({ page }) => {
   const pageErrors: string[] = [];
   const consoleErrors: string[] = [];
 
