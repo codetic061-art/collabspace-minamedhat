@@ -1,6 +1,5 @@
 import { X } from 'lucide-react';
 import { Button } from './Button';
-import { cn } from './cn';
 
 export interface ModalHeaderProps {
   titleId: string;
@@ -11,16 +10,18 @@ export interface ModalHeaderProps {
   onClose: () => void;
 }
 
-const HEADER_CLASSES = cn(
-  'flex items-start justify-between gap-4 border-b border-border-subtle',
-  'px-5 py-4 md:px-modal md:pt-modal md:pb-4',
-);
+interface ModalDescriptionProps {
+  id: string;
+  description?: string;
+}
 
+const HEADER_CLASSES =
+  'flex items-start justify-between gap-4 border-b border-border-subtle px-5 py-4 md:px-modal md:pt-modal md:pb-4';
 const TITLE_CLASSES = 'text-xl md:text-2xl font-medium text-ink';
 const DESC_CLASSES = 'mt-1 text-sm text-body';
 const CLOSE_CLASSES = 'border-transparent bg-transparent hover:bg-surface-input shrink-0';
 
-function ModalDescription({ id, description }: { id: string; description?: string }) {
+function ModalDescription({ id, description }: ModalDescriptionProps) {
   if (!description) {
     return null;
   }
