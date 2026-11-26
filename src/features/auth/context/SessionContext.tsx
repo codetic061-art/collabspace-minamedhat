@@ -115,13 +115,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const restoreSession = useCallback(
     async ({ signal }: { signal?: AbortSignal } = {}): Promise<void> => {
-      if (!hasStoredToken()) {
-        setState(ANONYMOUS_STATE);
-        return;
-      }
-
-      setState((prev) => ({ ...prev, status: 'unknown', startupError: null }));
-
       try {
         const me = await profileService.getMe(signal);
         queryClient.setQueryData(profileKeys.me(), me);
@@ -250,6 +243,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const retryRestore = useCallback(async () => {
+    if (!hasStoredToken()) {
+      setState(ANONYMOUS_STATE);
+      return;
+    }
+    setState((prev) => ({ ...prev, status: 'unknown', startupError: null }));
     await restoreSession();
   }, [restoreSession]);
 
