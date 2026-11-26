@@ -95,47 +95,44 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     statusRef.current = state.status;
   });
 
-  const restoreSession = useCallback(
-    async (signal?: AbortSignal) => {
-      if (!hasStoredToken()) {
+  const restoreSession = useCallback(async (signal?: AbortSignal) => {
+    if (!hasStoredToken()) {
+      setState(ANONYMOUS_STATE);
+      return;
+    }
+
+    setState((prev) => ({ ...prev, status: 'unknown', startupError: null }));
+
+    try {
+      const me = await profileService.getMe(signal);
+      queryClient.setQueryData(profileKeys.me(), me);
+      resetUnauthorizedGuard();
+      setState({
+        status: 'authenticated',
+        me,
+        role: normalizeSystemRole(me.user.roles),
+        startupError: null,
+      });
+    } catch (error) {
+      const appError = toAppError(error);
+      if (appError.kind === 'aborted') {
+        return;
+      }
+      if (appError.kind === 'unauthorized') {
+        clearAuthToken();
+        queryClient.clear();
         setState(ANONYMOUS_STATE);
         return;
       }
-
-      setState((prev) => ({ ...prev, status: 'unknown', startupError: null }));
-
-      try {
-        const me = await profileService.getMe(signal);
-        queryClient.setQueryData(profileKeys.me(), me);
-        resetUnauthorizedGuard();
-        setState({
-          status: 'authenticated',
-          me,
-          role: normalizeSystemRole(me.user.roles),
-          startupError: null,
-        });
-      } catch (error) {
-        const appError = toAppError(error);
-        if (appError.kind === 'aborted') {
-          return;
-        }
-        if (appError.kind === 'unauthorized') {
-          clearAuthToken();
-          queryClient.clear();
-          setState(ANONYMOUS_STATE);
-          return;
-        }
-        // Preserve stored token on transient startup errors so user can retry (ADR-01 §3).
-        setState({
-          status: 'unknown',
-          me: null,
-          role: null,
-          startupError: appError,
-        });
-      }
-    },
-    [queryClient],
-  );
+      // Preserve stored token on transient startup errors so user can retry (ADR-01 §3).
+      setState({
+        status: 'unknown',
+        me: null,
+        role: null,
+        startupError: appError,
+      });
+    }
+  }, [queryClient]);
 
   useEffect(() => {
     if (!hasStoredToken()) {
@@ -198,30 +195,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     });
   }, [navigate, queryClient, restoreSession]);
 
-  const completeAuth = useCallback(
-    async (token: string, options: { remember?: boolean } = {}) => {
-      setAuthToken(token, { remember: options.remember });
-      try {
-        const me = await profileService.getMe();
-        queryClient.setQueryData(profileKeys.me(), me);
-        resetUnauthorizedGuard();
-        broadcastSessionEvent('signed-in');
-        setState({
-          status: 'authenticated',
-          me,
-          role: normalizeSystemRole(me.user.roles),
-          startupError: null,
-        });
-        return me;
-      } catch (error) {
-        clearAuthToken();
-        queryClient.clear();
-        setState(ANONYMOUS_STATE);
-        throw error;
-      }
-    },
-    [queryClient],
-  );
+  const completeAuth = useCallback(async (token: string, options: { remember?: boolean } = {}) => {
+    setAuthToken(token, { remember: options.remember });
+    try {
+      const me = await profileService.getMe();
+      queryClient.setQueryData(profileKeys.me(), me);
+      resetUnauthorizedGuard();
+      broadcastSessionEvent('signed-in');
+      setState({
+        status: 'authenticated',
+        me,
+        role: normalizeSystemRole(me.user.roles),
+        startupError: null,
+      });
+      return me;
+    } catch (error) {
+      clearAuthToken();
+      queryClient.clear();
+      setState(ANONYMOUS_STATE);
+      throw error;
+    }
+  }, [queryClient]);
 
   const signOut = useCallback(async () => {
     try {
