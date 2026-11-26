@@ -1,10 +1,5 @@
 export { Avatar, AvatarStack, getInitials } from './Avatar';
-export type {
-  AvatarProps,
-  AvatarSize,
-  AvatarStackItem,
-  AvatarStackProps,
-} from './Avatar';
+export type { AvatarProps, AvatarSize, AvatarStackItem, AvatarStackProps } from './Avatar';
 
 export { Badge, StatusText } from './Badge';
 export type { BadgeProps, BadgeVariant, StatusTextProps, StatusTextTone } from './Badge';

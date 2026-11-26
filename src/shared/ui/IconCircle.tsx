@@ -1,18 +1,7 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { cn } from './cn';
 
-export type IconCircleTone =
-  | 'primary'
-  | 'success'
-  | 'danger'
-  | 'warning'
-  | 'orange'
-  | 'violet'
-  | 'teal'
-  | 'neutral';
-export type IconCircleSize = 'sm' | 'md' | 'lg';
-
-const TONE_CLASSES: Record<IconCircleTone, string> = {
+const TONE_CLASSES = {
   primary: 'bg-primary-tint text-primary',
   success: 'bg-success-tint text-success',
   danger: 'bg-danger-tint text-danger',
@@ -21,7 +10,10 @@ const TONE_CLASSES: Record<IconCircleTone, string> = {
   violet: 'bg-violet-tint text-violet',
   teal: 'bg-teal-tint text-teal',
   neutral: 'bg-surface-label text-heading',
-};
+} as const;
+
+export type IconCircleTone = keyof typeof TONE_CLASSES;
+export type IconCircleSize = 'sm' | 'md' | 'lg';
 
 const SIZE_CLASSES: Record<IconCircleSize, string> = {
   sm: 'h-8 w-8',

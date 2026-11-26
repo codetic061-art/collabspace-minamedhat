@@ -100,8 +100,7 @@ export function Modal({
       dialogEl.showModal?.();
     }
 
-    const focusTarget =
-      initialFocusRef?.current ?? getFocusableElements(dialogEl)[0] ?? dialogEl;
+    const focusTarget = initialFocusRef?.current ?? getFocusableElements(dialogEl)[0] ?? dialogEl;
     focusTarget.focus();
 
     return () => {

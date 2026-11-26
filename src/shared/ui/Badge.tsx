@@ -1,21 +1,7 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { cn } from './cn';
 
-export type BadgeVariant =
-  | 'low'
-  | 'medium'
-  | 'high'
-  | 'critical'
-  | 'completion'
-  | 'primary'
-  | 'neutral'
-  | 'orange'
-  | 'violet'
-  | 'teal'
-  | 'purple'
-  | 'pink';
-
-const BADGE_CLASSES: Record<BadgeVariant, string> = {
+const BADGE_CLASSES = {
   low: 'bg-success-tint text-success',
   medium: 'bg-warning-tint text-warning',
   high: 'bg-danger-tint text-danger',
@@ -28,7 +14,9 @@ const BADGE_CLASSES: Record<BadgeVariant, string> = {
   teal: 'bg-teal-tint text-teal',
   purple: 'bg-violet-tint text-purple',
   pink: 'bg-pink-tint text-pink',
-};
+} as const;
+
+export type BadgeVariant = keyof typeof BADGE_CLASSES;
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
@@ -56,22 +44,16 @@ export function Badge({ variant = 'neutral', icon, className, children, ...rest 
   );
 }
 
-export type StatusTextTone =
-  | 'pending'
-  | 'in-progress'
-  | 'on-hold'
-  | 'completed'
-  | 'cancelled'
-  | 'review';
-
-const STATUS_TEXT_CLASSES: Record<StatusTextTone, string> = {
+const STATUS_TEXT_CLASSES = {
   pending: 'text-status-pending',
   'in-progress': 'text-status-in-progress',
   'on-hold': 'text-status-on-hold',
   completed: 'text-status-completed',
   cancelled: 'text-status-cancelled',
   review: 'text-purple',
-};
+} as const;
+
+export type StatusTextTone = keyof typeof STATUS_TEXT_CLASSES;
 
 export interface StatusTextProps extends HTMLAttributes<HTMLSpanElement> {
   tone: StatusTextTone;

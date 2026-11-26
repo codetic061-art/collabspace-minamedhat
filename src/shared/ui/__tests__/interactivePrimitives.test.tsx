@@ -166,7 +166,7 @@ describe('Tabs', () => {
 });
 
 describe('Modal and ConfirmDialog', () => {
-  it('traps focus, blocks Escape while submitting, makes background inert, and restores focus', async () => {
+  it('traps focus, blocks Escape on submit, inerts background, restores focus', async () => {
     const user = userEvent.setup();
 
     function ModalHarness({ submitting = false }: { submitting?: boolean }) {
@@ -252,9 +252,7 @@ describe('ToastProvider and ToastRegion', () => {
   it('renders polite live toast that pauses on hover/focus and self-dismisses', async () => {
     function Trigger() {
       const { showToast } = useToast();
-      return (
-        <Button onClick={() => showToast({ message: 'Project updated.' })}>Show toast</Button>
-      );
+      return <Button onClick={() => showToast({ message: 'Project updated.' })}>Toast</Button>;
     }
 
     vi.useFakeTimers();
@@ -265,7 +263,7 @@ describe('ToastProvider and ToastRegion', () => {
         </ToastProvider>,
       );
 
-      fireEvent.click(screen.getByRole('button', { name: 'Show toast' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Toast' }));
       const statusToast = screen.getByRole('status');
       expect(statusToast).toHaveTextContent('Project updated.');
       expect(statusToast.parentElement).toHaveAttribute('aria-live', 'polite');
@@ -297,7 +295,7 @@ describe('ToastProvider and ToastRegion', () => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
 
       vi.useRealTimers();
-      fireEvent.click(screen.getByRole('button', { name: 'Show toast' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Toast' }));
       await expectNoA11yViolations(container);
     } finally {
       vi.useRealTimers();

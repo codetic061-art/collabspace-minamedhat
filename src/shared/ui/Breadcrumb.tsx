@@ -21,7 +21,8 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
       <ol className="flex flex-wrap items-center gap-1.5">
         {items.map((item, index) => {
           const isCurrent = index === items.length - 1;
-          const linkClass = 'inline-flex min-h-touch items-center text-body hover:text-ink hover:underline';
+          const linkClass =
+            'inline-flex min-h-touch items-center text-body hover:text-ink hover:underline';
 
           return (
             <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1.5">

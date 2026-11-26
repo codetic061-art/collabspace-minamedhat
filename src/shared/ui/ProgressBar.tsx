@@ -1,15 +1,6 @@
 import { cn } from './cn';
 
-export type ProgressTone =
-  | 'primary'
-  | 'success'
-  | 'warning'
-  | 'orange'
-  | 'danger'
-  | 'violet'
-  | 'teal';
-
-const TRACK_CLASSES: Record<ProgressTone, string> = {
+const TRACK_CLASSES = {
   primary: 'bg-primary-tint',
   success: 'bg-success-tint',
   warning: 'bg-warning-tint',
@@ -17,7 +8,9 @@ const TRACK_CLASSES: Record<ProgressTone, string> = {
   danger: 'bg-danger-tint',
   violet: 'bg-violet-tint',
   teal: 'bg-teal-tint',
-};
+} as const;
+
+export type ProgressTone = keyof typeof TRACK_CLASSES;
 
 const BAR_CLASSES: Record<ProgressTone, string> = {
   primary: 'bg-primary',

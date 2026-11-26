@@ -126,8 +126,7 @@ export function Tabs({
             onKeyDown={(event) => handleKeyDown(event, index)}
             className={cn(
               'min-h-touch inline-flex items-center gap-2 text-sm transition-colors motion-reduce:transition-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
-              variant === 'underline' &&
-                'border-b-2 px-1 pb-2.5 pt-2 -mb-px font-medium',
+              variant === 'underline' && 'border-b-2 px-1 pb-2.5 pt-2 -mb-px font-medium',
               variant === 'underline' &&
                 (isActive
                   ? 'border-primary text-primary'
