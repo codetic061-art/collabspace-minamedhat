@@ -136,7 +136,7 @@ describe('session storage, BroadcastChannel, and 401 loop guard', () => {
     expect(onUnauthorized).toHaveBeenCalledTimes(2);
   });
 
-  it('broadcasts signed-in and signed-out events without transmitting tokens', () => {
+  it('broadcasts signed-in and signed-out events without transmitting tokens', async () => {
     const events: Array<{ type: string }> = [];
     const unsubscribe = subscribeSessionEvents((event) => {
       events.push(event);
@@ -144,8 +144,10 @@ describe('session storage, BroadcastChannel, and 401 loop guard', () => {
 
     broadcastSessionEvent('signed-in');
     broadcastSessionEvent('signed-out');
-    unsubscribe();
 
-    expect(events).toEqual([{ type: 'signed-in' }, { type: 'signed-out' }]);
+    await vi.waitFor(() => {
+      expect(events).toEqual([{ type: 'signed-in' }, { type: 'signed-out' }]);
+    });
+    unsubscribe();
   });
 });
