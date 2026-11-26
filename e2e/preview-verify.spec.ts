@@ -145,8 +145,10 @@ test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y',
   expect(pageErrors, 'Uncaught page errors on Preview').toEqual([]);
   expect(consoleErrors, 'Console errors on Preview').toEqual([]);
 
+  await expect(page).toHaveURL(/\/sign-in/);
   await expect(page.getByRole('main')).toBeVisible();
-  await expect(page.getByText('https://collabspace.huma-volve.com/api/v1')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
+  await expect(page.getByText('CollabSpace', { exact: true })).toBeVisible();
   expect(
     bundleBodies.some((body) => body.includes('https://collabspace.huma-volve.com/api/v1')),
   ).toBe(true);
