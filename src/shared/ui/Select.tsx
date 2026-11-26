@@ -10,7 +10,12 @@ import {
 } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { cn } from './cn';
-import { Field, useFieldContext, type FieldLabelVariant } from './Field';
+import {
+  Field,
+  useFieldContext,
+  type FieldControlA11yProps,
+  type FieldLabelVariant,
+} from './Field';
 
 export interface SelectOption {
   value: string;
@@ -58,8 +63,6 @@ export function Select({
 }: SelectProps) {
   const field = useFieldContext();
   const generatedId = useId();
-  const triggerId = id ?? field?.inputId ?? generatedId;
-  const listboxId = `${triggerId}-listbox`;
 
   const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue ?? '');
   const currentValue = value !== undefined ? value : uncontrolledValue;
@@ -69,8 +72,6 @@ export function Select({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  const effectiveInvalid = Boolean(error || field?.hasError);
-  const effectiveDescribedBy = field?.describedBy;
   const resolvedVariant = variant ?? (labelVariant === 'notch' ? 'notch' : 'pill');
 
   const selectedOption = options.find((opt) => opt.value === currentValue);
@@ -190,94 +191,101 @@ export function Select({
     }
   };
 
-  const control = (
-    <div ref={containerRef} className={cn('relative w-full', className)}>
-      <button
-        ref={triggerRef}
-        id={triggerId}
-        type="button"
-        role="combobox"
-        disabled={disabled}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        aria-controls={isOpen ? listboxId : undefined}
-        aria-invalid={effectiveInvalid ? true : undefined}
-        aria-describedby={effectiveDescribedBy}
-        onClick={() => setIsOpen((prev) => !prev)}
-        onKeyDown={handleTriggerKeyDown}
-        className={cn(
-          'flex min-h-touch w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm transition-colors motion-reduce:transition-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-60',
-          resolvedVariant === 'minimal' &&
-            'rounded-pill bg-transparent text-ink hover:bg-surface-input px-2',
-          resolvedVariant === 'notch' &&
-            'rounded-input border bg-surface-input text-ink border-border-input',
-          resolvedVariant === 'pill' &&
-            'rounded-pill border bg-surface text-ink border-border-card hover:bg-surface-input',
-          effectiveInvalid && resolvedVariant !== 'minimal' && 'border-danger',
-          triggerClassName,
-        )}
-      >
-        <span className="flex min-w-0 items-center gap-2 truncate">
-          {leadingIcon ? (
-            <span className="inline-flex shrink-0 text-body" aria-hidden="true">
-              {leadingIcon}
-            </span>
-          ) : null}
-          <span className={cn('truncate', selectedOption ? 'text-ink' : 'text-body')}>
-            {selectedOption ? selectedOption.label : placeholder}
-          </span>
-        </span>
-        <ChevronDown
-          className={cn(
-            'h-4 w-4 shrink-0 text-body transition-transform motion-reduce:transition-none',
-            isOpen && 'rotate-180',
-          )}
-          aria-hidden="true"
-        />
-      </button>
+  const renderControl = (a11y?: FieldControlA11yProps) => {
+    const triggerId = id ?? a11y?.id ?? field?.inputId ?? generatedId;
+    const listboxId = `${triggerId}-listbox`;
+    const effectiveInvalid = Boolean(error || a11y?.['aria-invalid'] || field?.hasError);
+    const effectiveDescribedBy = a11y?.['aria-describedby'] ?? field?.describedBy;
 
-      {isOpen ? (
-        <div
-          id={listboxId}
-          role="listbox"
-          aria-labelledby={triggerId}
-          className="absolute left-0 z-30 mt-2 max-h-60 w-full min-w-44 overflow-auto rounded-card border border-border-subtle bg-surface py-1 shadow-popover divide-y divide-border-subtle"
+    return (
+      <div ref={containerRef} className={cn('relative w-full', className)}>
+        <button
+          ref={triggerRef}
+          id={triggerId}
+          type="button"
+          role="combobox"
+          disabled={disabled}
+          aria-haspopup="listbox"
+          aria-expanded={isOpen}
+          aria-controls={isOpen ? listboxId : undefined}
+          aria-invalid={effectiveInvalid ? true : undefined}
+          aria-describedby={effectiveDescribedBy}
+          onClick={() => setIsOpen((prev) => !prev)}
+          onKeyDown={handleTriggerKeyDown}
+          className={cn(
+            'flex min-h-touch w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm transition-colors motion-reduce:transition-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-60',
+            resolvedVariant === 'minimal' &&
+              'rounded-pill bg-transparent text-ink hover:bg-surface-input px-2',
+            resolvedVariant === 'notch' &&
+              'rounded-input border bg-surface-input text-ink border-border-input',
+            resolvedVariant === 'pill' &&
+              'rounded-pill border bg-surface text-ink border-border-card hover:bg-surface-input',
+            effectiveInvalid && resolvedVariant !== 'minimal' && 'border-danger',
+            triggerClassName,
+          )}
         >
-          {options.map((option, index) => {
-            const isSelected = option.value === currentValue;
-            return (
-              <button
-                key={option.value}
-                ref={(el) => {
-                  optionRefs.current[index] = el;
-                }}
-                type="button"
-                role="option"
-                disabled={option.disabled}
-                aria-selected={isSelected}
-                onClick={() => selectOption(option.value)}
-                onKeyDown={(event) => handleOptionKeyDown(event, index)}
-                className={cn(
-                  'flex min-h-touch w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm transition-colors motion-reduce:transition-none cursor-pointer focus:bg-primary-tint/50 focus:outline-none hover:bg-surface-input disabled:cursor-not-allowed disabled:opacity-50',
-                  isSelected ? 'font-medium text-ink bg-surface-input' : 'text-heading',
-                )}
-              >
-                <span className="truncate">{option.label}</span>
-                {isSelected ? (
-                  <span
-                    className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-pill bg-success text-surface"
-                    aria-hidden="true"
-                  >
-                    <Check className="h-3 w-3" />
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
-  );
+          <span className="flex min-w-0 items-center gap-2 truncate">
+            {leadingIcon ? (
+              <span className="inline-flex shrink-0 text-body" aria-hidden="true">
+                {leadingIcon}
+              </span>
+            ) : null}
+            <span className={cn('truncate', selectedOption ? 'text-ink' : 'text-body')}>
+              {selectedOption ? selectedOption.label : placeholder}
+            </span>
+          </span>
+          <ChevronDown
+            className={cn(
+              'h-4 w-4 shrink-0 text-body transition-transform motion-reduce:transition-none',
+              isOpen && 'rotate-180',
+            )}
+            aria-hidden="true"
+          />
+        </button>
+
+        {isOpen ? (
+          <div
+            id={listboxId}
+            role="listbox"
+            aria-labelledby={triggerId}
+            className="absolute left-0 z-30 mt-2 max-h-60 w-full min-w-44 overflow-auto rounded-card border border-border-subtle bg-surface py-1 shadow-popover divide-y divide-border-subtle"
+          >
+            {options.map((option, index) => {
+              const isSelected = option.value === currentValue;
+              return (
+                <button
+                  key={option.value}
+                  ref={(el) => {
+                    optionRefs.current[index] = el;
+                  }}
+                  type="button"
+                  role="option"
+                  disabled={option.disabled}
+                  aria-selected={isSelected}
+                  onClick={() => selectOption(option.value)}
+                  onKeyDown={(event) => handleOptionKeyDown(event, index)}
+                  className={cn(
+                    'flex min-h-touch w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm transition-colors motion-reduce:transition-none cursor-pointer focus:bg-primary-tint/50 focus:outline-none hover:bg-surface-input disabled:cursor-not-allowed disabled:opacity-50',
+                    isSelected ? 'font-medium text-ink bg-surface-input' : 'text-heading',
+                  )}
+                >
+                  <span className="truncate">{option.label}</span>
+                  {isSelected ? (
+                    <span
+                      className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-pill bg-success text-surface"
+                      aria-hidden="true"
+                    >
+                      <Check className="h-3 w-3" />
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
 
   if (label !== undefined) {
     return (
@@ -289,12 +297,12 @@ export function Select({
         hint={hint}
         required={required}
       >
-        {control}
+        {(a11yProps) => renderControl(a11yProps)}
       </Field>
     );
   }
 
-  return control;
+  return renderControl();
 }
 
 export interface NativeSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
@@ -325,44 +333,49 @@ export function NativeSelect({
 }: NativeSelectProps) {
   const field = useFieldContext();
 
-  const effectiveId = id ?? field?.inputId;
-  const effectiveInvalid = rest['aria-invalid'] ?? (error || field?.hasError ? true : undefined);
-  const effectiveDescribedBy = rest['aria-describedby'] ?? field?.describedBy;
   const resolvedVariant = field ? field.labelVariant : labelVariant;
 
-  const selectEl = (
-    <div className="relative">
-      <select
-        ref={ref}
-        id={effectiveId}
-        required={required}
-        aria-invalid={effectiveInvalid}
-        aria-describedby={effectiveDescribedBy}
-        className={cn(
-          'min-h-touch w-full appearance-none border bg-surface-input px-3.5 pr-9 py-2 text-sm text-ink transition-colors motion-reduce:transition-none focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60',
-          resolvedVariant === 'notch' ? 'rounded-input' : 'rounded-pill bg-surface',
-          effectiveInvalid ? 'border-danger focus:border-danger' : 'border-border-input',
-          className,
-        )}
-        {...rest}
-      >
-        {placeholder ? (
-          <option value="" disabled={required}>
-            {placeholder}
-          </option>
-        ) : null}
-        {options.map((option) => (
-          <option key={option.value} value={option.value} disabled={option.disabled}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        className="pointer-events-none absolute top-1/2 right-3.5 h-4 w-4 -translate-y-1/2 text-body"
-        aria-hidden="true"
-      />
-    </div>
-  );
+  const renderSelect = (a11y?: FieldControlA11yProps) => {
+    const effectiveId = id ?? a11y?.id ?? field?.inputId;
+    const isFieldInvalid = error || field?.hasError ? true : undefined;
+    const effectiveInvalid = rest['aria-invalid'] ?? a11y?.['aria-invalid'] ?? isFieldInvalid;
+    const effectiveDescribedBy =
+      rest['aria-describedby'] ?? a11y?.['aria-describedby'] ?? field?.describedBy;
+
+    return (
+      <div className="relative">
+        <select
+          ref={ref}
+          id={effectiveId}
+          required={required}
+          aria-invalid={effectiveInvalid}
+          aria-describedby={effectiveDescribedBy}
+          className={cn(
+            'min-h-touch w-full appearance-none border bg-surface-input px-3.5 pr-9 py-2 text-sm text-ink transition-colors motion-reduce:transition-none focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60',
+            resolvedVariant === 'notch' ? 'rounded-input' : 'rounded-pill bg-surface',
+            effectiveInvalid ? 'border-danger focus:border-danger' : 'border-border-input',
+            className,
+          )}
+          {...rest}
+        >
+          {placeholder ? (
+            <option value="" disabled={required}>
+              {placeholder}
+            </option>
+          ) : null}
+          {options.map((option) => (
+            <option key={option.value} value={option.value} disabled={option.disabled}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          className="pointer-events-none absolute top-1/2 right-3.5 h-4 w-4 -translate-y-1/2 text-body"
+          aria-hidden="true"
+        />
+      </div>
+    );
+  };
 
   if (label !== undefined) {
     return (
@@ -375,10 +388,10 @@ export function NativeSelect({
         required={required}
         className={wrapperClassName}
       >
-        {selectEl}
+        {(a11yProps) => renderSelect(a11yProps)}
       </Field>
     );
   }
 
-  return selectEl;
+  return renderSelect();
 }

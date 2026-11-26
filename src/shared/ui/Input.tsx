@@ -7,7 +7,12 @@ import {
 } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from './cn';
-import { Field, useFieldContext, type FieldLabelVariant } from './Field';
+import {
+  Field,
+  useFieldContext,
+  type FieldControlA11yProps,
+  type FieldLabelVariant,
+} from './Field';
 
 export type InputShape = 'notch' | 'pill';
 
@@ -41,51 +46,56 @@ export function Input({
 }: InputProps) {
   const field = useFieldContext();
 
-  const effectiveId = id ?? field?.inputId;
-  const effectiveInvalid = rest['aria-invalid'] ?? (error || field?.hasError ? true : undefined);
-  const effectiveDescribedBy = rest['aria-describedby'] ?? field?.describedBy;
   const resolvedVariant = field ? field.labelVariant : labelVariant;
   const resolvedShape: InputShape = shape ?? (resolvedVariant === 'notch' ? 'notch' : 'pill');
 
-  const control = (
-    <div
-      className={cn(
-        'flex min-h-touch w-full items-center gap-2 border px-3.5 transition-colors motion-reduce:transition-none',
-        resolvedShape === 'notch'
-          ? 'rounded-input bg-surface-input'
-          : 'rounded-pill bg-surface border-profile-border',
-        effectiveInvalid
-          ? 'border-danger focus-within:border-danger'
-          : resolvedShape === 'notch'
-            ? 'border-border-input focus-within:border-primary'
-            : 'border-profile-border focus-within:border-primary',
-        rest.disabled && 'opacity-60 cursor-not-allowed',
-      )}
-    >
-      {leadingIcon ? (
-        <span className="inline-flex shrink-0 items-center text-body" aria-hidden="true">
-          {leadingIcon}
-        </span>
-      ) : null}
+  const renderControl = (a11y?: FieldControlA11yProps) => {
+    const effectiveId = id ?? a11y?.id ?? field?.inputId;
+    const isFieldInvalid = error || field?.hasError ? true : undefined;
+    const effectiveInvalid = rest['aria-invalid'] ?? a11y?.['aria-invalid'] ?? isFieldInvalid;
+    const effectiveDescribedBy =
+      rest['aria-describedby'] ?? a11y?.['aria-describedby'] ?? field?.describedBy;
 
-      <input
-        ref={ref}
-        id={effectiveId}
-        required={required}
-        aria-invalid={effectiveInvalid}
-        aria-describedby={effectiveDescribedBy}
+    return (
+      <div
         className={cn(
-          'w-full min-w-0 bg-transparent py-2.5 text-sm text-ink placeholder:text-body focus:outline-none',
-          className,
+          'flex min-h-touch w-full items-center gap-2 border px-3.5 transition-colors motion-reduce:transition-none',
+          resolvedShape === 'notch'
+            ? 'rounded-input bg-surface-input'
+            : 'rounded-pill bg-surface border-profile-border',
+          effectiveInvalid
+            ? 'border-danger focus-within:border-danger'
+            : resolvedShape === 'notch'
+              ? 'border-border-input focus-within:border-primary'
+              : 'border-profile-border focus-within:border-primary',
+          rest.disabled && 'opacity-60 cursor-not-allowed',
         )}
-        {...rest}
-      />
+      >
+        {leadingIcon ? (
+          <span className="inline-flex shrink-0 items-center text-body" aria-hidden="true">
+            {leadingIcon}
+          </span>
+        ) : null}
 
-      {trailingAdornment ? (
-        <span className="inline-flex shrink-0 items-center gap-1">{trailingAdornment}</span>
-      ) : null}
-    </div>
-  );
+        <input
+          ref={ref}
+          id={effectiveId}
+          required={required}
+          aria-invalid={effectiveInvalid}
+          aria-describedby={effectiveDescribedBy}
+          className={cn(
+            'w-full min-w-0 bg-transparent py-2.5 text-sm text-ink placeholder:text-body focus:outline-none',
+            className,
+          )}
+          {...rest}
+        />
+
+        {trailingAdornment ? (
+          <span className="inline-flex shrink-0 items-center gap-1">{trailingAdornment}</span>
+        ) : null}
+      </div>
+    );
+  };
 
   if (label !== undefined) {
     return (
@@ -98,12 +108,12 @@ export function Input({
         required={required}
         className={wrapperClassName}
       >
-        {control}
+        {(a11yProps) => renderControl(a11yProps)}
       </Field>
     );
   }
 
-  return control;
+  return renderControl();
 }
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -131,26 +141,30 @@ export function Textarea({
 }: TextareaProps) {
   const field = useFieldContext();
 
-  const effectiveId = id ?? field?.inputId;
-  const effectiveInvalid = rest['aria-invalid'] ?? (error || field?.hasError ? true : undefined);
-  const effectiveDescribedBy = rest['aria-describedby'] ?? field?.describedBy;
+  const renderControl = (a11y?: FieldControlA11yProps) => {
+    const effectiveId = id ?? a11y?.id ?? field?.inputId;
+    const isFieldInvalid = error || field?.hasError ? true : undefined;
+    const effectiveInvalid = rest['aria-invalid'] ?? a11y?.['aria-invalid'] ?? isFieldInvalid;
+    const effectiveDescribedBy =
+      rest['aria-describedby'] ?? a11y?.['aria-describedby'] ?? field?.describedBy;
 
-  const textareaControl = (
-    <textarea
-      ref={ref}
-      id={effectiveId}
-      rows={rows}
-      required={required}
-      aria-invalid={effectiveInvalid}
-      aria-describedby={effectiveDescribedBy}
-      className={cn(
-        'w-full rounded-input border bg-surface-input px-3.5 py-2.5 text-sm text-ink placeholder:text-body transition-colors motion-reduce:transition-none focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60',
-        effectiveInvalid ? 'border-danger focus:border-danger' : 'border-border-input',
-        className,
-      )}
-      {...rest}
-    />
-  );
+    return (
+      <textarea
+        ref={ref}
+        id={effectiveId}
+        rows={rows}
+        required={required}
+        aria-invalid={effectiveInvalid}
+        aria-describedby={effectiveDescribedBy}
+        className={cn(
+          'w-full rounded-input border bg-surface-input px-3.5 py-2.5 text-sm text-ink placeholder:text-body transition-colors motion-reduce:transition-none focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60',
+          effectiveInvalid ? 'border-danger focus:border-danger' : 'border-border-input',
+          className,
+        )}
+        {...rest}
+      />
+    );
+  };
 
   if (label !== undefined) {
     return (
@@ -163,12 +177,12 @@ export function Textarea({
         required={required}
         className={wrapperClassName}
       >
-        {textareaControl}
+        {(a11yProps) => renderControl(a11yProps)}
       </Field>
     );
   }
 
-  return textareaControl;
+  return renderControl();
 }
 
 export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
