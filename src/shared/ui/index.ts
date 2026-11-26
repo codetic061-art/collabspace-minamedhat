@@ -34,7 +34,7 @@ export { ConfirmDialog } from './ConfirmDialog';
 export type { ConfirmDialogProps } from './ConfirmDialog';
 
 export { Modal } from './Modal';
-export type { ModalProps } from './Modal';
+export type { ModalProps, ModalSize } from './Modal';
 
 export { Gauge, ProgressBar } from './ProgressBar';
 export type { GaugeProps, ProgressBarProps, ProgressTone } from './ProgressBar';

@@ -1,3 +1,12 @@
+import {
+  useEffect,
+  useRef,
+  type KeyboardEvent,
+  type MouseEvent,
+  type RefObject,
+  type SyntheticEvent,
+} from 'react';
+
 const FOCUSABLE_SELECTOR = [
   'a[href]',
   'button:not([disabled])',
@@ -47,5 +56,108 @@ export function applyBackgroundInert(dialog: HTMLDialogElement): () => void {
       el.inert = false;
       el.removeAttribute('inert');
     }
+  };
+}
+
+export interface UseModalDialogOptions {
+  isOpen: boolean;
+  isSubmitting: boolean;
+  onClose: () => void;
+  initialFocusRef?: RefObject<HTMLElement | null>;
+}
+
+/** Encapsulates `<dialog>` Top Layer lifecycle, focus trap, Escape suppression, and focus return. */
+export function useModalDialog({
+  isOpen,
+  isSubmitting,
+  onClose,
+  initialFocusRef,
+}: UseModalDialogOptions) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const dialogEl = dialogRef.current;
+    if (!dialogEl) {
+      return;
+    }
+
+    const active = document.activeElement;
+    const previousFocus = active instanceof HTMLElement ? active : null;
+    const restoreInert = applyBackgroundInert(dialogEl);
+
+    if (!dialogEl.open) {
+      dialogEl.showModal?.();
+    }
+
+    const firstEl = getFocusableElements(dialogEl)[0];
+    const focusTarget = initialFocusRef?.current ?? firstEl ?? dialogEl;
+    focusTarget.focus();
+
+    return () => {
+      if (dialogEl.open) {
+        dialogEl.close?.();
+      }
+      restoreInert();
+      if (previousFocus && previousFocus.isConnected) {
+        previousFocus.focus();
+      }
+    };
+  }, [isOpen, initialFocusRef]);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      if (!isSubmitting) {
+        onClose();
+      }
+      return;
+    }
+
+    if (event.key !== 'Tab' || !dialogRef.current) {
+      return;
+    }
+
+    const focusables = getFocusableElements(dialogRef.current);
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+
+    if (!first || !last) {
+      event.preventDefault();
+      return;
+    }
+
+    const active = document.activeElement;
+    const atStart = active === first || active === dialogRef.current;
+    if (event.shiftKey && atStart) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
+  const handleCancel = (event: SyntheticEvent<HTMLDialogElement>) => {
+    event.preventDefault();
+    if (!isSubmitting) {
+      onClose();
+    }
+  };
+
+  const handleBackdropClick = (event: MouseEvent<HTMLDialogElement>) => {
+    if (event.target === dialogRef.current && !isSubmitting) {
+      onClose();
+    }
+  };
+
+  return {
+    dialogRef,
+    handleKeyDown,
+    handleCancel,
+    handleBackdropClick,
   };
 }

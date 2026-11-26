@@ -1,10 +1,11 @@
-import { useEffect, useId, useRef } from 'react';
-import type { KeyboardEvent, MouseEvent, ReactNode, RefObject, SyntheticEvent } from 'react';
+import { useId, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from './Button';
 import { cn } from './cn';
-import { applyBackgroundInert, getFocusableElements } from './modalFocus';
+import { useModalDialog } from './modalFocus';
+
+export type ModalSize = 'sm' | 'md' | 'lg';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -12,14 +13,14 @@ export interface ModalProps {
   title: string;
   description?: string;
   isSubmitting?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: ModalSize;
   initialFocusRef?: RefObject<HTMLElement | null>;
   footer?: ReactNode;
   className?: string;
   children: ReactNode;
 }
 
-const MODAL_SIZE_CLASSES: Record<'sm' | 'md' | 'lg', string> = {
+const MODAL_SIZE_CLASSES: Record<ModalSize, string> = {
   sm: 'md:max-w-md',
   md: 'md:max-w-xl',
   lg: 'md:max-w-2xl',
@@ -37,16 +38,15 @@ const HEADER_CLASSES = cn(
   'px-5 py-4 md:px-modal md:pt-modal md:pb-4',
 );
 
-const TITLE_CLASSES = 'text-xl md:text-2xl font-medium text-ink';
-const DESC_CLASSES = 'mt-1 text-sm text-body';
-const BODY_CLASSES = 'flex-1 overflow-y-auto px-5 py-5 md:px-modal';
-
 const FOOTER_CLASSES = cn(
   'sticky bottom-0 flex flex-col-reverse gap-3 border-t border-border-subtle',
   'bg-surface px-5 py-4 sm:flex-row sm:justify-end md:px-modal md:pb-modal',
 );
 
-const CLOSE_BTN_CLASSES = 'border-transparent bg-transparent hover:bg-surface-input shrink-0';
+const TITLE_CLASSES = 'text-xl md:text-2xl font-medium text-ink';
+const DESC_CLASSES = 'mt-1 text-sm text-body';
+const BODY_CLASSES = 'flex-1 overflow-y-auto px-5 py-5 md:px-modal';
+const CLOSE_CLASSES = 'border-transparent bg-transparent hover:bg-surface-input shrink-0';
 
 interface ModalHeaderProps {
   titleId: string;
@@ -79,7 +79,7 @@ function ModalHeader({
         disabled={isSubmitting}
         aria-label="Close dialog"
         onClick={onClose}
-        className={CLOSE_BTN_CLASSES}
+        className={CLOSE_CLASSES}
       >
         <X className="h-5 w-5" aria-hidden="true" />
       </Button>
@@ -102,93 +102,20 @@ export function Modal({
 }: ModalProps) {
   const titleId = useId();
   const descriptionId = useId();
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const dialogEl = dialogRef.current;
-    if (!dialogEl) {
-      return;
-    }
-
-    const active = document.activeElement;
-    const previousFocus = active instanceof HTMLElement ? active : null;
-    const restoreInert = applyBackgroundInert(dialogEl);
-
-    if (!dialogEl.open) {
-      dialogEl.showModal?.();
-    }
-
-    const firstEl = getFocusableElements(dialogEl)[0];
-    const focusTarget = initialFocusRef?.current ?? firstEl ?? dialogEl;
-    focusTarget.focus();
-
-    return () => {
-      if (dialogEl.open) {
-        dialogEl.close?.();
-      }
-      restoreInert();
-      if (previousFocus && previousFocus.isConnected) {
-        previousFocus.focus();
-      }
-    };
-  }, [isOpen, initialFocusRef]);
+  const { dialogRef, handleKeyDown, handleCancel, handleBackdropClick } = useModalDialog({
+    isOpen,
+    isSubmitting,
+    onClose,
+    initialFocusRef,
+  });
 
   if (!isOpen) {
     return null;
   }
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      if (!isSubmitting) {
-        onClose();
-      }
-      return;
-    }
-
-    if (event.key !== 'Tab' || !dialogRef.current) {
-      return;
-    }
-
-    const focusables = getFocusableElements(dialogRef.current);
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-
-    if (!first || !last) {
-      event.preventDefault();
-      return;
-    }
-
-    const active = document.activeElement;
-    const atStart = active === first || active === dialogRef.current;
-    if (event.shiftKey && atStart) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
-
-  const handleCancel = (event: SyntheticEvent<HTMLDialogElement>) => {
-    event.preventDefault();
-    if (!isSubmitting) {
-      onClose();
-    }
-  };
-
-  const handleBackdropClick = (event: MouseEvent<HTMLDialogElement>) => {
-    if (event.target === dialogRef.current && !isSubmitting) {
-      onClose();
-    }
-  };
-
   const dialogClass = cn(DIALOG_LAYOUT_CLASSES, MODAL_SIZE_CLASSES[size], className);
   const describedBy = description ? descriptionId : undefined;
+  const footerNode = footer ? <div className={FOOTER_CLASSES}>{footer}</div> : null;
 
   const modalDialog = (
     <dialog
@@ -210,10 +137,8 @@ export function Modal({
         isSubmitting={isSubmitting}
         onClose={onClose}
       />
-
       <div className={BODY_CLASSES}>{children}</div>
-
-      {footer ? <div className={FOOTER_CLASSES}>{footer}</div> : null}
+      {footerNode}
     </dialog>
   );
 
