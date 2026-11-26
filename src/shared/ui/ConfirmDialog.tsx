@@ -40,6 +40,7 @@ export function ConfirmDialog({
         <>
           <Button
             ref={cancelButtonRef}
+            type="button"
             variant="outline"
             disabled={isConfirming}
             onClick={onClose}
@@ -47,6 +48,7 @@ export function ConfirmDialog({
             {cancelLabel}
           </Button>
           <Button
+            type="button"
             variant="danger"
             isLoading={isConfirming}
             loadingText={confirmingLabel}

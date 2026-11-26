@@ -150,7 +150,8 @@ export function Modal({
       return;
     }
 
-    const atStart = document.activeElement === first || document.activeElement === dialogRef.current;
+    const active = document.activeElement;
+    const atStart = active === first || active === dialogRef.current;
     if (event.shiftKey && atStart) {
       event.preventDefault();
       last.focus();

@@ -15,6 +15,7 @@ export interface BreadcrumbProps {
 }
 
 const LINK_CLASS = 'inline-flex min-h-touch items-center text-body hover:text-ink hover:underline';
+const BUTTON_LINK_CLASS = cn(LINK_CLASS, 'cursor-pointer');
 
 function renderCrumb(item: BreadcrumbItem, isCurrent: boolean): ReactNode {
   if (isCurrent) {
@@ -28,7 +29,7 @@ function renderCrumb(item: BreadcrumbItem, isCurrent: boolean): ReactNode {
   }
   if (item.onClick) {
     return (
-      <button type="button" onClick={item.onClick} className={cn(LINK_CLASS, 'cursor-pointer')}>
+      <button type="button" className={BUTTON_LINK_CLASS} onClick={item.onClick}>
         {item.label}
       </button>
     );
@@ -45,9 +46,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
           const isCurrent = index === items.length - 1;
           return (
             <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1.5">
-              {index > 0 ? (
-                <ChevronRight className="h-4 w-4 text-body" aria-hidden="true" />
-              ) : null}
+              {index > 0 ? <ChevronRight className="h-4 w-4 text-body" aria-hidden="true" /> : null}
               {renderCrumb(item, isCurrent)}
             </li>
           );
