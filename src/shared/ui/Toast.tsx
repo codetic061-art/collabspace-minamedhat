@@ -178,6 +178,7 @@ export function ToastRegion({ toasts, onDismiss, className }: ToastRegionProps) 
   return (
     <div
       data-toast-region=""
+      role="region"
       aria-live="polite"
       aria-atomic="false"
       aria-label="Notifications"
