@@ -54,7 +54,7 @@ export function Modal({
 }: ModalProps) {
   const titleId = useId();
   const descriptionId = useId();
-  const modal = useModalDialog({
+  const dialogRef = useModalDialog({
     isOpen,
     isSubmitting,
     onClose,
@@ -71,14 +71,11 @@ export function Modal({
 
   return createPortal(
     <dialog
-      ref={modal.dialogRef}
+      ref={dialogRef}
       tabIndex={-1}
       aria-modal="true"
       aria-labelledby={titleId}
       aria-describedby={describedBy}
-      onKeyDown={modal.handleKeyDown}
-      onCancel={modal.handleCancel}
-      onClick={modal.handleBackdropClick}
       className={dialogClass}
     >
       <ModalHeader

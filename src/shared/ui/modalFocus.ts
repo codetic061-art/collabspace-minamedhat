@@ -1,11 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  type KeyboardEvent,
-  type MouseEvent,
-  type RefObject,
-  type SyntheticEvent,
-} from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -59,6 +52,27 @@ export function applyBackgroundInert(dialog: HTMLDialogElement): () => void {
   };
 }
 
+function handleTabTrap(event: globalThis.KeyboardEvent, dialogEl: HTMLDialogElement) {
+  const focusables = getFocusableElements(dialogEl);
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+
+  if (!first || !last) {
+    event.preventDefault();
+    return;
+  }
+
+  const active = document.activeElement;
+  const atStart = active === first || active === dialogEl;
+  if (event.shiftKey && atStart) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
 export interface UseModalDialogOptions {
   isOpen: boolean;
   isSubmitting: boolean;
@@ -72,8 +86,13 @@ export function useModalDialog({
   isSubmitting,
   onClose,
   initialFocusRef,
-}: UseModalDialogOptions) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+}: UseModalDialogOptions): RefObject<HTMLDialogElement | null> {
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const latestRef = useRef({ isSubmitting, onClose });
+
+  useEffect(() => {
+    latestRef.current = { isSubmitting, onClose };
+  });
 
   useEffect(() => {
     if (!isOpen) {
@@ -97,7 +116,41 @@ export function useModalDialog({
     const focusTarget = initialFocusRef?.current ?? firstEl ?? dialogEl;
     focusTarget.focus();
 
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        if (!latestRef.current.isSubmitting) {
+          latestRef.current.onClose();
+        }
+        return;
+      }
+
+      if (event.key === 'Tab') {
+        handleTabTrap(event, dialogEl);
+      }
+    };
+
+    const onCancel = (event: Event) => {
+      event.preventDefault();
+      if (!latestRef.current.isSubmitting) {
+        latestRef.current.onClose();
+      }
+    };
+
+    const onClick = (event: globalThis.MouseEvent) => {
+      if (event.target === dialogEl && !latestRef.current.isSubmitting) {
+        latestRef.current.onClose();
+      }
+    };
+
+    dialogEl.addEventListener('keydown', onKeyDown);
+    dialogEl.addEventListener('cancel', onCancel);
+    dialogEl.addEventListener('click', onClick);
+
     return () => {
+      dialogEl.removeEventListener('keydown', onKeyDown);
+      dialogEl.removeEventListener('cancel', onCancel);
+      dialogEl.removeEventListener('click', onClick);
       if (dialogEl.open) {
         dialogEl.close?.();
       }
@@ -108,56 +161,5 @@ export function useModalDialog({
     };
   }, [isOpen, initialFocusRef]);
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      if (!isSubmitting) {
-        onClose();
-      }
-      return;
-    }
-
-    if (event.key !== 'Tab' || !dialogRef.current) {
-      return;
-    }
-
-    const focusables = getFocusableElements(dialogRef.current);
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-
-    if (!first || !last) {
-      event.preventDefault();
-      return;
-    }
-
-    const active = document.activeElement;
-    const atStart = active === first || active === dialogRef.current;
-    if (event.shiftKey && atStart) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
-
-  const handleCancel = (event: SyntheticEvent<HTMLDialogElement>) => {
-    event.preventDefault();
-    if (!isSubmitting) {
-      onClose();
-    }
-  };
-
-  const handleBackdropClick = (event: MouseEvent<HTMLDialogElement>) => {
-    if (event.target === dialogRef.current && !isSubmitting) {
-      onClose();
-    }
-  };
-
-  return {
-    dialogRef,
-    handleKeyDown,
-    handleCancel,
-    handleBackdropClick,
-  };
+  return dialogRef;
 }

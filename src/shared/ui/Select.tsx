@@ -196,6 +196,7 @@ export function Select({
         ref={triggerRef}
         id={triggerId}
         type="button"
+        role="combobox"
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={isOpen}

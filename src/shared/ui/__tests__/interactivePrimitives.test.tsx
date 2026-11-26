@@ -44,7 +44,7 @@ describe('Select and NativeSelect', () => {
       </div>,
     );
 
-    const trigger = screen.getByRole('button', { name: /Priority/i });
+    const trigger = screen.getByRole('combobox', { name: /Priority/i });
     await user.click(trigger);
 
     expect(trigger).toHaveAttribute('aria-expanded', 'true');

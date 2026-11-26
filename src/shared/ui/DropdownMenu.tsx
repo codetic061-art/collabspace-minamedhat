@@ -41,7 +41,7 @@ export function DropdownMenu({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const pendingFocusTargetRef = useRef<'first' | 'last'>('first');
+  const [focusEdge, setFocusEdge] = useState<'first' | 'last'>('first');
 
   const focusTrigger = () => {
     const triggerEl = document.getElementById(triggerId);
@@ -55,8 +55,8 @@ export function DropdownMenu({
       return;
     }
 
-    const focusEdge = () => {
-      if (pendingFocusTargetRef.current === 'last') {
+    const focusTargetItem = () => {
+      if (focusEdge === 'last') {
         for (let i = items.length - 1; i >= 0; i -= 1) {
           if (!items[i]?.disabled) {
             itemRefs.current[i]?.focus();
@@ -72,7 +72,7 @@ export function DropdownMenu({
       }
     };
 
-    focusEdge();
+    focusTargetItem();
 
     const handlePointerDown = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -82,7 +82,7 @@ export function DropdownMenu({
 
     document.addEventListener('mousedown', handlePointerDown);
     return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [isOpen, items]);
+  }, [isOpen, focusEdge, items]);
 
   const moveFocus = (fromIndex: number, direction: 1 | -1 | 'first' | 'last') => {
     if (items.length === 0) {
@@ -121,12 +121,12 @@ export function DropdownMenu({
     if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
       if (!isOpen) {
         event.preventDefault();
-        pendingFocusTargetRef.current = 'first';
+        setFocusEdge('first');
         setIsOpen(true);
       }
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
-      pendingFocusTargetRef.current = 'last';
+      setFocusEdge('last');
       setIsOpen(true);
     } else if (event.key === 'Escape' && isOpen) {
       event.preventDefault();
@@ -173,7 +173,7 @@ export function DropdownMenu({
         'aria-expanded': isOpen,
         'aria-controls': isOpen ? menuId : undefined,
         onClick: () => {
-          pendingFocusTargetRef.current = 'first';
+          setFocusEdge('first');
           setIsOpen((prev) => !prev);
         },
         onKeyDown: handleTriggerKeyDown,
