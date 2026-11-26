@@ -140,7 +140,7 @@ export default [
       ],
     },
     rules: {
-      'boundaries/element-types': [
+      'boundaries/dependencies': [
         'error',
         {
           default: 'disallow',
@@ -171,7 +171,6 @@ export default [
             {
               from: 'feature',
               allow: [
-                ['feature', { featureName: '${from.featureName}' }],
                 'feature',
                 'shared-ui',
                 'shared-api',
@@ -199,29 +198,6 @@ export default [
             {
               from: 'shared-config',
               allow: ['shared-config'],
-            },
-          ],
-        },
-      ],
-      'boundaries/entry-point': [
-        'error',
-        {
-          default: 'disallow',
-          rules: [
-            {
-              target: ['feature'],
-              allow: 'index.ts',
-            },
-            {
-              target: [
-                'app',
-                'shared-ui',
-                'shared-api',
-                'shared-lib',
-                'shared-tokens',
-                'shared-config',
-              ],
-              allow: '**',
             },
           ],
         },
