@@ -113,7 +113,7 @@ describe('Auth screens (Layer 2 + Layer 5)', () => {
       ),
     );
 
-    const { container } = renderAtRoute('/sign-in');
+    const { container, unmount } = renderAtRoute('/sign-in');
 
     const heading = await screen.findByRole('heading', { level: 1, name: 'Sign in' });
     expect(heading).toBeInTheDocument();
@@ -153,20 +153,18 @@ describe('Auth screens (Layer 2 + Layer 5)', () => {
     );
 
     await expectNoA11yViolations(container);
+    unmount();
 
     // 4) Duplicate-submit guard sends only one in-flight request.
-    const slowRender = renderAtRoute('/sign-in');
-    const [secondEmail] = slowRender.getAllByLabelText(/Email Address/i);
-    const [secondPass] = slowRender.getAllByLabelText('Password');
-    await user.type(secondEmail!, 'alex@example.test');
-    await user.type(secondPass!, 'password123');
-    const [, secondBtn] = slowRender.getAllByRole('button', { name: 'Sign in' });
-    await user.dblClick(secondBtn!);
+    renderAtRoute('/sign-in');
+    await user.type(screen.getByLabelText(/Email Address/i), 'alex@example.test');
+    await user.type(screen.getByLabelText('Password'), 'password123');
+    await user.dblClick(screen.getByRole('button', { name: 'Sign in' }));
 
     await waitFor(() => expect(loginCallCount).toBe(4));
-    expect(slowRender.getByRole('button', { name: 'Signing in...' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Signing in...' })).toBeDisabled();
     slowLoginGate.resolve();
-    await slowRender.findByRole('heading', { level: 1, name: 'Dashboard' });
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' });
   });
 
   it('sends strictly the 4 OpenAPI fields on Sign up and maps taken-email 422', async () => {
