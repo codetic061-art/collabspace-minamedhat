@@ -5,6 +5,7 @@ import { expect, test } from '@playwright/test';
 interface CspViolationEntry {
   violatedDirective: string;
   blockedURI: string;
+  sourceFile: string;
 }
 
 declare global {
@@ -82,6 +83,19 @@ test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y',
     );
   }
 
+  // Silence Vercel Preview edge-injected Toolbar script so third-party feedback widgets do not run eval/iframes
+  // or inject toolbar DOM into automated CSP and accessibility assertions.
+  await page.route(
+    (url) => url.origin === 'https://vercel.live',
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/javascript',
+        body: '',
+      });
+    },
+  );
+
   await page.addInitScript(() => {
     const violations: CspViolationEntry[] = [];
     window.__cspViolations = violations;
@@ -89,6 +103,7 @@ test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y',
       violations.push({
         violatedDirective: event.violatedDirective,
         blockedURI: event.blockedURI,
+        sourceFile: event.sourceFile,
       });
     });
   });
@@ -136,7 +151,11 @@ test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y',
     bundleBodies.some((body) => body.includes('https://collabspace.huma-volve.com/api/v1')),
   ).toBe(true);
 
-  const cspViolations = await page.evaluate(() => window.__cspViolations ?? []);
+  const cspViolations = (await page.evaluate(() => window.__cspViolations ?? [])).filter(
+    (entry) =>
+      !entry.blockedURI.startsWith('https://vercel.live') &&
+      !entry.sourceFile.startsWith('https://vercel.live'),
+  );
   expect(cspViolations).toEqual([]);
 
   const axeResults = await new AxeBuilder({ page })
