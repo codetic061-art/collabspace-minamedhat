@@ -195,27 +195,30 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     });
   }, [navigate, queryClient, restoreSession]);
 
-  const completeAuth = useCallback(async (token: string, options: { remember?: boolean } = {}) => {
-    setAuthToken(token, { remember: options.remember });
-    try {
-      const me = await profileService.getMe();
-      queryClient.setQueryData(profileKeys.me(), me);
-      resetUnauthorizedGuard();
-      broadcastSessionEvent('signed-in');
-      setState({
-        status: 'authenticated',
-        me,
-        role: normalizeSystemRole(me.user.roles),
-        startupError: null,
-      });
-      return me;
-    } catch (error) {
-      clearAuthToken();
-      queryClient.clear();
-      setState(ANONYMOUS_STATE);
-      throw error;
-    }
-  }, [queryClient]);
+  const completeAuth = useCallback(
+    async (token: string, options: { remember?: boolean } = {}) => {
+      setAuthToken(token, { remember: options.remember });
+      try {
+        const me = await profileService.getMe();
+        queryClient.setQueryData(profileKeys.me(), me);
+        resetUnauthorizedGuard();
+        broadcastSessionEvent('signed-in');
+        setState({
+          status: 'authenticated',
+          me,
+          role: normalizeSystemRole(me.user.roles),
+          startupError: null,
+        });
+        return me;
+      } catch (error) {
+        clearAuthToken();
+        queryClient.clear();
+        setState(ANONYMOUS_STATE);
+        throw error;
+      }
+    },
+    [queryClient],
+  );
 
   const signOut = useCallback(async () => {
     try {
