@@ -1,6 +1,6 @@
-# ADR-07: Routing, Code Splitting, Loading, and Error Boundaries
+﻿# ADR-07: Routing, Code Splitting, Loading, and Error Boundaries
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §3, §4, §7, §8 (item 8: Routing and loading), Spec ID-3, ID-8, ID-17, ID-18
 

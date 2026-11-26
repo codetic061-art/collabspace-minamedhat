@@ -1,6 +1,6 @@
-# ADR-09: Performance — Fonts, Charts, React Compiler, and Bundle Budget
+﻿# ADR-09: Performance — Fonts, Charts, React Compiler, and Bundle Budget
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §4, §6, §8 (item 9: Performance), Spec ID-10, ID-18, Decision D4
 

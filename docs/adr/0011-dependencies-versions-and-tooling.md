@@ -1,6 +1,6 @@
-# ADR-11: Dependencies, Versions, and Tooling
+﻿# ADR-11: Dependencies, Versions, and Tooling
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §1, §6, §7, §8 (item 11: Dependencies, with versions and compatibility), Spec ID-20.5, ID-24
 

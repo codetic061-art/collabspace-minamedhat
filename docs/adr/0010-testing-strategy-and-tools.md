@@ -1,6 +1,6 @@
-# ADR-10: Testing Strategy and Tools
+﻿# ADR-10: Testing Strategy and Tools
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §7, §8 (item 10: Testing), Spec Testing Decisions (Layers 1–6), D6
 

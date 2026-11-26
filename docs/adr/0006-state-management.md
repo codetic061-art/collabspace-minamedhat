@@ -1,6 +1,6 @@
-# ADR-06: State Management
+﻿# ADR-06: State Management
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §4, §6, §8 (item 7: State management), Spec ID-5, ID-15, ID-17
 

@@ -1,6 +1,6 @@
-# ADR-04: Component Architecture, Styling, and UI Primitives
+﻿# ADR-04: Component Architecture, Styling, and UI Primitives
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §2, §7, §8 (item 3: Component architecture), Spec ID-4, ID-8, ID-9, ID-11, ID-13, ID-14, ID-23
 

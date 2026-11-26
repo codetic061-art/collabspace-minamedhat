@@ -1,6 +1,6 @@
-# ADR-12: Browser Security Headers, CSP, and Vercel Deployment
+﻿# ADR-12: Browser Security Headers, CSP, and Vercel Deployment
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §8, §9, §10, Spec ID-20.5, Further Notes ("Deployment environment")
 

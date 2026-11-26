@@ -1,6 +1,6 @@
-# ADR-13: Bot Protection, Backend Throttling Policy, and Backend Dependency Matrix
+﻿# ADR-13: Bot Protection, Backend Throttling Policy, and Backend Dependency Matrix
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §7, §8, Spec ID-20.3, ID-20.4, ID-20.6, ID-21, Decision D7
 

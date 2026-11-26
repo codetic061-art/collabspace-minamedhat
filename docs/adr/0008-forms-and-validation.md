@@ -1,6 +1,6 @@
-# ADR-08: Forms and Validation
+﻿# ADR-08: Forms and Validation
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §2, §7, §8 (items 3 & 11: Component architecture and dependencies), Spec ID-5, ID-8, ID-11, ID-22
 

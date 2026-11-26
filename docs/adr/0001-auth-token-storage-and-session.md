@@ -1,6 +1,6 @@
-# ADR-01: Authentication, Token Storage, and Session Behaviour
+﻿# ADR-01: Authentication, Token Storage, and Session Behaviour
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §1, §5, §8 (item 6: Authentication strategy), Spec ID-7, ID-20.1, ID-20.2, ID-21
 

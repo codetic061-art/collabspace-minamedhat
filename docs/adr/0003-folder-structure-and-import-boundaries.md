@@ -1,6 +1,6 @@
-# ADR-03: Folder Structure and Import Boundaries
+﻿# ADR-03: Folder Structure and Import Boundaries
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §2, §6, §8 (item 2: Folder structure), Spec ID-13, ID-14, ID-24
 

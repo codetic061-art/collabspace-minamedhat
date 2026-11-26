@@ -1,6 +1,6 @@
-# ADR-02: Framework and Rendering Model
+﻿# ADR-02: Framework and Rendering Model
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §1, §3, §4, §8 (items 1 & 4: Framework, rendering model, and server/client boundaries), Spec ID-16
 

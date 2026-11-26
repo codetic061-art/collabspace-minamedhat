@@ -1,6 +1,6 @@
-# ADR-05: API Layer, Data Fetching, Caching, Retry, and Timeout
+﻿# ADR-05: API Layer, Data Fetching, Caching, Retry, and Timeout
 
-- **Status:** Proposed (awaiting user approval)
+- **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
 - **Implements:** AGENTS.md §4, §5, §8 (item 5: API and data-fetching architecture), Spec ID-6, ID-8, ID-18, ID-19, Decisions D5, D10
 
