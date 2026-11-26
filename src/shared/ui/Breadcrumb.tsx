@@ -18,21 +18,13 @@ const LINK_CLASS = 'inline-flex min-h-touch items-center text-body hover:text-in
 
 function renderCrumb(item: BreadcrumbItem, isCurrent: boolean): ReactNode {
   if (isCurrent) {
-    return (
-      <span aria-current="page" className="font-medium text-ink">
-        {item.label}
-      </span>
-    );
+    return <span aria-current="page" className="font-medium text-ink">{item.label}</span>;
   }
   if (item.renderLink) {
     return item.renderLink(item.label, LINK_CLASS);
   }
   if (item.href) {
-    return (
-      <a href={item.href} className={LINK_CLASS}>
-        {item.label}
-      </a>
-    );
+    return <a href={item.href} className={LINK_CLASS}>{item.label}</a>;
   }
   if (item.onClick) {
     return (

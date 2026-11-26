@@ -13,23 +13,33 @@ import { X } from 'lucide-react';
 import { Button } from './Button';
 import { cn } from './cn';
 
-const FOCUSABLE_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(', ');
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+const NON_INERT_TAGS = new Set(['SCRIPT', 'STYLE', 'DIALOG']);
+
+function isVisibleFocusable(node: Element): node is HTMLElement {
+  if (!(node instanceof HTMLElement)) {
+    return false;
+  }
+  if (node.hasAttribute('disabled') || node.closest('[hidden]')) {
+    return false;
+  }
+  return node.getAttribute('aria-hidden') !== 'true';
+}
 
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
-  return Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
-    (node): node is HTMLElement =>
-      node instanceof HTMLElement &&
-      !node.hasAttribute('disabled') &&
-      !node.closest('[hidden]') &&
-      node.getAttribute('aria-hidden') !== 'true',
-  );
+  return Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(isVisibleFocusable);
+}
+
+function shouldInertSibling(child: Element, dialogEl: HTMLDialogElement): child is HTMLElement {
+  if (!(child instanceof HTMLElement) || child === dialogEl) {
+    return false;
+  }
+  if (child.hasAttribute('data-toast-region') || NON_INERT_TAGS.has(child.tagName)) {
+    return false;
+  }
+  return !child.inert;
 }
 
 export interface ModalProps {
@@ -51,7 +61,10 @@ const MODAL_SIZE_CLASSES: Record<'sm' | 'md' | 'lg', string> = {
   lg: 'md:max-w-2xl',
 };
 
-/** Native `<dialog>` Top Layer modal with focus trap, inert background, Escape suppression, and mobile full-screen sheet. */
+const DIALOG_LAYOUT_CLASSES =
+  'm-0 md:m-auto flex flex-col bg-surface text-ink shadow-modal backdrop:bg-ink/50 focus:outline-none h-dvh max-h-dvh w-screen max-w-none rounded-none md:h-auto md:max-h-dvh md:w-full md:rounded-modal';
+
+/** Native `<dialog>` Top Layer modal with focus trap and background inerting (ID-23). */
 export function Modal({
   isOpen,
   onClose,
@@ -78,18 +91,12 @@ export function Modal({
       return;
     }
 
-    const previousFocus =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const active = document.activeElement;
+    const previousFocus = active instanceof HTMLElement ? active : null;
 
     const inertedElements: HTMLElement[] = [];
     for (const child of Array.from(document.body.children)) {
-      if (
-        child instanceof HTMLElement &&
-        child !== dialogEl &&
-        !child.hasAttribute('data-toast-region') &&
-        !['SCRIPT', 'STYLE', 'DIALOG'].includes(child.tagName) &&
-        !child.inert
-      ) {
+      if (shouldInertSibling(child, dialogEl)) {
         child.inert = true;
         child.setAttribute('inert', '');
         inertedElements.push(child);
@@ -143,10 +150,8 @@ export function Modal({
       return;
     }
 
-    if (
-      event.shiftKey &&
-      (document.activeElement === first || document.activeElement === dialogRef.current)
-    ) {
+    const atStart = document.activeElement === first || document.activeElement === dialogRef.current;
+    if (event.shiftKey && atStart) {
       event.preventDefault();
       last.focus();
     } else if (!event.shiftKey && document.activeElement === last) {
@@ -178,13 +183,7 @@ export function Modal({
       onKeyDown={handleKeyDown}
       onCancel={handleCancel}
       onClick={handleBackdropClick}
-      className={cn(
-        'm-0 md:m-auto flex flex-col bg-surface text-ink shadow-modal backdrop:bg-ink/50 focus:outline-none',
-        'h-dvh max-h-dvh w-screen max-w-none rounded-none',
-        'md:h-auto md:max-h-dvh md:w-full md:rounded-modal',
-        MODAL_SIZE_CLASSES[size],
-        className,
-      )}
+      className={cn(DIALOG_LAYOUT_CLASSES, MODAL_SIZE_CLASSES[size], className)}
     >
       <div className="flex items-start justify-between gap-4 border-b border-border-subtle px-5 py-4 md:px-modal md:pt-modal md:pb-4">
         <div className="min-w-0">
@@ -215,65 +214,5 @@ export function Modal({
       ) : null}
     </dialog>,
     document.body,
-  );
-}
-
-export interface ConfirmDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  title: string;
-  description: string;
-  confirmLabel?: string;
-  confirmingLabel?: string;
-  cancelLabel?: string;
-  isConfirming?: boolean;
-}
-
-/** Destructive confirmation dialog placing initial focus safely on Cancel (ID-23). */
-export function ConfirmDialog({
-  isOpen,
-  onClose,
-  onConfirm,
-  title,
-  description,
-  confirmLabel = 'Delete',
-  confirmingLabel = 'Deleting...',
-  cancelLabel = 'Cancel',
-  isConfirming = false,
-}: ConfirmDialogProps) {
-  const cancelButtonRef = useRef<HTMLButtonElement>(null);
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={title}
-      size="sm"
-      isSubmitting={isConfirming}
-      initialFocusRef={cancelButtonRef}
-      footer={
-        <>
-          <Button
-            ref={cancelButtonRef}
-            variant="outline"
-            disabled={isConfirming}
-            onClick={onClose}
-          >
-            {cancelLabel}
-          </Button>
-          <Button
-            variant="danger"
-            isLoading={isConfirming}
-            loadingText={confirmingLabel}
-            onClick={onConfirm}
-          >
-            {confirmLabel}
-          </Button>
-        </>
-      }
-    >
-      <p className="text-sm leading-6 text-heading">{description}</p>
-    </Modal>
   );
 }

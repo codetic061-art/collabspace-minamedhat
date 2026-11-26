@@ -30,8 +30,11 @@ export type { IconCircleProps, IconCircleSize, IconCircleTone } from './IconCirc
 export { Checkbox, Input, Textarea } from './Input';
 export type { CheckboxProps, InputProps, InputShape, TextareaProps } from './Input';
 
-export { ConfirmDialog, Modal } from './Modal';
-export type { ConfirmDialogProps, ModalProps } from './Modal';
+export { ConfirmDialog } from './ConfirmDialog';
+export type { ConfirmDialogProps } from './ConfirmDialog';
+
+export { Modal } from './Modal';
+export type { ModalProps } from './Modal';
 
 export { Gauge, ProgressBar } from './ProgressBar';
 export type { GaugeProps, ProgressBarProps, ProgressTone } from './ProgressBar';
