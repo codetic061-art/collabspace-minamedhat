@@ -1,0 +1,14 @@
+dist
+node_modules
+coverage
+playwright-report
+test-results
+preview-shots
+package-lock.json
+AGENTS.md
+docs/discovery/**
+docs/research/**
+docs/adr/**
+docs/agents/**
+docs/api/**
+docs/spec/mvp-spec.md

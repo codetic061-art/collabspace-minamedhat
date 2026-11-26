@@ -13,6 +13,7 @@
 | Screen → feature → API → roles; mismatch register M1–M35 | `docs/discovery/screen-feature-map.md` |
 | Verified response shapes (current reference until `docs/api/plain.md` exists) | `docs/discovery/api-authenticated-shapes.md` |
 | Engineering policy and the architecture gate | `/AGENTS.md` |
+| Implementation conventions addendum (WI-3) | `docs/spec/conventions.md` |
 
 ---
 

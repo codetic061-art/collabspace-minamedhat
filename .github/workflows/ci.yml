@@ -1,0 +1,198 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: read
+
+jobs:
+  lockfile:
+    if: ${{ hashFiles('package-lock.json') == '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Generate package-lock.json in cloud runner
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Upload package-lock artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-lock
+          path: package-lock.json
+          if-no-files-found: error
+
+  verify:
+    if: ${{ hashFiles('package-lock.json') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit high-severity vulnerabilities
+        run: npm audit --audit-level=high
+
+      - name: Verify npm registry signatures
+        run: npm audit signatures
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run unit and integration tests
+        run: npm run test
+
+      - name: Build production bundle
+        env:
+          VITE_API_BASE_URL: https://collabspace.huma-volve.com/api/v1
+        run: npm run build
+
+      - name: Check bundle budget and CSP compliance
+        run: npm run check:budget
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          if-no-files-found: error
+
+  e2e:
+    if: ${{ hashFiles('package-lock.json') != '' }}
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build production bundle
+        env:
+          VITE_API_BASE_URL: https://collabspace.huma-volve.com/api/v1
+        run: npm run build
+
+      - name: Run Playwright smoke test
+        run: npx playwright test e2e/smoke.spec.ts
+
+      - name: Upload Playwright failure traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: test-results/
+          if-no-files-found: ignore
+
+  preview-verify:
+    if: ${{ hashFiles('package-lock.json') != '' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feat/') }}
+    needs: [verify, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Wait for Vercel Preview deployment and resolve Preview URL
+        id: vercel
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          BRANCH="${GITHUB_REF_NAME}"
+          echo "Waiting for Vercel deployment on commit ${GITHUB_SHA} (branch ${BRANCH})..."
+          VERCEL_STATE="pending"
+          for i in $(seq 1 30); do
+            STATUS_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/status")
+            VERCEL_STATE=$(echo "$STATUS_JSON" | jq -r '[.statuses[] | select(.context == "Vercel")][0].state // "pending"')
+            TARGET_URL=$(echo "$STATUS_JSON" | jq -r '[.statuses[] | select(.context == "Vercel")][0].target_url // ""')
+            DESC=$(echo "$STATUS_JSON" | jq -r '[.statuses[] | select(.context == "Vercel")][0].description // ""')
+            echo "Attempt $i: Vercel state=$VERCEL_STATE ($DESC) $TARGET_URL"
+            if [ "$VERCEL_STATE" = "success" ]; then
+              break
+            fi
+            if [ "$VERCEL_STATE" = "failure" ] || [ "$VERCEL_STATE" = "error" ]; then
+              echo "::error::Vercel deployment failed: $DESC ($TARGET_URL)"
+              exit 1
+            fi
+            sleep 10
+          done
+          if [ "$VERCEL_STATE" != "success" ]; then
+            echo "::error::Timed out waiting for Vercel deployment to succeed (last state: $VERCEL_STATE)"
+            exit 1
+          fi
+
+          PREVIEW_HOST=""
+          PR_COMMENTS=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json comments --jq '.[0].comments // []')
+          VC_B64=$(echo "$PR_COMMENTS" | jq -r '[.[] | select(.author.login == "vercel") | .body][0] // ""' | sed -nE 's/^\[vc\]: #[A-Za-z0-9+/=]+:([A-Za-z0-9+/=]+).*/\1/p' | head -n 1)
+          if [ -n "$VC_B64" ]; then
+            PREVIEW_HOST=$(echo "$VC_B64" | base64 -d 2>/dev/null | jq -r '.projects[0].previewUrl // ""' || true)
+          fi
+          if [ -z "$PREVIEW_HOST" ]; then
+            SLUG=$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
+            PREVIEW_HOST="collabspace-minamedhat-git-${SLUG}-123-60f4.vercel.app"
+          fi
+          PREVIEW_URL="https://${PREVIEW_HOST}"
+          mkdir -p preview-shots
+          echo "$PREVIEW_URL" > preview-shots/preview-url.txt
+          echo "preview_url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
+          echo "::notice::Resolved Vercel Preview URL: $PREVIEW_URL"
+
+      - name: Run Playwright verification against live Vercel Preview
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ steps.vercel.outputs.preview_url }}
+        run: npx playwright test "${{ env.PREVIEW_SPEC || 'e2e/preview-verify.spec.ts' }}"
+
+      - name: Upload preview verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-evidence
+          path: |
+            test-results/
+            preview-shots/
+          if-no-files-found: ignore
