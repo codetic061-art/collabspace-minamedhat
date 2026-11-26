@@ -5,6 +5,7 @@ export type FieldLabelVariant = 'top' | 'notch' | 'sr-only';
 
 export interface FieldControlA11yProps {
   id: string;
+  required: boolean;
   'aria-invalid': true | undefined;
   'aria-describedby': string | undefined;
 }
@@ -14,6 +15,7 @@ interface FieldContextValue {
   errorId: string;
   hintId: string;
   hasError: boolean;
+  required: boolean;
   describedBy: string | undefined;
   labelVariant: FieldLabelVariant;
 }
@@ -64,6 +66,7 @@ export function Field({
 
   const a11yProps: FieldControlA11yProps = {
     id: inputId,
+    required,
     'aria-invalid': hasError ? true : undefined,
     'aria-describedby': describedBy,
   };
@@ -73,6 +76,7 @@ export function Field({
     errorId,
     hintId,
     hasError,
+    required,
     describedBy,
     labelVariant,
   };

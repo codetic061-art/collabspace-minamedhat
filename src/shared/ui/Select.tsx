@@ -337,6 +337,7 @@ export function NativeSelect({
 
   const renderSelect = (a11y?: FieldControlA11yProps) => {
     const effectiveId = id ?? a11y?.id ?? field?.inputId;
+    const effectiveRequired = required ?? a11y?.required ?? field?.required;
     const isFieldInvalid = error || field?.hasError ? true : undefined;
     const effectiveInvalid = rest['aria-invalid'] ?? a11y?.['aria-invalid'] ?? isFieldInvalid;
     const effectiveDescribedBy =
@@ -347,7 +348,7 @@ export function NativeSelect({
         <select
           ref={ref}
           id={effectiveId}
-          required={required}
+          required={effectiveRequired}
           aria-invalid={effectiveInvalid}
           aria-describedby={effectiveDescribedBy}
           className={cn(

@@ -80,7 +80,7 @@ describe('Field, Input, Textarea, Checkbox', () => {
     expect(describedBy).toContain('-hint');
     expect(describedBy).toContain('-error');
     expect(screen.getByRole('alert')).toHaveTextContent('The email must be a valid email address.');
-    expect(screen.getByLabelText('Project Name')).toBeRequired();
+    expect(screen.getByLabelText(/Project Name/)).toBeRequired();
     expect(screen.getByRole('checkbox', { name: 'Remember Me' })).toBeChecked();
 
     await expectNoA11yViolations(container);

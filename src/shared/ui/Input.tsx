@@ -51,6 +51,7 @@ export function Input({
 
   const renderControl = (a11y?: FieldControlA11yProps) => {
     const effectiveId = id ?? a11y?.id ?? field?.inputId;
+    const effectiveRequired = required ?? a11y?.required ?? field?.required;
     const isFieldInvalid = error || field?.hasError ? true : undefined;
     const effectiveInvalid = rest['aria-invalid'] ?? a11y?.['aria-invalid'] ?? isFieldInvalid;
     const effectiveDescribedBy =
@@ -80,7 +81,7 @@ export function Input({
         <input
           ref={ref}
           id={effectiveId}
-          required={required}
+          required={effectiveRequired}
           aria-invalid={effectiveInvalid}
           aria-describedby={effectiveDescribedBy}
           className={cn(
@@ -143,6 +144,7 @@ export function Textarea({
 
   const renderControl = (a11y?: FieldControlA11yProps) => {
     const effectiveId = id ?? a11y?.id ?? field?.inputId;
+    const effectiveRequired = required ?? a11y?.required ?? field?.required;
     const isFieldInvalid = error || field?.hasError ? true : undefined;
     const effectiveInvalid = rest['aria-invalid'] ?? a11y?.['aria-invalid'] ?? isFieldInvalid;
     const effectiveDescribedBy =
@@ -153,7 +155,7 @@ export function Textarea({
         ref={ref}
         id={effectiveId}
         rows={rows}
-        required={required}
+        required={effectiveRequired}
         aria-invalid={effectiveInvalid}
         aria-describedby={effectiveDescribedBy}
         className={cn(
