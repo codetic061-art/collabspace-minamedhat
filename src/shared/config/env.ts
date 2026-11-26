@@ -2,7 +2,31 @@ import { z } from 'zod';
 
 const TEST_DEFAULT_API_BASE_URL = 'https://collabspace.huma-volve.com/api/v1';
 
-const ALLOWED_ENV_KEYS = new Set([
+const FORBIDDEN_PUBLIC_KEY_PATTERN = /SECRET|PRIVATE|TOKEN|PASSWORD/i;
+
+// Standard non-secret metadata keys Vercel auto-exposes to Vite builds when System Env Vars are enabled.
+const VERCEL_PUBLIC_SYSTEM_KEYS = [
+  'VITE_VERCEL_ENV',
+  'VITE_VERCEL_TARGET_ENV',
+  'VITE_VERCEL_URL',
+  'VITE_VERCEL_BRANCH_URL',
+  'VITE_VERCEL_PROJECT_PRODUCTION_URL',
+  'VITE_VERCEL_DEPLOYMENT_ID',
+  'VITE_VERCEL_PROJECT_ID',
+  'VITE_VERCEL_GIT_PROVIDER',
+  'VITE_VERCEL_GIT_REPO_SLUG',
+  'VITE_VERCEL_GIT_REPO_OWNER',
+  'VITE_VERCEL_GIT_REPO_ID',
+  'VITE_VERCEL_GIT_COMMIT_REF',
+  'VITE_VERCEL_GIT_COMMIT_SHA',
+  'VITE_VERCEL_GIT_COMMIT_MESSAGE',
+  'VITE_VERCEL_GIT_COMMIT_AUTHOR_LOGIN',
+  'VITE_VERCEL_GIT_COMMIT_AUTHOR_NAME',
+  'VITE_VERCEL_GIT_PREVIOUS_SHA',
+  'VITE_VERCEL_GIT_PULL_REQUEST_ID',
+] as const;
+
+const ALLOWED_ENV_KEYS = new Set<string>([
   'VITE_API_BASE_URL',
   'VITE_TURNSTILE_ENABLED',
   'VITE_TURNSTILE_SITEKEY',
@@ -11,6 +35,7 @@ const ALLOWED_ENV_KEYS = new Set([
   'PROD',
   'DEV',
   'SSR',
+  ...VERCEL_PUBLIC_SYSTEM_KEYS,
 ]);
 
 const publicEnvSchema = z.object({
@@ -45,6 +70,12 @@ export interface PublicEnv {
 
 export function parsePublicEnv(raw: Record<string, unknown>): PublicEnv {
   for (const key of Object.keys(raw)) {
+    if (FORBIDDEN_PUBLIC_KEY_PATTERN.test(key)) {
+      throw new Error(
+        `Non-public or secret-like environment variable "${key}" is not allowed in client code.`,
+      );
+    }
+
     if (!ALLOWED_ENV_KEYS.has(key)) {
       throw new Error(
         `Non-public or unknown environment variable "${key}" is not allowed in client code.`,

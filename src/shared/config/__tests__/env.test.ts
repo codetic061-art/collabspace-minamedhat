@@ -20,12 +20,40 @@ describe('parsePublicEnv', () => {
     ).toThrow();
   });
 
-  it('rejects any non-public or unknown environment variable', () => {
+  it('rejects any non-public, unknown, or secret-like environment variable', () => {
     expect(() =>
       parsePublicEnv({
         VITE_API_BASE_URL: 'https://collabspace.huma-volve.com/api/v1',
         SECRET_TOKEN: 'leaked',
       }),
-    ).toThrow(/Non-public or unknown environment variable/i);
+    ).toThrow(/Non-public/i);
+
+    expect(() =>
+      parsePublicEnv({
+        VITE_API_BASE_URL: 'https://collabspace.huma-volve.com/api/v1',
+        VITE_VERCEL_OIDC_TOKEN: 'leaked',
+      }),
+    ).toThrow(/Non-public/i);
+
+    expect(() =>
+      parsePublicEnv({
+        VITE_API_BASE_URL: 'https://collabspace.huma-volve.com/api/v1',
+        VITE_UNKNOWN_FLAG: '1',
+      }),
+    ).toThrow(/Non-public/i);
+  });
+
+  it('permits Vercel public system metadata keys without exposing them in PublicEnv', () => {
+    const env = parsePublicEnv({
+      VITE_API_BASE_URL: 'https://collabspace.huma-volve.com/api/v1',
+      VITE_VERCEL_ENV: 'preview',
+      VITE_VERCEL_BRANCH_URL: 'example-git-feat-branch.vercel.app',
+    });
+
+    expect(env).toEqual({
+      VITE_API_BASE_URL: 'https://collabspace.huma-volve.com/api/v1',
+      VITE_TURNSTILE_ENABLED: false,
+      VITE_TURNSTILE_SITEKEY: undefined,
+    });
   });
 });
