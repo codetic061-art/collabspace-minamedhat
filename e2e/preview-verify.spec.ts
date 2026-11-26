@@ -26,6 +26,10 @@ test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y',
   expect(rootResponse.status()).toBe(200);
 
   const rootHeaders = rootResponse.headers();
+  expect(
+    rootHeaders['x-matched-path'],
+    'Vercel Preview Deployment Protection (SSO /login) is blocking unauthenticated preview requests.',
+  ).not.toBe('/login');
   expect(rootHeaders['x-content-type-options']).toBe('nosniff');
   expect(rootHeaders['x-frame-options']).toBe('DENY');
   expect(rootHeaders['referrer-policy']).toBeTruthy();

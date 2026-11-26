@@ -30,20 +30,10 @@ function validateBuildPublicEnv(): Plugin {
       }
 
       const apiBaseUrl = resolvedConfig.env.VITE_API_BASE_URL ?? process.env.VITE_API_BASE_URL;
-      if (typeof apiBaseUrl !== 'string' || apiBaseUrl.trim().length === 0) {
-        if (process.env.CI === 'true' && process.env.VERCEL !== '1') {
-          throw new Error(
-            'Missing VITE_API_BASE_URL for CI build: must be set and start with "https://".',
-          );
-        }
-        console.warn(
-          '[validate-build-public-env] VITE_API_BASE_URL is not set in this build environment.',
+      if (typeof apiBaseUrl !== 'string' || !apiBaseUrl.startsWith('https://')) {
+        throw new Error(
+          'Missing or invalid VITE_API_BASE_URL for build: must be set and start with "https://".',
         );
-        return;
-      }
-
-      if (!apiBaseUrl.startsWith('https://')) {
-        throw new Error('Invalid VITE_API_BASE_URL for build: must start with "https://".');
       }
 
       try {
