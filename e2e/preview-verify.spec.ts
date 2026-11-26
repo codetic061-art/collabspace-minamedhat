@@ -16,6 +16,11 @@ declare global {
 // Disable trace recording here so protection bypass headers are never written to trace artifacts.
 test.use({ trace: 'off' });
 
+// ADR-0012 intentionally keeps `upgrade-insecure-requests` in Content-Security-Policy-Report-Only on Preview
+// until Gate 2 promotes the header to enforcing CSP; Chromium logs this exact diagnostic twice during load.
+const REPORT_ONLY_UPGRADE_NOTICE =
+  "The Content Security Policy directive 'upgrade-insecure-requests' is ignored when delivered in a report-only policy.";
+
 test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y', async ({
   page,
   request,
@@ -98,8 +103,9 @@ test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y',
   });
 
   page.on('console', (message) => {
-    if (message.type() === 'error') {
-      consoleErrors.push(message.text());
+    const text = message.text();
+    if (message.type() === 'error' && text !== REPORT_ONLY_UPGRADE_NOTICE) {
+      consoleErrors.push(text);
     }
   });
 
