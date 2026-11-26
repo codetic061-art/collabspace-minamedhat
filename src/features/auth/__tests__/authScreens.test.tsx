@@ -157,7 +157,8 @@ describe('Auth screens (Layer 2 + Layer 5)', () => {
 
     // 4) Duplicate-submit guard sends only one in-flight request.
     renderAtRoute('/sign-in');
-    await user.type(screen.getByLabelText(/Email Address/i), 'alex@example.test');
+    const secondEmail = await screen.findByLabelText(/Email Address/i);
+    await user.type(secondEmail, 'alex@example.test');
     await user.type(screen.getByLabelText('Password'), 'password123');
     await user.dblClick(screen.getByRole('button', { name: 'Sign in' }));
 
