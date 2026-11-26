@@ -13,8 +13,14 @@ import { X } from 'lucide-react';
 import { Button } from './Button';
 import { cn } from './cn';
 
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ');
 
 const NON_INERT_TAGS = new Set(['SCRIPT', 'STYLE', 'DIALOG']);
 
@@ -29,10 +35,11 @@ function isVisibleFocusable(node: Element): node is HTMLElement {
 }
 
 function getFocusableElements(container: HTMLElement): HTMLElement[] {
-  return Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(isVisibleFocusable);
+  const nodes = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR));
+  return nodes.filter(isVisibleFocusable);
 }
 
-function shouldInertSibling(child: Element, dialogEl: HTMLDialogElement): child is HTMLElement {
+function isInertCandidate(child: Element, dialogEl: HTMLDialogElement): child is HTMLElement {
   if (!(child instanceof HTMLElement) || child === dialogEl) {
     return false;
   }
@@ -61,8 +68,62 @@ const MODAL_SIZE_CLASSES: Record<'sm' | 'md' | 'lg', string> = {
   lg: 'md:max-w-2xl',
 };
 
-const DIALOG_LAYOUT_CLASSES =
-  'm-0 md:m-auto flex flex-col bg-surface text-ink shadow-modal backdrop:bg-ink/50 focus:outline-none h-dvh max-h-dvh w-screen max-w-none rounded-none md:h-auto md:max-h-dvh md:w-full md:rounded-modal';
+const DIALOG_LAYOUT_CLASSES = cn(
+  'm-0 md:m-auto flex flex-col bg-surface text-ink shadow-modal',
+  'backdrop:bg-ink/50 focus:outline-none',
+  'h-dvh max-h-dvh w-screen max-w-none rounded-none',
+  'md:h-auto md:max-h-dvh md:w-full md:rounded-modal',
+);
+
+const HEADER_CLASSES = cn(
+  'flex items-start justify-between gap-4 border-b border-border-subtle',
+  'px-5 py-4 md:px-modal md:pt-modal md:pb-4',
+);
+
+const FOOTER_CLASSES = cn(
+  'sticky bottom-0 flex flex-col-reverse gap-3 border-t border-border-subtle',
+  'bg-surface px-5 py-4 sm:flex-row sm:justify-end md:px-modal md:pb-modal',
+);
+
+interface ModalHeaderProps {
+  titleId: string;
+  descriptionId: string;
+  title: string;
+  description?: string;
+  isSubmitting: boolean;
+  onClose: () => void;
+}
+
+function ModalHeader({
+  titleId,
+  descriptionId,
+  title,
+  description,
+  isSubmitting,
+  onClose,
+}: ModalHeaderProps) {
+  return (
+    <div className={HEADER_CLASSES}>
+      <div className="min-w-0">
+        <h2 id={titleId} className="text-xl md:text-2xl font-medium text-ink">{title}</h2>
+        {description ? (
+          <p id={descriptionId} className="mt-1 text-sm text-body">{description}</p>
+        ) : null}
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        iconOnly
+        disabled={isSubmitting}
+        aria-label="Close dialog"
+        onClick={onClose}
+        className="border-transparent bg-transparent hover:bg-surface-input shrink-0"
+      >
+        <X className="h-5 w-5" aria-hidden="true" />
+      </Button>
+    </div>
+  );
+}
 
 /** Native `<dialog>` Top Layer modal with focus trap and background inerting (ID-23). */
 export function Modal({
@@ -96,7 +157,7 @@ export function Modal({
 
     const inertedElements: HTMLElement[] = [];
     for (const child of Array.from(document.body.children)) {
-      if (shouldInertSibling(child, dialogEl)) {
+      if (isInertCandidate(child, dialogEl)) {
         child.inert = true;
         child.setAttribute('inert', '');
         inertedElements.push(child);
@@ -107,7 +168,8 @@ export function Modal({
       dialogEl.showModal?.();
     }
 
-    const focusTarget = initialFocusRef?.current ?? getFocusableElements(dialogEl)[0] ?? dialogEl;
+    const firstEl = getFocusableElements(dialogEl)[0];
+    const focusTarget = initialFocusRef?.current ?? firstEl ?? dialogEl;
     focusTarget.focus();
 
     return () => {
@@ -174,6 +236,8 @@ export function Modal({
     }
   };
 
+  const dialogClass = cn(DIALOG_LAYOUT_CLASSES, MODAL_SIZE_CLASSES[size], className);
+
   return createPortal(
     <dialog
       ref={dialogRef}
@@ -184,35 +248,20 @@ export function Modal({
       onKeyDown={handleKeyDown}
       onCancel={handleCancel}
       onClick={handleBackdropClick}
-      className={cn(DIALOG_LAYOUT_CLASSES, MODAL_SIZE_CLASSES[size], className)}
+      className={dialogClass}
     >
-      <div className="flex items-start justify-between gap-4 border-b border-border-subtle px-5 py-4 md:px-modal md:pt-modal md:pb-4">
-        <div className="min-w-0">
-          <h2 id={titleId} className="text-xl md:text-2xl font-medium text-ink">{title}</h2>
-          {description ? (
-            <p id={descriptionId} className="mt-1 text-sm text-body">{description}</p>
-          ) : null}
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          iconOnly
-          disabled={isSubmitting}
-          aria-label="Close dialog"
-          onClick={onClose}
-          className="border-transparent bg-transparent hover:bg-surface-input shrink-0"
-        >
-          <X className="h-5 w-5" aria-hidden="true" />
-        </Button>
-      </div>
+      <ModalHeader
+        titleId={titleId}
+        descriptionId={descriptionId}
+        title={title}
+        description={description}
+        isSubmitting={isSubmitting}
+        onClose={onClose}
+      />
 
       <div className="flex-1 overflow-y-auto px-5 py-5 md:px-modal">{children}</div>
 
-      {footer ? (
-        <div className="sticky bottom-0 flex flex-col-reverse gap-3 border-t border-border-subtle bg-surface px-5 py-4 sm:flex-row sm:justify-end md:px-modal md:pb-modal">
-          {footer}
-        </div>
-      ) : null}
+      {footer ? <div className={FOOTER_CLASSES}>{footer}</div> : null}
     </dialog>,
     document.body,
   );

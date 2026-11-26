@@ -14,27 +14,44 @@ export interface BreadcrumbProps {
   className?: string;
 }
 
-const LINK_CLASS = 'inline-flex min-h-touch items-center text-body hover:text-ink hover:underline';
+const LINK_CLASS = cn(
+  'inline-flex min-h-touch items-center text-body',
+  'hover:text-ink hover:underline',
+);
+
 const BUTTON_LINK_CLASS = cn(LINK_CLASS, 'cursor-pointer');
 
 function renderCrumb(item: BreadcrumbItem, isCurrent: boolean): ReactNode {
   if (isCurrent) {
-    return <span aria-current="page" className="font-medium text-ink">{item.label}</span>;
+    return (
+      <span aria-current="page" className="font-medium text-ink">
+        {item.label}
+      </span>
+    );
   }
   if (item.renderLink) {
     return item.renderLink(item.label, LINK_CLASS);
   }
   if (item.href) {
-    return <a href={item.href} className={LINK_CLASS}>{item.label}</a>;
+    return (
+      <a href={item.href} className={LINK_CLASS}>
+        {item.label}
+      </a>
+    );
   }
   if (item.onClick) {
+    const handleClick = item.onClick;
     return (
-      <button type="button" className={BUTTON_LINK_CLASS} onClick={item.onClick}>
+      <button type="button" className={BUTTON_LINK_CLASS} onClick={handleClick}>
         {item.label}
       </button>
     );
   }
   return <span className="text-body">{item.label}</span>;
+}
+
+function CrumbSeparator() {
+  return <ChevronRight className="h-4 w-4 text-body" aria-hidden="true" />;
 }
 
 /** Semantic breadcrumb navigation matching Figma muted-parent > active-ink hierarchy. */
@@ -46,7 +63,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
           const isCurrent = index === items.length - 1;
           return (
             <li key={`${item.label}-${index}`} className="inline-flex items-center gap-1.5">
-              {index > 0 ? <ChevronRight className="h-4 w-4 text-body" aria-hidden="true" /> : null}
+              {index > 0 ? <CrumbSeparator /> : null}
               {renderCrumb(item, isCurrent)}
             </li>
           );
