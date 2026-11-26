@@ -1,7 +1,6 @@
 import { useId, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
-import { Button } from './Button';
+import { ModalHeader } from './ModalHeader';
 import { cn } from './cn';
 import { useModalDialog } from './modalFocus';
 
@@ -33,59 +32,12 @@ const DIALOG_LAYOUT_CLASSES = cn(
   'md:h-auto md:max-h-dvh md:w-full md:rounded-modal',
 );
 
-const HEADER_CLASSES = cn(
-  'flex items-start justify-between gap-4 border-b border-border-subtle',
-  'px-5 py-4 md:px-modal md:pt-modal md:pb-4',
-);
-
 const FOOTER_CLASSES = cn(
   'sticky bottom-0 flex flex-col-reverse gap-3 border-t border-border-subtle',
   'bg-surface px-5 py-4 sm:flex-row sm:justify-end md:px-modal md:pb-modal',
 );
 
-const TITLE_CLASSES = 'text-xl md:text-2xl font-medium text-ink';
-const DESC_CLASSES = 'mt-1 text-sm text-body';
 const BODY_CLASSES = 'flex-1 overflow-y-auto px-5 py-5 md:px-modal';
-const CLOSE_CLASSES = 'border-transparent bg-transparent hover:bg-surface-input shrink-0';
-
-interface ModalHeaderProps {
-  titleId: string;
-  descriptionId: string;
-  title: string;
-  description?: string;
-  isSubmitting: boolean;
-  onClose: () => void;
-}
-
-function ModalHeader({
-  titleId,
-  descriptionId,
-  title,
-  description,
-  isSubmitting,
-  onClose,
-}: ModalHeaderProps) {
-  return (
-    <div className={HEADER_CLASSES}>
-      <div className="min-w-0">
-        <h2 id={titleId} className={TITLE_CLASSES}>{title}</h2>
-        {description ? <p id={descriptionId} className={DESC_CLASSES}>{description}</p> : null}
-      </div>
-      <Button
-        variant="outline"
-        size="sm"
-        iconOnly
-        type="button"
-        disabled={isSubmitting}
-        aria-label="Close dialog"
-        onClick={onClose}
-        className={CLOSE_CLASSES}
-      >
-        <X className="h-5 w-5" aria-hidden="true" />
-      </Button>
-    </div>
-  );
-}
 
 /** Native `<dialog>` Top Layer modal with focus trap and background inerting (ID-23). */
 export function Modal({
@@ -102,7 +54,7 @@ export function Modal({
 }: ModalProps) {
   const titleId = useId();
   const descriptionId = useId();
-  const { dialogRef, handleKeyDown, handleCancel, handleBackdropClick } = useModalDialog({
+  const modal = useModalDialog({
     isOpen,
     isSubmitting,
     onClose,
@@ -117,16 +69,16 @@ export function Modal({
   const describedBy = description ? descriptionId : undefined;
   const footerNode = footer ? <div className={FOOTER_CLASSES}>{footer}</div> : null;
 
-  const modalDialog = (
+  return createPortal(
     <dialog
-      ref={dialogRef}
+      ref={modal.dialogRef}
       tabIndex={-1}
       aria-modal="true"
       aria-labelledby={titleId}
       aria-describedby={describedBy}
-      onKeyDown={handleKeyDown}
-      onCancel={handleCancel}
-      onClick={handleBackdropClick}
+      onKeyDown={modal.handleKeyDown}
+      onCancel={modal.handleCancel}
+      onClick={modal.handleBackdropClick}
       className={dialogClass}
     >
       <ModalHeader
@@ -139,8 +91,7 @@ export function Modal({
       />
       <div className={BODY_CLASSES}>{children}</div>
       {footerNode}
-    </dialog>
+    </dialog>,
+    document.body,
   );
-
-  return createPortal(modalDialog, document.body);
 }
