@@ -73,6 +73,28 @@ const ANONYMOUS_STATE: SessionState = {
   startupError: null,
 };
 
+interface RedirectLocation {
+  pathname: string;
+  search: string;
+  hash: string;
+}
+
+function buildSignInRedirectPath(loc: RedirectLocation): string {
+  const currentFullPath = `${loc.pathname}${loc.search}${loc.hash}`;
+  const safeReturn = sanitizeReturnPath(currentFullPath, '/');
+  if (safeReturn === '/') {
+    return '/sign-in';
+  }
+  return `/sign-in?redirectTo=${encodeURIComponent(safeReturn)}`;
+}
+
+function getInitialSessionState(): SessionState {
+  if (hasStoredToken()) {
+    return { status: 'unknown', me: null, role: null, startupError: null };
+  }
+  return ANONYMOUS_STATE;
+}
+
 /**
  * Provides app-wide authentication state (`unknown | authenticated | anonymous`),
  * startup `/auth/me` restore, centralized 401 redirection, and BroadcastChannel sync (ADR-01).
@@ -82,11 +104,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [state, setState] = useState<SessionState>(() =>
-    hasStoredToken()
-      ? { status: 'unknown', me: null, role: null, startupError: null }
-      : ANONYMOUS_STATE,
-  );
+  const [state, setState] = useState<SessionState>(getInitialSessionState);
 
   const locationRef = useRef(location);
   const statusRef = useRef(state.status);
@@ -95,44 +113,47 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     statusRef.current = state.status;
   });
 
-  const restoreSession = useCallback(async (signal?: AbortSignal) => {
-    if (!hasStoredToken()) {
-      setState(ANONYMOUS_STATE);
-      return;
-    }
-
-    setState((prev) => ({ ...prev, status: 'unknown', startupError: null }));
-
-    try {
-      const me = await profileService.getMe(signal);
-      queryClient.setQueryData(profileKeys.me(), me);
-      resetUnauthorizedGuard();
-      setState({
-        status: 'authenticated',
-        me,
-        role: normalizeSystemRole(me.user.roles),
-        startupError: null,
-      });
-    } catch (error) {
-      const appError = toAppError(error);
-      if (appError.kind === 'aborted') {
-        return;
-      }
-      if (appError.kind === 'unauthorized') {
-        clearAuthToken();
-        queryClient.clear();
+  const restoreSession = useCallback(
+    async ({ signal }: { signal?: AbortSignal } = {}): Promise<void> => {
+      if (!hasStoredToken()) {
         setState(ANONYMOUS_STATE);
         return;
       }
-      // Preserve stored token on transient startup errors so user can retry (ADR-01 §3).
-      setState({
-        status: 'unknown',
-        me: null,
-        role: null,
-        startupError: appError,
-      });
-    }
-  }, [queryClient]);
+
+      setState((prev) => ({ ...prev, status: 'unknown', startupError: null }));
+
+      try {
+        const me = await profileService.getMe(signal);
+        queryClient.setQueryData(profileKeys.me(), me);
+        resetUnauthorizedGuard();
+        setState({
+          status: 'authenticated',
+          me,
+          role: normalizeSystemRole(me.user.roles),
+          startupError: null,
+        });
+      } catch (error) {
+        const appError = toAppError(error);
+        if (appError.kind === 'aborted') {
+          return;
+        }
+        if (appError.kind === 'unauthorized') {
+          clearAuthToken();
+          queryClient.clear();
+          setState(ANONYMOUS_STATE);
+          return;
+        }
+        // Preserve stored token on transient startup errors so user can retry (ADR-01 §3).
+        setState({
+          status: 'unknown',
+          me: null,
+          role: null,
+          startupError: appError,
+        });
+      }
+    },
+    [queryClient],
+  );
 
   useEffect(() => {
     if (!hasStoredToken()) {
@@ -140,7 +161,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
 
     const controller = new AbortController();
-    void restoreSession(controller.signal);
+    void restoreSession({ signal: controller.signal });
     return () => {
       controller.abort();
     };
@@ -155,13 +176,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
       const loc = locationRef.current;
       if (!isPublicAuthPath(loc.pathname)) {
-        const currentFullPath = `${loc.pathname}${loc.search}${loc.hash}`;
-        const safeReturn = sanitizeReturnPath(currentFullPath, '/');
-        const target =
-          safeReturn === '/'
-            ? '/sign-in'
-            : `/sign-in?redirectTo=${encodeURIComponent(safeReturn)}`;
-        navigate(target, { replace: true });
+        navigate(buildSignInRedirectPath(loc), { replace: true });
       }
     });
 
@@ -177,13 +192,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
         const loc = locationRef.current;
         if (!isPublicAuthPath(loc.pathname)) {
-          const currentFullPath = `${loc.pathname}${loc.search}${loc.hash}`;
-          const safeReturn = sanitizeReturnPath(currentFullPath, '/');
-          const target =
-            safeReturn === '/'
-              ? '/sign-in'
-              : `/sign-in?redirectTo=${encodeURIComponent(safeReturn)}`;
-          navigate(target, { replace: true });
+          navigate(buildSignInRedirectPath(loc), { replace: true });
         }
       } else if (
         event.type === 'signed-in' &&
@@ -196,8 +205,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [navigate, queryClient, restoreSession]);
 
   const completeAuth = useCallback(
-    async (token: string, options: { remember?: boolean } = {}) => {
-      setAuthToken(token, { remember: options.remember });
+    async (token: string, options?: { remember?: boolean }): Promise<ProfileMeData> => {
+      setAuthToken(token, { remember: options?.remember });
       try {
         const me = await profileService.getMe();
         queryClient.setQueryData(profileKeys.me(), me);
