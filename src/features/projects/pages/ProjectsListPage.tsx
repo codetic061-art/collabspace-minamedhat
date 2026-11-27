@@ -88,7 +88,7 @@ export function ProjectsListPage() {
         );
       }
 
-      if (result.currentPage > 1) {
+      if (result && result.currentPage > 1) {
         return (
           <EmptyState
             title="No projects on this page"
