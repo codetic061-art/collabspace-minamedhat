@@ -27,8 +27,8 @@ const titles: Record<TaskStatus, string> = {
 const tints: Record<TaskStatus, string> = {
   Pending: 'bg-surface-input',
   'In Progress': 'bg-primary-tint',
-  'In Review': 'bg-pink-50',
-  Completed: 'bg-green-50',
+  'In Review': 'bg-pink-tint',
+  Completed: 'bg-success-tint',
 };
 
 export function TaskBoard({ projectId }: { projectId: number }) {
@@ -68,19 +68,22 @@ export function TaskBoard({ projectId }: { projectId: number }) {
   const canCreate = hasCapability(role, 'create_task');
   return (
     <section className="space-y-5" aria-label="Task board">
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="text-sm">
-          Search tasks
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="w-full md:w-[326px]">
+          <span className="sr-only">Search tasks</span>
           <input
-            className="ml-2 rounded-input border border-border-card bg-surface px-3 py-2"
+            className="h-10 w-full rounded-pill border border-border-subtle bg-surface px-4 py-2 text-sm"
+            type="search"
+            placeholder="Search"
+            aria-label="Search tasks"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </label>
-        <label className="text-sm">
-          Tasks
+        <label>
+          <span className="sr-only">Task assignment filter</span>
           <select
-            className="ml-2 rounded-input border border-border-card bg-surface px-3 py-2"
+            className="h-10 rounded-[16px] border border-ink bg-surface px-4 py-2 text-sm"
             value={mine ? 'mine' : 'all'}
             onChange={(event) => setMine(event.target.value === 'mine')}
           >
@@ -88,10 +91,10 @@ export function TaskBoard({ projectId }: { projectId: number }) {
             <option value="mine">My tasks</option>
           </select>
         </label>
-        <label className="text-sm">
-          Team
+        <label>
+          <span className="sr-only">Team filter</span>
           <select
-            className="ml-2 rounded-input border border-border-card bg-surface px-3 py-2"
+            className="h-10 rounded-[16px] border border-ink bg-surface px-4 py-2 text-sm"
             value={team}
             onChange={(event) => setTeam(event.target.value)}
           >
@@ -122,7 +125,7 @@ export function TaskBoard({ projectId }: { projectId: number }) {
           {statusMutation.message}
         </p>
       )}
-      <div className="flex snap-x gap-5 overflow-x-auto pb-4">
+      <div className="flex snap-x gap-8 overflow-x-auto pb-4">
         {KANBAN_STATUS_ORDER.map((status) => {
           const tasks = board.data.columns[status].tasks.filter(
             (task) =>
@@ -133,9 +136,9 @@ export function TaskBoard({ projectId }: { projectId: number }) {
           return (
             <section
               key={status}
-              className="min-w-[280px] flex-1 snap-start overflow-hidden rounded-card border border-border-subtle bg-surface"
+              className="min-w-[324px] flex-1 snap-start overflow-hidden rounded-card border border-border-subtle bg-surface"
             >
-              <h2 className={`p-5 text-sm font-semibold ${tints[status]}`}>
+              <h2 className={`p-5 text-base font-semibold ${tints[status]}`}>
                 {titles[status]} <span className="font-normal">({tasks.length})</span>
               </h2>
               <div className="space-y-4 p-5">

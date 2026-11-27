@@ -28,8 +28,8 @@ function StatCard({ title, value, total, percentage, tone, icon }: StatCardProps
     <Card>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-medium text-ink">{title}</h2>
-          <p className="mt-2 text-3xl font-bold text-ink">{value}</p>
+          <h2 className="text-xl font-medium text-ink">{title}</h2>
+          <p className="mt-2 text-[31px] font-semibold leading-tight text-ink">{value}</p>
         </div>
         <IconCircle tone={tone} size="md">
           {icon}
@@ -38,7 +38,12 @@ function StatCard({ title, value, total, percentage, tone, icon }: StatCardProps
       <p className="mt-4 text-xs text-body">
         {value}/{total}
       </p>
-      <ProgressBar value={percentage} tone={tone} label={`${title} percentage`} className="mt-2" />
+      <ProgressBar
+        value={percentage}
+        tone={tone}
+        label={`${title} percentage`}
+        className="mt-2 h-1.5"
+      />
     </Card>
   );
 }
@@ -130,7 +135,7 @@ export function StatsRow({ query }: { query: DashboardQueryResult }) {
       <StatSlot query={query} title="Completion Rate">
         {(tasks) => (
           <Card className="h-full">
-            <h2 className="text-base font-medium text-ink">Completion Rate</h2>
+            <h2 className="text-xl font-medium text-ink">Completion Rate</h2>
             <Gauge
               value={tasks.completion_rate}
               label="Overall task completion"

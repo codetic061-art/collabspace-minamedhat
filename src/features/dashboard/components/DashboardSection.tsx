@@ -27,7 +27,7 @@ export function DashboardCard({ title, action, className, children }: DashboardC
   return (
     <Card className={className}>
       <div className="mb-4 flex items-start justify-between gap-3">
-        <h2 className="text-lg font-semibold text-ink">{title}</h2>
+        <h2 className="text-xl font-semibold text-ink">{title}</h2>
         {action}
       </div>
       {children}

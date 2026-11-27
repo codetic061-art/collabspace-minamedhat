@@ -124,7 +124,7 @@ export function ProjectsListPage() {
   return (
     <section className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-ink">All Projects</h1>
+        <h1 className="text-[31px] font-semibold leading-[1.5] text-ink">All Projects</h1>
         {canCreateProject ? (
           <Button
             variant="primary"

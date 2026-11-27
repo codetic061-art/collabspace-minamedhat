@@ -74,9 +74,9 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border-subtle bg-surface">
-      <div className="mx-auto flex h-navbar max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3">
+    <header className="relative sticky top-0 z-30 border-0 bg-surface after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-1 after:h-1 after:bg-[linear-gradient(180deg,rgba(9,30,66,0.13)_0%,rgba(9,30,66,0.13)_25%,rgba(9,30,66,0.08)_25.01%,rgba(9,30,66,0)_100%)]">
+      <div className="flex h-navbar items-center justify-between gap-4 px-4 sm:px-6 lg:px-16">
+        <div className="flex items-center gap-6">
           <button
             type="button"
             className="inline-flex min-h-touch min-w-touch items-center justify-center rounded-input text-heading hover:bg-surface-label lg:hidden cursor-pointer"
@@ -100,7 +100,10 @@ export function Navbar() {
           </Link>
         </div>
 
-        <nav aria-label="Primary" className="hidden lg:flex items-center gap-2">
+        <nav
+          aria-label="Primary"
+          className="hidden items-center gap-[19px] rounded-pill bg-surface-input pl-1 pr-2 py-1 lg:flex"
+        >
           {PRIMARY_NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
@@ -108,7 +111,7 @@ export function Navbar() {
               end={item.end}
               className={({ isActive }) =>
                 cn(
-                  'inline-flex min-h-touch items-center rounded-pill px-4 text-sm font-medium transition-colors motion-reduce:transition-none',
+                  'inline-flex items-center justify-center rounded-pill p-2.5 text-xs font-normal transition-colors motion-reduce:transition-none',
                   isActive
                     ? 'bg-primary text-surface'
                     : 'text-heading hover:bg-surface-label hover:text-ink',

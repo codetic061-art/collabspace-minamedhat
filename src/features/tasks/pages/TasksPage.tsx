@@ -34,14 +34,14 @@ export function TasksPage() {
   if (projects.isPending || (taskId > 0 && detail.isPending))
     return (
       <section className="space-y-5">
-        <h1 className="text-2xl font-semibold">Tasks</h1>
+        <h1 className="text-[31px] font-semibold leading-[1.5]">Tasks</h1>
         <Skeleton variant="card" />
       </section>
     );
   if (projects.error)
     return (
       <section className="space-y-5">
-        <h1 className="text-2xl font-semibold">Tasks</h1>
+        <h1 className="text-[31px] font-semibold leading-[1.5]">Tasks</h1>
         <BlockErrorState
           message={getErrorMessage(toAppError(projects.error))}
           onRetry={() => void projects.refetch()}
@@ -51,7 +51,7 @@ export function TasksPage() {
   if (taskId > 0 && detail.error)
     return (
       <section className="space-y-5">
-        <h1 className="text-2xl font-semibold">Tasks</h1>
+        <h1 className="text-[31px] font-semibold leading-[1.5]">Tasks</h1>
         <BlockErrorState
           message={getErrorMessage(toAppError(detail.error))}
           onRetry={() => void detail.refetch()}
@@ -64,16 +64,16 @@ export function TasksPage() {
     : (projects.data[0]?.id ?? 0);
   return (
     <main className="space-y-5">
-      <h1 className="text-2xl font-semibold">Tasks</h1>
+      <h1 className="text-[31px] font-semibold leading-[1.5]">Tasks</h1>
       {projects.data.length === 0 ? (
         <p>No projects available yet.</p>
       ) : (
         <>
-          <label className="text-sm">
-            Project{' '}
+          <label className="flex items-center">
+            <span className="sr-only">Project</span>
             <select
               value={projectId}
-              className="rounded-input border border-border-card bg-surface p-2"
+              className="h-10 rounded-[16px] border border-ink bg-surface px-4 py-2 text-sm"
               onChange={(event) => {
                 setSelected(event.target.value);
                 try {

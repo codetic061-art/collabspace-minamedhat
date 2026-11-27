@@ -1,0 +1,30 @@
+name: WI-11 temporary formatting
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx prettier --write docs/wi11-acceptance.md e2e/wi11-real-read.spec.ts src/app/AppShell.tsx src/app/Navbar.tsx src/features/dashboard/components/StatsRow.tsx src/features/dashboard/components/DashboardSection.tsx src/features/projects/pages/ProjectsListPage.tsx src/features/projects/components/ProjectsFiltersToolbar.tsx src/features/projects/components/ProjectsTable.tsx src/features/tasks/pages/TasksPage.tsx src/features/tasks/pages/TaskBoard.tsx
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formatted-wi11
+          path: |
+            docs/wi11-acceptance.md
+            e2e/wi11-real-read.spec.ts
+            src/app/AppShell.tsx
+            src/app/Navbar.tsx
+            src/features/dashboard/components/StatsRow.tsx
+            src/features/dashboard/components/DashboardSection.tsx
+            src/features/projects/pages/ProjectsListPage.tsx
+            src/features/projects/components/ProjectsFiltersToolbar.tsx
+            src/features/projects/components/ProjectsTable.tsx
+            src/features/tasks/pages/TasksPage.tsx
+            src/features/tasks/pages/TaskBoard.tsx

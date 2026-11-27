@@ -26,26 +26,26 @@ export function ProjectsTable({ projects, isRefreshing = false }: ProjectsTableP
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full border-separate border-spacing-y-3 text-left">
           <thead>
-            <tr className="border-b border-border-neutral text-sm font-medium text-heading">
-              <th scope="col" className="px-5 pb-3 font-medium">
+            <tr className="border-b border-border-neutral text-lg font-medium text-heading">
+              <th scope="col" className="px-2.5 pb-2 pt-1 font-medium">
                 Project Name
               </th>
-              <th scope="col" className="px-4 pb-3 font-medium">
+              <th scope="col" className="px-2.5 pb-2 pt-1 font-medium">
                 Start Date
               </th>
-              <th scope="col" className="px-4 pb-3 font-medium">
+              <th scope="col" className="px-2.5 pb-2 pt-1 font-medium">
                 Deadline
               </th>
-              <th scope="col" className="px-4 pb-3 font-medium">
+              <th scope="col" className="px-2.5 pb-2 pt-1 font-medium">
                 Status
               </th>
-              <th scope="col" className="px-4 pb-3 font-medium">
+              <th scope="col" className="px-2.5 pb-2 pt-1 font-medium">
                 Files
               </th>
-              <th scope="col" className="px-4 pb-3 font-medium">
+              <th scope="col" className="px-2.5 pb-2 pt-1 font-medium">
                 Teams
               </th>
-              <th scope="col" className="px-5 pb-3 font-medium">
+              <th scope="col" className="px-2.5 pb-2 pt-1 font-medium">
                 Priority
               </th>
             </tr>

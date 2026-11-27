@@ -62,8 +62,8 @@ export function ProjectsFiltersToolbar({
   };
 
   return (
-    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-      <div className="w-full md:max-w-xs">
+    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-8">
+      <div className="w-full md:w-[326px] md:shrink-0">
         <Input
           label="Search projects"
           labelVariant="sr-only"
@@ -94,6 +94,7 @@ export function ProjectsFiltersToolbar({
             label="Filter by status"
             labelVariant="sr-only"
             variant="pill"
+          triggerClassName="h-10 rounded-[16px] border-ink px-4 py-2.5"
             options={STATUS_FILTER_OPTIONS}
             value={status ?? ''}
             onChange={handleStatusSelect}
@@ -106,6 +107,7 @@ export function ProjectsFiltersToolbar({
             label="Sort projects"
             labelVariant="sr-only"
             variant="pill"
+          triggerClassName="h-10 rounded-[16px] border-ink px-4 py-2.5"
             options={SORT_OPTIONS}
             value={sort}
             onChange={() => {}}
