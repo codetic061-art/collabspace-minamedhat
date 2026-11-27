@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Calendar, FolderKanban } from 'lucide-react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   Controller,
   useForm,
@@ -8,6 +9,8 @@ import {
   type FieldPath,
   type FieldValues,
   type UseFormRegister,
+  type UseFormSetError,
+  type UseFormSetFocus,
 } from 'react-hook-form';
 import {
   applyServerValidationErrors,
@@ -278,8 +281,64 @@ export type ProjectFormModalProps =
       project: ProjectOverviewResource;
     };
 
-function CreateProjectFormBody({ onClose }: { onClose: () => void }) {
+function findFirstValidationField<TFieldValues extends FieldValues>(
+  error: unknown,
+  knownFields: readonly FieldPath<TFieldValues>[],
+): FieldPath<TFieldValues> | null {
+  const appError = toAppError(error);
+  if (appError.kind !== 'validation') {
+    return null;
+  }
+
+  for (const rawField of Object.keys(appError.errors)) {
+    const matched = knownFields.find((field) => String(field) === rawField);
+    if (matched) {
+      return matched;
+    }
+  }
+
+  return null;
+}
+
+function useProjectSubmitErrorHandler<TFieldValues extends FieldValues>(
+  isSubmitting: boolean,
+  setError: UseFormSetError<TFieldValues>,
+  setFocus: UseFormSetFocus<TFieldValues>,
+  knownFields: readonly FieldPath<TFieldValues>[],
+) {
   const { showToast } = useToast();
+  const pendingFocusRef = useRef<FieldPath<TFieldValues> | null>(null);
+
+  useEffect(() => {
+    if (!isSubmitting && pendingFocusRef.current) {
+      setFocus(pendingFocusRef.current);
+      pendingFocusRef.current = null;
+    }
+  }, [isSubmitting, setFocus]);
+
+  return useCallback(
+    (error: unknown) => {
+      const appError = toAppError(error);
+      if (appError.kind === 'forbidden') {
+        const message = "You don't have permission to do this.";
+        setError('root.serverError', { type: 'server', message });
+        showToast({ message, tone: 'error' });
+        return;
+      }
+
+      if (appError.kind !== 'validation') {
+        setError('root.serverError', { type: 'server', message: getErrorMessage(appError) });
+        return;
+      }
+
+      pendingFocusRef.current = findFirstValidationField(error, knownFields);
+      applyServerValidationErrors(error, setError, knownFields);
+    },
+    [knownFields, setError, showToast],
+  );
+}
+
+function CreateProjectFormBody({ onClose }: { onClose: () => void }) {
   const createMutation = useCreateProjectMutation();
   const teamsQuery = useTeamsPickerOptions(true);
 
@@ -288,6 +347,7 @@ function CreateProjectFormBody({ onClose }: { onClose: () => void }) {
     control,
     handleSubmit,
     setError,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<ProjectCreateFormValues>({
     resolver: zodResolver(projectCreateSchema),
@@ -303,23 +363,19 @@ function CreateProjectFormBody({ onClose }: { onClose: () => void }) {
     },
   });
 
+  const handleSubmitError = useProjectSubmitErrorHandler(
+    isSubmitting,
+    setError,
+    setFocus,
+    CREATE_KNOWN_FIELDS,
+  );
+
   const onSubmit = handleSubmit(async (values) => {
     try {
       await createMutation.mutateAsync(toCreateProjectPayload(values));
       onClose();
     } catch (error) {
-      const appError = toAppError(error);
-      if (appError.kind === 'forbidden') {
-        const message = "You don't have permission to do this.";
-        setError('root.serverError', { type: 'server', message });
-        showToast({ message, tone: 'error' });
-        return;
-      }
-      if (appError.kind !== 'validation') {
-        setError('root.serverError', { type: 'server', message: getErrorMessage(appError) });
-        return;
-      }
-      applyServerValidationErrors(error, setError, CREATE_KNOWN_FIELDS);
+      handleSubmitError(error);
     }
   });
 
@@ -367,7 +423,6 @@ function EditProjectFormBody({
   project: ProjectOverviewResource;
   onClose: () => void;
 }) {
-  const { showToast } = useToast();
   const updateMutation = useUpdateProjectMutation(project.id);
   const teamsQuery = useTeamsPickerOptions(true);
 
@@ -376,6 +431,7 @@ function EditProjectFormBody({
     control,
     handleSubmit,
     setError,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<ProjectEditFormValues>({
     resolver: zodResolver(projectEditSchema),
@@ -390,23 +446,19 @@ function EditProjectFormBody({
     },
   });
 
+  const handleSubmitError = useProjectSubmitErrorHandler(
+    isSubmitting,
+    setError,
+    setFocus,
+    EDIT_KNOWN_FIELDS,
+  );
+
   const onSubmit = handleSubmit(async (values) => {
     try {
       await updateMutation.mutateAsync(toUpdateProjectPayload(values));
       onClose();
     } catch (error) {
-      const appError = toAppError(error);
-      if (appError.kind === 'forbidden') {
-        const message = "You don't have permission to do this.";
-        setError('root.serverError', { type: 'server', message });
-        showToast({ message, tone: 'error' });
-        return;
-      }
-      if (appError.kind !== 'validation') {
-        setError('root.serverError', { type: 'server', message: getErrorMessage(appError) });
-        return;
-      }
-      applyServerValidationErrors(error, setError, EDIT_KNOWN_FIELDS);
+      handleSubmitError(error);
     }
   });
 

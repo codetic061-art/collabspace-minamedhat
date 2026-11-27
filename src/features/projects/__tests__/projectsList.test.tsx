@@ -112,7 +112,7 @@ describe('ProjectsListPage (Layer 2)', () => {
     const { container, router } = renderProjectsRoute('/projects', mswServer, 'Administrator');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'All Projects' })).toBeVisible();
-    expect(screen.getByRole('button', { name: /Add Project/i })).toBeVisible();
+    expect(await screen.findByRole('button', { name: /Add Project/i })).toBeVisible();
     expect(screen.queryByRole('button', { name: /Delete/i })).not.toBeInTheDocument();
 
     const table = await screen.findByRole('table');
@@ -260,7 +260,8 @@ describe('ProjectsListPage (Layer 2)', () => {
       ),
     );
     await user.click(errorRender.getByRole('button', { name: 'Retry' }));
-    expect(await errorRender.findByText('Recovered')).toBeVisible();
+    const recoveredTable = await errorRender.findByRole('table');
+    expect(within(recoveredTable).getByText('Recovered')).toBeVisible();
     errorRender.unmount();
 
     // 4) 401 redirects to Sign in

@@ -66,65 +66,63 @@ export function ProjectOverviewTab({
         </Card>
 
         <Card header={<h2 className="text-lg font-medium text-ink">Project Details</h2>}>
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex items-center gap-3">
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <li className="flex items-center gap-3">
               <IconCircle tone="primary" size="md">
                 <Calendar className="h-5 w-5" aria-hidden="true" />
               </IconCircle>
               <div>
-                <dt className="text-xs text-body">Start Date</dt>
-                <dd className="text-sm font-semibold text-ink">
+                <p className="text-xs text-body">Start Date</p>
+                <p className="text-sm font-semibold text-ink">
                   {formatDisplayDate(due.start_date)}
-                </dd>
+                </p>
               </div>
-            </div>
+            </li>
 
-            <div className="flex items-center gap-3">
+            <li className="flex items-center gap-3">
               <IconCircle tone="orange" size="md">
                 <Calendar className="h-5 w-5" aria-hidden="true" />
               </IconCircle>
               <div>
-                <dt className="text-xs text-body">Deadline</dt>
-                <dd className="text-sm font-semibold text-ink">
-                  {formatDisplayDate(due.deadline)}
-                </dd>
+                <p className="text-xs text-body">Deadline</p>
+                <p className="text-sm font-semibold text-ink">{formatDisplayDate(due.deadline)}</p>
               </div>
-            </div>
+            </li>
 
-            <div className="flex items-center gap-3">
+            <li className="flex items-center gap-3">
               <IconCircle tone="violet" size="md">
                 <Flag className="h-5 w-5" aria-hidden="true" />
               </IconCircle>
               <div>
-                <dt className="text-xs text-body">Priority</dt>
-                <dd className="mt-0.5">
+                <p className="text-xs text-body">Priority</p>
+                <div className="mt-0.5">
                   <ProjectPriorityBadge priority={project.priority} />
-                </dd>
+                </div>
               </div>
-            </div>
+            </li>
 
-            <div className="flex items-center gap-3">
+            <li className="flex items-center gap-3">
               <IconCircle tone="teal" size="md">
                 <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
               </IconCircle>
               <div>
-                <dt className="text-xs text-body">Status</dt>
-                <dd className="mt-0.5">
+                <p className="text-xs text-body">Status</p>
+                <div className="mt-0.5">
                   <ProjectStatusText status={project.status} />
-                </dd>
+                </div>
               </div>
-            </div>
+            </li>
 
-            <div className="flex items-center gap-3">
+            <li className="flex items-center gap-3">
               <IconCircle tone="success" size="md">
                 <ListChecks className="h-5 w-5" aria-hidden="true" />
               </IconCircle>
               <div>
-                <dt className="text-xs text-body">Total Tasks</dt>
-                <dd className="text-sm font-semibold text-ink">{stats.total}</dd>
+                <p className="text-xs text-body">Total Tasks</p>
+                <p className="text-sm font-semibold text-ink">{stats.total}</p>
               </div>
-            </div>
-          </dl>
+            </li>
+          </ul>
         </Card>
       </div>
 
