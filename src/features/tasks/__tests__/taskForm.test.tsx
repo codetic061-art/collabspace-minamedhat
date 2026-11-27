@@ -10,24 +10,39 @@ const base = 'https://collabspace.huma-volve.com/api/v1';
 
 it('deduplicates project members and preserves the input when the server rejects it', async () => {
   mswServer.use(
-    http.get(`${base}/projects/1/overview`, () => HttpResponse.json({
-      success: true,
-      data: { name: 'Project', direct_members: [{ id: 2, name: 'A Member' }] },
-    })),
-    http.get(`${base}/projects/1/teams`, () => HttpResponse.json({
-      success: true,
-      data: [{ id: 3, name: 'Team', members: [{ id: 2, name: 'A Member' }] }],
-    })),
-    http.post(`${base}/tasks`, () => HttpResponse.json({
-      success: false,
-      message: 'Validation failed',
-      errors: { name: ['Name already exists.'] },
-    }, { status: 422 })),
+    http.get(`${base}/projects/1/overview`, () =>
+      HttpResponse.json({
+        success: true,
+        data: { name: 'Project', direct_members: [{ id: 2, name: 'A Member' }] },
+      }),
+    ),
+    http.get(`${base}/projects/1/teams`, () =>
+      HttpResponse.json({
+        success: true,
+        data: [{ id: 3, name: 'Team', members: [{ id: 2, name: 'A Member' }] }],
+      }),
+    ),
+    http.post(`${base}/tasks`, () =>
+      HttpResponse.json(
+        {
+          success: false,
+          message: 'Validation failed',
+          errors: { name: ['Name already exists.'] },
+        },
+        { status: 422 },
+      ),
+    ),
   );
   const user = userEvent.setup();
   const onClose = vi.fn();
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  render(<QueryClientProvider client={client}><TaskFormModal projectId={1} initialStatus="In Review" task={null} onClose={onClose} /></QueryClientProvider>);
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={client}>
+      <TaskFormModal projectId={1} initialStatus="In Review" task={null} onClose={onClose} />
+    </QueryClientProvider>,
+  );
   await screen.findByRole('option', { name: 'A Member' });
   expect(screen.getAllByRole('option', { name: 'A Member' })).toHaveLength(1);
   expect(screen.getByLabelText('Status')).toHaveValue('In Review');

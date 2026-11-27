@@ -23,3 +23,10 @@ jobs:
             src/features/projects/pages/ProjectDetailsPage.tsx
             src/features/projects/__tests__/projectDetails.test.tsx
             src/app/router.tsx
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+        env:
+          VITE_API_BASE_URL: https://collabspace.huma-volve.com/api/v1
+      - run: npm run check:budget

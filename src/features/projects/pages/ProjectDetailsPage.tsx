@@ -19,7 +19,10 @@ import { ProjectOverviewTab } from '../components/ProjectOverviewTab';
 import { parseProjectIdParam, useProjectDetails } from '../hooks/useProjectDetails';
 import { TaskBoard } from '@/features/tasks';
 
-const OVERVIEW_TAB_ITEMS: readonly TabItem[] = [{ key: 'overview', label: 'Overview' }, { key: 'tasks', label: 'Tasks' }];
+const OVERVIEW_TAB_ITEMS: readonly TabItem[] = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'tasks', label: 'Tasks' },
+];
 
 /**
  * Project Details page (`1:8753`, §3.5, §3.6, §12.6, M17):
@@ -33,7 +36,9 @@ export function ProjectDetailsPage() {
   const { role } = useSession();
   const canEditProject = hasCapability(role, 'edit_project');
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState(() => searchParams.has('taskId') ? 'tasks' : 'overview');
+  const [activeTab, setActiveTab] = useState(() =>
+    searchParams.has('taskId') ? 'tasks' : 'overview',
+  );
   const tabsId = useId();
 
   const { overviewQuery, teamsQuery } = useProjectDetails(projectId);

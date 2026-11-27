@@ -3,15 +3,33 @@ import { Paperclip } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useSession } from '@/features/auth';
-import { getErrorMessage, KANBAN_STATUS_ORDER, projectsQueries, tasksQueries, toAppError, type TaskResource, type TaskStatus } from '@/shared/api';
+import {
+  getErrorMessage,
+  KANBAN_STATUS_ORDER,
+  projectsQueries,
+  tasksQueries,
+  toAppError,
+  type TaskResource,
+  type TaskStatus,
+} from '@/shared/api';
 import { hasCapability } from '@/shared/lib';
 import { Avatar, BlockErrorState, Button, Skeleton, SkeletonRegion } from '@/shared/ui';
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
 import { TaskFormModal } from '../components/TaskFormModal';
 import { useTaskStatus } from '../hooks/useTaskStatus';
 
-const titles: Record<TaskStatus, string> = { Pending: 'To-do', 'In Progress': 'In Progress', 'In Review': 'In Review', Completed: 'Completed Tasks' };
-const tints: Record<TaskStatus, string> = { Pending: 'bg-surface-input', 'In Progress': 'bg-primary-tint', 'In Review': 'bg-pink-50', Completed: 'bg-green-50' };
+const titles: Record<TaskStatus, string> = {
+  Pending: 'To-do',
+  'In Progress': 'In Progress',
+  'In Review': 'In Review',
+  Completed: 'Completed Tasks',
+};
+const tints: Record<TaskStatus, string> = {
+  Pending: 'bg-surface-input',
+  'In Progress': 'bg-primary-tint',
+  'In Review': 'bg-pink-50',
+  Completed: 'bg-green-50',
+};
 
 export function TaskBoard({ projectId }: { projectId: number }) {
   const { role, user } = useSession();
@@ -27,45 +45,197 @@ export function TaskBoard({ projectId }: { projectId: number }) {
   const statusMutation = useTaskStatus(projectId);
   const openTask = (id: number | null) => {
     const next = new URLSearchParams(params);
-    if (id === null) next.delete('taskId'); else next.set('taskId', String(id));
+    if (id === null) next.delete('taskId');
+    else next.set('taskId', String(id));
     setParams(next);
   };
-  if (board.isPending) return <SkeletonRegion label="Loading tasks" className="grid grid-cols-4 gap-4"><Skeleton variant="card" /><Skeleton variant="card" /><Skeleton variant="card" /><Skeleton variant="card" /></SkeletonRegion>;
+  if (board.isPending)
+    return (
+      <SkeletonRegion label="Loading tasks" className="grid grid-cols-4 gap-4">
+        <Skeleton variant="card" />
+        <Skeleton variant="card" />
+        <Skeleton variant="card" />
+        <Skeleton variant="card" />
+      </SkeletonRegion>
+    );
   if (board.error) {
     const error = toAppError(board.error);
     if (error.kind === 'unauthorized') return null;
-    return <BlockErrorState message={getErrorMessage(error)} onRetry={() => void board.refetch()} />;
+    return (
+      <BlockErrorState message={getErrorMessage(error)} onRetry={() => void board.refetch()} />
+    );
   }
   const canCreate = hasCapability(role, 'create_task');
-  return <section className="space-y-5" aria-label="Task board">
-    <div className="flex flex-wrap items-end gap-3">
-      <label className="text-sm">Search tasks<input className="ml-2 rounded-input border border-border-card bg-surface px-3 py-2" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
-      <label className="text-sm">Tasks<select className="ml-2 rounded-input border border-border-card bg-surface px-3 py-2" value={mine ? 'mine' : 'all'} onChange={(event) => setMine(event.target.value === 'mine')}><option value="all">All tasks</option><option value="mine">My tasks</option></select></label>
-      <label className="text-sm">Team<select className="ml-2 rounded-input border border-border-card bg-surface px-3 py-2" value={team} onChange={(event) => setTeam(event.target.value)}><option value="">All teams</option>{teams.data?.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-      {canCreate && <Button className="ml-auto" onClick={() => setForm({ status: 'Pending', task: null })}>Create Task +</Button>}
-    </div>
-    {teams.error && <p role="alert">Teams could not be loaded. <button type="button" onClick={() => void teams.refetch()}>Retry</button></p>}
-    {statusMutation.message && <p role="alert" className="text-danger">{statusMutation.message}</p>}
-    <div className="flex snap-x gap-5 overflow-x-auto pb-4">
-      {KANBAN_STATUS_ORDER.map((status) => {
-        const tasks = board.data.columns[status].tasks.filter((task) => (!mine || task.assigned_to === user?.id) && (!team || task.team_id === Number(team)) && `${task.name} ${task.description ?? ''}`.toLowerCase().includes(search.toLowerCase()));
-        return <section key={status} className="min-w-[280px] flex-1 snap-start overflow-hidden rounded-card border border-border-subtle bg-surface">
-          <h2 className={`p-5 text-sm font-semibold ${tints[status]}`}>{titles[status]} <span className="font-normal">({tasks.length})</span></h2>
-          <div className="space-y-4 p-5">
-            {canCreate && <Button variant="dashed" fullWidth onClick={() => setForm({ status, task: null })}>Add Task +</Button>}
-            {tasks.length === 0 && <p className="text-sm text-body">No tasks</p>}
-            {tasks.map((task) => <article key={task.id} className="space-y-3 rounded-card bg-surface-input p-4 text-sm">
-              <div className="flex justify-between gap-2"><button type="button" className="text-left font-semibold text-ink hover:underline" onClick={() => openTask(task.id)}>{task.name}</button><span>{task.priority}</span></div>
-              {task.description && <p className="line-clamp-2 text-body">{task.description}</p>}
-              <div className="flex items-center gap-2">{task.assignee && <><Avatar name={task.assignee.name} src={task.assignee.avatar_url} size="xs" /><span>{task.assignee.name}</span></>}{task.attachments_count > 0 && <span className="ml-auto flex items-center gap-1"><Paperclip size={14} />{task.attachments_count}</span>}</div>
-              {task.due_date && <p>Due {task.due_date.slice(0, 10)}</p>}
-              <label className="block">Status<select className="mt-1 w-full rounded-input border border-border-card bg-surface p-2" value={task.status} disabled={!hasCapability(role, 'change_task_status') || statusMutation.isPending} onChange={(event) => { const value = KANBAN_STATUS_ORDER.find((item) => item === event.target.value); if (value) statusMutation.changeStatus(task, value); }}>{KANBAN_STATUS_ORDER.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-            </article>)}
-          </div>
-        </section>;
-      })}
-    </div>
-    {taskId !== null && <TaskDetailsModal taskId={taskId} projectId={projectId} onClose={() => openTask(null)} onEdit={(task) => { openTask(null); setForm({ task, status: task.status }); }} onStatus={statusMutation.changeStatus} isStatusPending={statusMutation.isPending} />}
-    {form && <TaskFormModal projectId={projectId} initialStatus={form.status} task={form.task} onClose={() => setForm(null)} />}
-  </section>;
+  return (
+    <section className="space-y-5" aria-label="Task board">
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="text-sm">
+          Search tasks
+          <input
+            className="ml-2 rounded-input border border-border-card bg-surface px-3 py-2"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </label>
+        <label className="text-sm">
+          Tasks
+          <select
+            className="ml-2 rounded-input border border-border-card bg-surface px-3 py-2"
+            value={mine ? 'mine' : 'all'}
+            onChange={(event) => setMine(event.target.value === 'mine')}
+          >
+            <option value="all">All tasks</option>
+            <option value="mine">My tasks</option>
+          </select>
+        </label>
+        <label className="text-sm">
+          Team
+          <select
+            className="ml-2 rounded-input border border-border-card bg-surface px-3 py-2"
+            value={team}
+            onChange={(event) => setTeam(event.target.value)}
+          >
+            <option value="">All teams</option>
+            {teams.data?.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        {canCreate && (
+          <Button className="ml-auto" onClick={() => setForm({ status: 'Pending', task: null })}>
+            Create Task +
+          </Button>
+        )}
+      </div>
+      {teams.error && (
+        <p role="alert">
+          Teams could not be loaded.{' '}
+          <button type="button" onClick={() => void teams.refetch()}>
+            Retry
+          </button>
+        </p>
+      )}
+      {statusMutation.message && (
+        <p role="alert" className="text-danger">
+          {statusMutation.message}
+        </p>
+      )}
+      <div className="flex snap-x gap-5 overflow-x-auto pb-4">
+        {KANBAN_STATUS_ORDER.map((status) => {
+          const tasks = board.data.columns[status].tasks.filter(
+            (task) =>
+              (!mine || task.assigned_to === user?.id) &&
+              (!team || task.team_id === Number(team)) &&
+              `${task.name} ${task.description ?? ''}`.toLowerCase().includes(search.toLowerCase()),
+          );
+          return (
+            <section
+              key={status}
+              className="min-w-[280px] flex-1 snap-start overflow-hidden rounded-card border border-border-subtle bg-surface"
+            >
+              <h2 className={`p-5 text-sm font-semibold ${tints[status]}`}>
+                {titles[status]} <span className="font-normal">({tasks.length})</span>
+              </h2>
+              <div className="space-y-4 p-5">
+                {canCreate && (
+                  <Button
+                    variant="dashed"
+                    fullWidth
+                    onClick={() => setForm({ status, task: null })}
+                  >
+                    Add Task +
+                  </Button>
+                )}
+                {tasks.length === 0 && <p className="text-sm text-body">No tasks</p>}
+                {tasks.map((task) => (
+                  <article
+                    key={task.id}
+                    className="space-y-3 rounded-card bg-surface-input p-4 text-sm"
+                  >
+                    <div className="flex justify-between gap-2">
+                      <button
+                        type="button"
+                        className="text-left font-semibold text-ink hover:underline"
+                        onClick={() => openTask(task.id)}
+                      >
+                        {task.name}
+                      </button>
+                      <span>{task.priority}</span>
+                    </div>
+                    {task.description && (
+                      <p className="line-clamp-2 text-body">{task.description}</p>
+                    )}
+                    <div className="flex items-center gap-2">
+                      {task.assignee && (
+                        <>
+                          <Avatar
+                            name={task.assignee.name}
+                            src={task.assignee.avatar_url}
+                            size="xs"
+                          />
+                          <span>{task.assignee.name}</span>
+                        </>
+                      )}
+                      {task.attachments_count > 0 && (
+                        <span className="ml-auto flex items-center gap-1">
+                          <Paperclip size={14} />
+                          {task.attachments_count}
+                        </span>
+                      )}
+                    </div>
+                    {task.due_date && <p>Due {task.due_date.slice(0, 10)}</p>}
+                    <label className="block">
+                      Status
+                      <select
+                        className="mt-1 w-full rounded-input border border-border-card bg-surface p-2"
+                        value={task.status}
+                        disabled={
+                          !hasCapability(role, 'change_task_status') || statusMutation.isPending
+                        }
+                        onChange={(event) => {
+                          const value = KANBAN_STATUS_ORDER.find(
+                            (item) => item === event.target.value,
+                          );
+                          if (value) statusMutation.changeStatus(task, value);
+                        }}
+                      >
+                        {KANBAN_STATUS_ORDER.map((item) => (
+                          <option key={item} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </article>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+      {taskId !== null && (
+        <TaskDetailsModal
+          taskId={taskId}
+          projectId={projectId}
+          onClose={() => openTask(null)}
+          onEdit={(task) => {
+            openTask(null);
+            setForm({ task, status: task.status });
+          }}
+          onStatus={statusMutation.changeStatus}
+          isStatusPending={statusMutation.isPending}
+        />
+      )}
+      {form && (
+        <TaskFormModal
+          projectId={projectId}
+          initialStatus={form.status}
+          task={form.task}
+          onClose={() => setForm(null)}
+        />
+      )}
+    </section>
+  );
 }
