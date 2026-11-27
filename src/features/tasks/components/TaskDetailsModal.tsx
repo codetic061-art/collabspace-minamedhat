@@ -121,7 +121,7 @@ export function TaskDetailsModal({
         onClose={onClose}
         title={task?.name ?? 'Task Details'}
         size="lg"
-        className="md:h-fit"
+        className="md:h-fit md:max-w-[720px]"
       >
         {query.isPending ? <Skeleton variant="card" /> : null}
         {error && error.kind !== 'unauthorized' ? (

@@ -93,12 +93,12 @@ function PasswordCard() {
     }
   });
   return (
-    <section className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+    <section className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
       <div>
         <h2 className="text-xl font-semibold">Security</h2>
         <p className="mt-2 text-sm text-body">Change your password here.</p>
       </div>
-      <Card className="min-w-0 space-y-5">
+      <Card variant="settings" className="min-w-0 space-y-5">
         <form onSubmit={submit} noValidate className="space-y-5">
           <Input
             label="Current password"
@@ -205,7 +205,7 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
     }
   }
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 lg:pt-12">
       <div className="flex items-center gap-5">
         <Avatar name={user.name} src={toSafeExternalUrl(user.avatar_url)} size="xl" />
         <div className="min-w-0">
@@ -216,14 +216,14 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
         </div>
       </div>
       <form onSubmit={submit} noValidate className="space-y-10">
-        <section className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        <section className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
           <div>
             <h2 className="text-xl font-semibold">Personal Info</h2>
             <p className="mt-2 text-sm text-body">
               You can change your personal information settings here.
             </p>
           </div>
-          <Card className="min-w-0 space-y-5">
+          <Card variant="settings" className="min-w-0 space-y-5">
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Input
                 label="Full name"
@@ -304,12 +304,12 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
             )}
           </Card>
         </section>
-        <section className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        <section className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
           <div>
             <h2 className="text-xl font-semibold">Experience</h2>
             <p className="mt-2 text-sm text-body">You can change your experience settings here.</p>
           </div>
-          <Card className="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2">
+          <Card variant="settings" className="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2">
             <Input
               label="Job title"
               labelVariant="top"

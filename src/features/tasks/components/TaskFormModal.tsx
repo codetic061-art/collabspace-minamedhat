@@ -115,7 +115,7 @@ export function TaskFormModal({
       title={task ? 'Edit Task' : 'Create Task'}
       size="lg"
       isSubmitting={isSubmitting}
-      className="md:h-fit"
+      className="md:h-fit md:max-w-[720px]"
     >
       <form noValidate onSubmit={onSubmit} className="space-y-4">
         <Input
