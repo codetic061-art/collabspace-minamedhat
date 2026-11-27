@@ -47,6 +47,9 @@ export function ResetPasswordPage() {
   });
 
   const verifiedOtp = recovery?.otp;
+  if (resetMutation.isSuccess) {
+    return null;
+  }
   if (!recovery || !verifiedOtp || !/^\d{6}$/.test(verifiedOtp)) {
     return <Navigate to="/forgot-password" replace />;
   }
