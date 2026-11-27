@@ -51,14 +51,14 @@ function ProfileTasks() {
         <>
           <p className="text-sm text-body">Task counts shown are for this page.</p>
           <div className="grid gap-6 md:grid-cols-2">
-          <TaskGroup
-            title="To do (this page)"
-            tasks={tasks.filter((task) => task.status !== 'Completed')}
-          />
-          <TaskGroup
-            title="Done (this page)"
-            tasks={tasks.filter((task) => task.status === 'Completed')}
-          />
+            <TaskGroup
+              title="To do (this page)"
+              tasks={tasks.filter((task) => task.status !== 'Completed')}
+            />
+            <TaskGroup
+              title="Done (this page)"
+              tasks={tasks.filter((task) => task.status === 'Completed')}
+            />
           </div>
         </>
       )}

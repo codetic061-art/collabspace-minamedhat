@@ -179,7 +179,9 @@ export function TaskBoard({ projectId }: { projectId: number }) {
                       >
                         {task.name}
                       </button>
-                      <Badge variant={normalizeDashboardPriority(task.priority.toLowerCase()).variant}>
+                      <Badge
+                        variant={normalizeDashboardPriority(task.priority.toLowerCase()).variant}
+                      >
                         {task.priority}
                       </Badge>
                     </div>
@@ -221,7 +223,8 @@ export function TaskBoard({ projectId }: { projectId: number }) {
                         className="mt-1 w-full rounded-input border border-border-card bg-surface p-2"
                         value={task.status}
                         disabled={
-                          !hasCapability(role, 'change_task_status') || statusMutation.pendingIds.has(task.id)
+                          !hasCapability(role, 'change_task_status') ||
+                          statusMutation.pendingIds.has(task.id)
                         }
                         onChange={(event) => {
                           const value = KANBAN_STATUS_ORDER.find(

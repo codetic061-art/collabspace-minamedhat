@@ -1,7 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { getErrorMessage, projectsKeys, projectsService, tasksQueries, toAppError } from '@/shared/api';
+import {
+  getErrorMessage,
+  projectsKeys,
+  projectsService,
+  tasksQueries,
+  toAppError,
+} from '@/shared/api';
 import { BlockErrorState, Skeleton } from '@/shared/ui';
 import { TaskBoard } from './TaskBoard';
 

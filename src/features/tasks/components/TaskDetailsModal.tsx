@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useSession } from '@/features/auth';
@@ -7,11 +7,8 @@ import {
   formatDisplayDateTime,
   getErrorMessage,
   KANBAN_STATUS_ORDER,
-  projectsKeys,
   projectsQueries,
-  tasksKeys,
   tasksQueries,
-  tasksService,
   toAppError,
   type TaskResource,
   type TaskStatus,
@@ -25,26 +22,15 @@ import {
   Modal,
   NativeSelect,
   Skeleton,
-  useToast,
 } from '@/shared/ui';
+import { useTaskAssignment, useTaskDeletion } from '../hooks/useTaskDetailsMutations';
 
 const statusOptions = KANBAN_STATUS_ORDER.map((value) => ({ value, label: value }));
 
 function AssigneeControl({ task }: { task: TaskResource }) {
-  const { showToast } = useToast();
-  const client = useQueryClient();
   const overview = useQuery(projectsQueries.overview(task.project_id));
   const teams = useQuery(projectsQueries.teams(task.project_id));
-  const assign = useMutation({
-    mutationFn: (assignedTo: number | null) =>
-      tasksService.assignTask(task.id, { assigned_to: assignedTo }),
-    onSettled: async () => {
-      await client.invalidateQueries({ queryKey: tasksKeys.all });
-    },
-    onSuccess: () => {
-      showToast({ message: 'Task assignment updated.', tone: 'success' });
-    },
-  });
+  const assign = useTaskAssignment(task.id);
   const members = new Map<number, string>();
   for (const member of overview.data?.direct_members ?? []) members.set(member.id, member.name);
   for (const team of teams.data ?? []) {
@@ -104,23 +90,10 @@ export function TaskDetailsModal({
   isStatusPending: boolean;
   statusMessage?: string;
 }) {
-  const { showToast } = useToast();
   const { role } = useSession();
-  const client = useQueryClient();
   const query = useQuery(tasksQueries.detail(taskId));
   const [confirming, setConfirming] = useState(false);
-  const deletion = useMutation({
-    mutationFn: () => tasksService.deleteTask(taskId),
-    onError: () => setConfirming(false),
-    onSuccess: async () => {
-      await Promise.all([
-        client.invalidateQueries({ queryKey: tasksKeys.all }),
-        client.invalidateQueries({ queryKey: projectsKeys.all }),
-      ]);
-      showToast({ message: 'Task deleted.', tone: 'success' });
-      onClose();
-    },
-  });
+  const deletion = useTaskDeletion(taskId, onClose, () => setConfirming(false));
   const task = query.data;
   const error = query.error ? toAppError(query.error) : null;
   return (

@@ -6,6 +6,7 @@ import {
   Button,
   ConfirmDialog,
   DropdownMenu,
+  Input,
   Modal,
   NativeSelect,
   Select,
@@ -61,6 +62,36 @@ describe('Select and NativeSelect', () => {
 
     await expectNoA11yViolations(container);
   });
+
+  it('associates standalone error messages with custom and native controls', () => {
+    render(
+      <div>
+        <Input id="standalone-input" error="Input is invalid." />
+        <Select
+          id="standalone-select"
+          options={[{ value: 'one', label: 'One' }]}
+          error="Select is invalid."
+        />
+        <NativeSelect
+          id="standalone-native-select"
+          options={[{ value: 'one', label: 'One' }]}
+          error="Native select is invalid."
+        />
+      </div>,
+    );
+
+    expect(screen.getByText('Input is invalid.')).toHaveAttribute('role', 'alert');
+    expect(screen.getByRole('combobox', { name: 'Select an option' })).toHaveAttribute(
+      'aria-describedby',
+      expect.stringContaining('standalone-select-error'),
+    );
+    expect(document.getElementById('standalone-native-select')).toHaveAttribute(
+      'aria-describedby',
+      expect.stringContaining('standalone-native-select-error'),
+    );
+    expect(screen.getByText('Select is invalid.')).toHaveAttribute('role', 'alert');
+    expect(screen.getByText('Native select is invalid.')).toHaveAttribute('role', 'alert');
+  });
 });
 
 describe('DropdownMenu', () => {
@@ -105,6 +136,23 @@ describe('DropdownMenu', () => {
 });
 
 describe('Tabs', () => {
+  it('keeps a first enabled tab in the tab sequence when the active key is unavailable', () => {
+    render(
+      <Tabs
+        ariaLabel="Fallback tabs"
+        activeKey="missing"
+        onChange={() => {}}
+        items={[
+          { key: 'disabled', label: 'Disabled', disabled: true },
+          { key: 'available', label: 'Available' },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole('tab', { name: 'Disabled' })).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByRole('tab', { name: 'Available' })).toHaveAttribute('tabindex', '0');
+  });
+
   it('supports underline and segmented modes with ArrowLeft/ArrowRight navigation', async () => {
     const user = userEvent.setup();
 

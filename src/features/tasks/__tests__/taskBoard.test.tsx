@@ -156,7 +156,11 @@ describe('task board', () => {
             project: { id: 1, name: 'Example', progress_percentage: 0 },
             total_tasks: 2,
             columns: {
-              Pending: { name: 'Pending', count: 2, tasks: [task, { ...task, id: 2, name: 'Other task' }] },
+              Pending: {
+                name: 'Pending',
+                count: 2,
+                tasks: [task, { ...task, id: 2, name: 'Other task' }],
+              },
               'In Progress': { name: 'In Progress', count: 0, tasks: [] },
               'In Review': { name: 'In Review', count: 0, tasks: [] },
               Completed: { name: 'Completed', count: 0, tasks: [] },

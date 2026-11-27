@@ -33,6 +33,9 @@ export function Tabs({
   const generatedPrefix = useId();
   const prefix = idPrefix ?? generatedPrefix;
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const activeIndex = items.findIndex((item) => item.key === activeKey && !item.disabled);
+  const firstEnabledIndex = items.findIndex((item) => !item.disabled);
+  const rovingIndex = activeIndex >= 0 ? activeIndex : firstEnabledIndex;
 
   const focusTab = (index: number) => {
     const item = items[index];
@@ -109,7 +112,7 @@ export function Tabs({
       )}
     >
       {items.map((item, index) => {
-        const isActive = item.key === activeKey;
+        const isActive = item.key === activeKey && !item.disabled;
         return (
           <button
             key={item.key}
@@ -122,7 +125,7 @@ export function Tabs({
             disabled={item.disabled}
             aria-selected={isActive}
             aria-controls={hasPanels ? `${prefix}-panel-${item.key}` : undefined}
-            tabIndex={isActive ? 0 : -1}
+            tabIndex={index === rovingIndex ? 0 : -1}
             onClick={() => onChange(item.key)}
             onKeyDown={(event) => handleKeyDown(event, index)}
             className={cn(

@@ -13,9 +13,7 @@ it('mounts the project Kanban board when the Tasks tab is selected', async () =>
     http.get(`${API_BASE}/projects/1/overview`, () =>
       HttpResponse.json({ success: true, data: makeProjectOverview() }),
     ),
-    http.get(`${API_BASE}/projects/1/teams`, () =>
-      HttpResponse.json({ success: true, data: [] }),
-    ),
+    http.get(`${API_BASE}/projects/1/teams`, () => HttpResponse.json({ success: true, data: [] })),
     http.get(`${API_BASE}/projects/1/tasks/kanban`, () => {
       boardRequests += 1;
       return HttpResponse.json({

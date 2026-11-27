@@ -42,7 +42,10 @@ beforeEach(() => {
       HttpResponse.json({
         success: true,
         data: {
-          data: [{ id: 1, name: 'Project A' }, { id: 2, name: 'Project B' }],
+          data: [
+            { id: 1, name: 'Project A' },
+            { id: 2, name: 'Project B' },
+          ],
           links: { first: null, last: null, prev: null, next: null },
           meta: { current_page: 1, last_page: 1, per_page: 100, total: 2 },
         },

@@ -16,22 +16,18 @@ jobs:
       - run: npm ci
       - name: Format changed files
         run: |
-          npx prettier --write docs/wi11-acceptance.md src/features/profile/PasswordCard.tsx src/features/profile/ProfilePage.tsx src/features/tasks/__tests__/taskBoard.test.tsx src/features/tasks/__tests__/tasksPage.test.tsx src/features/tasks/__tests__/taskMutations.integration.test.tsx src/features/projects/__tests__/projectTasks.integration.test.tsx src/features/tasks/components/TaskDetailsModal.tsx src/features/tasks/pages/TaskBoard.tsx src/features/tasks/pages/TasksPage.tsx
+          npx prettier --write src/features/tasks/components/TaskDetailsModal.tsx src/features/tasks/hooks/useTaskDetailsMutations.ts src/shared/ui/Input.tsx src/shared/ui/Select.tsx src/shared/ui/Tabs.tsx src/shared/ui/__tests__/interactivePrimitives.test.tsx
       - name: Upload formatted files
         uses: actions/upload-artifact@v4
         with:
           name: gate2-formatted
           path: |
-            docs/wi11-acceptance.md
-            src/features/profile/PasswordCard.tsx
-            src/features/profile/ProfilePage.tsx
-            src/features/tasks/__tests__/taskBoard.test.tsx
-            src/features/tasks/__tests__/tasksPage.test.tsx
-            src/features/tasks/__tests__/taskMutations.integration.test.tsx
-            src/features/projects/__tests__/projectTasks.integration.test.tsx
             src/features/tasks/components/TaskDetailsModal.tsx
-            src/features/tasks/pages/TaskBoard.tsx
-            src/features/tasks/pages/TasksPage.tsx
+            src/features/tasks/hooks/useTaskDetailsMutations.ts
+            src/shared/ui/Input.tsx
+            src/shared/ui/Select.tsx
+            src/shared/ui/Tabs.tsx
+            src/shared/ui/__tests__/interactivePrimitives.test.tsx
       - name: Typecheck
         run: npm run typecheck
         continue-on-error: true
