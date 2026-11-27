@@ -124,8 +124,10 @@ describe('DashboardPage', () => {
 
     const projectsHeading = screen.getByRole('heading', { name: 'Active Projects' });
     const projectsCard = projectsHeading.closest('section, div')?.parentElement;
-    expect(projectsCard).not.toBeNull();
-    expect(screen.getByText('Borealis')).toBeInTheDocument();
+    if (!projectsCard) {
+      throw new Error('Expected Active Projects card container.');
+    }
+    expect(within(projectsCard).getByText('Borealis')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Apollo/i })).toHaveAttribute('href', '/projects/10');
     expect(screen.getByRole('progressbar', { name: 'Apollo progress' })).toHaveAttribute(
       'aria-valuenow',
