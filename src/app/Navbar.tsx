@@ -144,8 +144,7 @@ export function Navbar() {
                   <Avatar name={displayName} src={toSafeExternalUrl(user?.avatar_url)} size="sm" />
                 </span>
                 <span className="hidden xl:flex flex-col leading-tight">
-                  <span className="text-sm font-medium text-ink">{displayName}</span>
-                  {' '}
+                  <span className="text-sm font-medium text-ink">{displayName}</span>{' '}
                   <span className="text-xs text-gray-500">{displayRole}</span>
                 </span>
                 <ChevronDown className="h-4 w-4 text-gray-500" aria-hidden="true" />
