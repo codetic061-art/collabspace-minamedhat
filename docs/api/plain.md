@@ -74,7 +74,7 @@ Every endpoint, field, and behaviour in this document carries one of four eviden
 | Setting | Value | Notes |
 |---|---|---|
 | **API Base URL** | `https://collabspace.huma-volve.com/api/v1` | All endpoint paths in this document are relative to this base URL unless prefixed with `/api/v1/`. |
-| **API Origin** | `https://collabspace.huma-volve.com` | Needed when resolving root-relative paths returned by the API (notably `GET /dashboard` `recent_files.items[].download_url`, which returns `/api/v1/files/{id}/download`). Never blindly prepend `/api/v1` to a URL that already starts with `/api/v1/`. |
+| **API Origin** | `https://collabspace.huma-volve.com` | Needed when resolving any root-relative API path (for example if `GET /dashboard` `recent_files.items[].download_url` returns `/api/v1/files/{id}/download`; key and string type are `VERIFIED` in `api-authenticated-shapes.md:157`, while root-relative vs. absolute URL format is `UNVERIFIED` without a recorded URL dump). Never blindly prepend `/api/v1` to a URL that already starts with `/api/v1/`. |
 | **Backend Stack** | Laravel (13.x hint) on PHP 8.3.37 behind Apache; stateless Laravel Sanctum personal access tokens. | `/api/v1/*` routes set no cookies. |
 | **Public OpenAPI Spec** | `https://collabspace.huma-volve.com/docs/api.json` (OpenAPI 3.1.2, 65 paths, 92 operations). | No `Access-Control-Allow-Origin` header; CLI/build-time fetch only. |
 
@@ -98,7 +98,7 @@ Verified against `http://localhost:3000`, `http://localhost:5173`, and `https://
 | `Access-Control-Allow-Methods` | Echoes `Access-Control-Request-Method` | Preflight returns `204 No Content`. |
 | `Access-Control-Allow-Headers` | Echoes `Access-Control-Request-Headers` (e.g. `authorization,content-type`) | Bearer + JSON headers permitted. |
 | `Access-Control-Max-Age` | `0` | Browsers send an `OPTIONS` preflight before **every** authenticated or JSON-body cross-origin request unless routed through a same-origin BFF/proxy. |
-| `Access-Control-Expose-Headers` | **Absent** (confirmed on `/api/v1/auth/me` and `/api/v1/files/{id}/download`) | Cross-origin browser JavaScript **cannot read** `Content-Disposition`, `Retry-After`, or `X-RateLimit-*`. Always derive download filenames from file metadata (`name`) and never assume `Retry-After` is readable in direct browser calls. |
+| `Access-Control-Expose-Headers` | **Absent** (`VERIFIED` on `GET /api/v1/auth/me` and `OPTIONS /api/v1/projects` in `api-probe.md` #14–#15; not logged on `/api/v1/files/{id}/download` — `UNVERIFIED` there) | Cross-origin browser JavaScript **cannot read** `Content-Disposition`, `Retry-After`, or `X-RateLimit-*`. Always derive download filenames from file metadata (`name`) and never assume `Retry-After` is readable in direct browser calls. |
 
 ### Response Envelope Variants
 
@@ -154,16 +154,16 @@ Notes on `P1`–`P4`:
 - On empty pages, `from` and `to` are `null` and `data` is `[]` (`VERIFIED`).
 - `GET /projects/{project}/messages`, `GET /meetings/{meeting}/comments`, and `GET /activities` are untyped in OpenAPI and unprobed (`UNVERIFIED` pagination shape — likely `P1` or `P4`).
 
-### Date & Time Formats (`VERIFIED`)
+### Date & Time Formats (`VERIFIED` on probed endpoints)
 
-The shared date utility must parse all four formats returned across endpoints:
+The shared date utility must parse all four formats returned across endpoints (`api-authenticated-shapes.md` §3):
 
-| Format | Pattern | Where Observed |
+| Format | Pattern | Where Observed (`VERIFIED`) & Documented (`DOCUMENTED` / `UNVERIFIED`) |
 |---|---|---|
-| **`YYYY-MM-DD`** | `2026-11-26` | Resource calendar dates: `start_date`, `deadline`, `due_date` (`Project`, `TaskResource`), `meeting_date` (`MeetingResource`), dashboard `upcoming_meetings[].date`, chart `from`/`to`. |
-| **`HH:MM:SS`** | `14:30:00` | Meeting times: `start_time`, `end_time` (`MeetingResource`, `DashboardMeetingResource`, `meeting_scheduled` notification `data.start_time`). |
-| **`ISO+offset`** | `YYYY-MM-DDTHH:MM:SS+HH:MM` | API Resource timestamps: `created_at`, `updated_at`, `completed_at`, `joined_at`, `read_at` across resources (`UserResource`, `TaskResource`, `TeamResource`, `ProjectOverviewResource`, `MeetingResource`, `FileAttachmentResource`, `NotificationResource`, `Dashboard*`). |
-| **`ISO-Z`** | `YYYY-MM-DDTHH:MM:SS.000000Z` | Raw Eloquent models: `/auth/me` `teams[]`, `projects[]` (including `start_date`/`deadline`), and `pivot` timestamps; `/auth/profile/tasks` (including `due_date` and `completed_at`). |
+| **`YYYY-MM-DD`** | `2026-11-26` | **`VERIFIED`:** `start_date`, `deadline`, `due_date` (`Project`, `TaskResource`), dashboard `upcoming_meetings[].date`, chart `from`/`to`. **`DOCUMENTED`:** `meeting_date` (`MeetingResource`, unprobed live). |
+| **`HH:MM:SS`** | `14:30:00` | **`VERIFIED`:** dashboard `upcoming_meetings[].start_time` and `end_time` (`DashboardMeetingResource`). **`DOCUMENTED` / `UNVERIFIED`:** `MeetingResource` `start_time`/`end_time` and notification `data.start_time` (unprobed live). |
+| **`ISO+offset`** | `YYYY-MM-DDTHH:MM:SS+HH:MM` | **`VERIFIED`:** `created_at`, `updated_at`, `completed_at`, `joined_at` across probed resources (`UserResource`, `TaskResource`, `TeamResource`, `ProjectOverviewResource`, `Dashboard*`). **`DOCUMENTED` / `UNVERIFIED`:** `MeetingResource`, `FileAttachmentResource`, `NotificationResource` (`read_at`, `created_at`). |
+| **`ISO-Z`** | `YYYY-MM-DDTHH:MM:SS.000000Z` | **`VERIFIED`:** Raw Eloquent models in `/auth/me` `teams[]`, `projects[]` (including `start_date`/`deadline`), and `pivot` timestamps; `/auth/profile/tasks` (including `due_date` and `completed_at`). |
 
 Request date/time input formatting:
 - OpenAPI marks `start_date`, `deadline`, `due_date`, `meeting_date`, and `default_due_date` as `format: date-time`, while Postman sends `YYYY-MM-DD` for date fields and `HH:MM:SS` for `start_time`/`end_time`. Send `YYYY-MM-DD` for calendar dates and `HH:MM:SS` for meeting times unless a specific endpoint requires ISO timestamps; `GET /dashboard` `from`/`to` explicitly require `YYYY-MM-DD`.
