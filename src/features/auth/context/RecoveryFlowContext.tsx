@@ -74,13 +74,7 @@ export function RecoveryFlowProvider({ children }: { children: ReactNode }) {
 
   return (
     <RecoveryFlowContext.Provider
-      value={{
-        recovery,
-        startRecovery,
-        updateExpiry,
-        setVerifiedOtp,
-        clearRecovery,
-      }}
+      value={{ recovery, startRecovery, updateExpiry, setVerifiedOtp, clearRecovery }}
     >
       {children}
     </RecoveryFlowContext.Provider>
