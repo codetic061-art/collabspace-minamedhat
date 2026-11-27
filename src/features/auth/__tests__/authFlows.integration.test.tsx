@@ -1,12 +1,12 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw/http';
-import { createMemoryRouter } from 'react-router';
+import { createBrowserRouter, createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppProviders } from '@/app/providers';
 import { createAppRoutes } from '@/app/router';
-import type { UserResource } from '@/shared/api';
+import { downloadBlob, type UserResource } from '@/shared/api';
 import {
   broadcastSessionEvent,
   clearAuthToken,
@@ -81,6 +81,9 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    window.history.replaceState(null, '', '/');
+    window.sessionStorage.clear();
+    window.localStorage.clear();
   });
 
   it('shows neutral shell on reload, renders MVP Navbar, and clears on logout', async () => {
@@ -219,6 +222,7 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/verify-code'));
     expect(router.state.location.search).toBe('');
+    expect(router.state.location.state).toBeNull();
     expect(screen.getByText('Code expires in 10:00')).toBeVisible();
 
     const resendBtn = screen.getByRole('button', { name: /Resend/i });
@@ -245,6 +249,7 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
     await user.click(screen.getByRole('button', { name: 'Verify code' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/reset-password'));
     expect(router.state.location.search).toBe('');
+    expect(router.state.location.state).toBeNull();
 
     await user.type(screen.getByLabelText('New Password'), 'newpass123');
     await user.type(screen.getByLabelText('Confirm Password'), 'newpass123');
@@ -272,5 +277,117 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/sign-in'));
     expect(getAuthToken()).toBeNull();
+  });
+
+  it('keeps recovery secrets out of window.history.state and clears on reload', async () => {
+    const user = userEvent.setup();
+    mswServer.use(
+      http.post(`${BASE}/auth/forgot-password`, () =>
+        HttpResponse.json({
+          success: true,
+          message: 'Code sent.',
+          data: { expires_in_minutes: 10 },
+        }),
+      ),
+      http.post(`${BASE}/auth/verify-reset-otp`, () =>
+        HttpResponse.json({ success: true, message: 'The code is valid.', data: null }),
+      ),
+    );
+
+    const assertNoLeakedSecrets = () => {
+      const historyJson = JSON.stringify(window.history.state ?? null);
+      const sessionJson = JSON.stringify(window.sessionStorage);
+      const localJson = JSON.stringify(window.localStorage);
+      for (const secret of ['alex@example.test', '123456']) {
+        expect(historyJson).not.toContain(secret);
+        expect(window.location.href).not.toContain(secret);
+        expect(sessionJson).not.toContain(secret);
+        expect(localJson).not.toContain(secret);
+      }
+    };
+
+    window.history.replaceState(null, '', '/forgot-password');
+    const initialRouter = createBrowserRouter(createAppRoutes());
+    const initialRender = render(
+      <AppProviders queryClient={createTestQueryClient()}>
+        <RouterProvider router={initialRouter} />
+      </AppProviders>,
+    );
+
+    await user.type(await screen.findByLabelText(/Email Address/i), 'alex@example.test');
+    await user.click(screen.getByRole('button', { name: 'Send verification code' }));
+    await waitFor(() => expect(window.location.pathname).toBe('/verify-code'));
+    assertNoLeakedSecrets();
+
+    await user.type(screen.getByLabelText('Verification code digit 1 of 6'), '123456');
+    await user.click(screen.getByRole('button', { name: 'Verify code' }));
+    await waitFor(() => expect(window.location.pathname).toBe('/reset-password'));
+    const resetHeading = await screen.findByRole('heading', {
+      level: 1,
+      name: 'Reset password',
+    });
+    expect(resetHeading).toBeVisible();
+    assertNoLeakedSecrets();
+
+    // Unmounting and mounting a fresh router at /reset-password simulates a browser reload.
+    initialRender.unmount();
+    const reloadedRouter = createBrowserRouter(createAppRoutes());
+    const reloadedRender = render(
+      <AppProviders queryClient={createTestQueryClient()}>
+        <RouterProvider router={reloadedRouter} />
+      </AppProviders>,
+    );
+
+    await waitFor(() => expect(reloadedRouter.state.location.pathname).toBe('/forgot-password'));
+    expect(screen.queryByRole('heading', { level: 1, name: 'Reset password' })).toBeNull();
+    assertNoLeakedSecrets();
+
+    // Leaving the recovery flow unmounts RecoveryFlowProvider and clears in-memory state.
+    await user.type(await screen.findByLabelText(/Email Address/i), 'alex@example.test');
+    await user.click(screen.getByRole('button', { name: 'Send verification code' }));
+    await waitFor(() => expect(window.location.pathname).toBe('/verify-code'));
+
+    await act(async () => {
+      await reloadedRouter.navigate('/sign-in');
+    });
+    await screen.findByRole('heading', { level: 1, name: 'Sign in' });
+
+    await act(async () => {
+      await reloadedRouter.navigate('/verify-code');
+    });
+    await waitFor(() => expect(reloadedRouter.state.location.pathname).toBe('/forgot-password'));
+    reloadedRender.unmount();
+  });
+
+  it('redirects to Sign in and clears session when downloadBlob receives 401', async () => {
+    setAuthToken('expired-download-jwt');
+    let seenAccept: string | null = null;
+
+    mswServer.use(
+      http.get(`${BASE}/auth/me`, () => mockMeSuccess()),
+      http.get(`${BASE}/files/7/download`, ({ request }) => {
+        seenAccept = request.headers.get('accept');
+        return HttpResponse.json(
+          {
+            success: false,
+            message: 'Unauthenticated. Please provide a valid Bearer token.',
+            errors: null,
+          },
+          { status: 401 },
+        );
+      }),
+    );
+
+    const { router } = mountApp('/projects');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
+
+    await expect(
+      downloadBlob('/api/v1/files/7/download', { fallbackFilename: 'spec.pdf' }),
+    ).rejects.toMatchObject({ appError: { kind: 'unauthorized', status: 401 } });
+
+    expect(seenAccept).toBe('application/json');
+    expect(getAuthToken()).toBeNull();
+    await waitFor(() => expect(router.state.location.pathname).toBe('/sign-in'));
+    expect(router.state.location.search).toBe('?redirectTo=%2Fprojects');
   });
 });

@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router';
+import { Link, Navigate, useNavigate } from 'react-router';
 import { applyServerValidationErrors, authService, toAppError } from '@/shared/api';
 import { Button } from '@/shared/ui';
 import { AuthLayout } from '../components/AuthLayout';
 import { PasswordInput } from '../components/PasswordInput';
+import { useRecoveryFlow } from '../context/RecoveryFlowContext';
 import { useSession } from '../context/SessionContext';
 import { useRateLimitCountdown } from '../hooks/useRateLimitCountdown';
 import { useRecoveryMetaReferrer } from '../hooks/useRecoveryMetaReferrer';
@@ -16,42 +17,17 @@ const KNOWN_FIELDS: readonly (keyof ResetPasswordFormValues)[] = [
   'password_confirmation',
 ];
 
-interface ResetLocationState {
-  email: string;
-  otp: string;
-}
-
-function readResetLocationState(state: unknown): ResetLocationState | null {
-  if (
-    typeof state === 'object' &&
-    state !== null &&
-    'email' in state &&
-    'otp' in state &&
-    typeof state.email === 'string' &&
-    typeof state.otp === 'string' &&
-    state.email.trim().length > 0 &&
-    /^\d{6}$/.test(state.otp)
-  ) {
-    return {
-      email: state.email.trim(),
-      otp: state.otp,
-    };
-  }
-  return null;
-}
-
 /**
- * Reset Password step (§12.4, ID-21): enforces min 8 chars + confirmation, clears any local session,
- * and returns cleanly to `/sign-in` without auto-logging in.
+ * Reset Password step (§12.4, ID-21): enforces min 8 chars + confirmation, clears in-memory
+ * recovery secrets and any local session, and returns to `/sign-in` without auto-logging in.
  */
 export function ResetPasswordPage() {
   useRecoveryMetaReferrer();
 
-  const location = useLocation();
   const navigate = useNavigate();
+  const { recovery, clearRecovery } = useRecoveryFlow();
   const { clearSessionAfterReset } = useSession();
   const rateLimit = useRateLimitCountdown();
-  const resetState = readResetLocationState(location.state);
 
   const resetMutation = useMutation({
     mutationFn: authService.resetPassword,
@@ -70,18 +46,20 @@ export function ResetPasswordPage() {
     },
   });
 
-  if (!resetState) {
+  const verifiedOtp = recovery?.otp;
+  if (!recovery || !verifiedOtp || !/^\d{6}$/.test(verifiedOtp)) {
     return <Navigate to="/forgot-password" replace />;
   }
 
   const onSubmit = handleSubmit(async (values) => {
     try {
       await resetMutation.mutateAsync({
-        email: resetState.email,
-        otp: resetState.otp,
+        email: recovery.email,
+        otp: verifiedOtp,
         password: values.password,
         password_confirmation: values.password_confirmation,
       });
+      clearRecovery();
       clearSessionAfterReset();
       navigate('/sign-in', {
         replace: true,

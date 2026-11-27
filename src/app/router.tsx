@@ -1,6 +1,7 @@
 import { createBrowserRouter, type RouteObject } from 'react-router';
 import {
   loadForgotPasswordPage,
+  loadRecoveryFlowLayout,
   loadResetPasswordPage,
   loadSignInPage,
   loadSignUpPage,
@@ -35,16 +36,21 @@ export function createAppRoutes(): RouteObject[] {
               lazy: loadSignUpPage,
             },
             {
-              path: '/forgot-password',
-              lazy: loadForgotPasswordPage,
-            },
-            {
-              path: '/verify-code',
-              lazy: loadVerifyCodePage,
-            },
-            {
-              path: '/reset-password',
-              lazy: loadResetPasswordPage,
+              lazy: loadRecoveryFlowLayout,
+              children: [
+                {
+                  path: '/forgot-password',
+                  lazy: loadForgotPasswordPage,
+                },
+                {
+                  path: '/verify-code',
+                  lazy: loadVerifyCodePage,
+                },
+                {
+                  path: '/reset-password',
+                  lazy: loadResetPasswordPage,
+                },
+              ],
             },
           ],
         },

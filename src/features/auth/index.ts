@@ -15,6 +15,11 @@ export async function loadSignUpPage() {
   return { Component: SignUpPage };
 }
 
+export async function loadRecoveryFlowLayout() {
+  const { RecoveryFlowLayout } = await import('./context/RecoveryFlowContext');
+  return { Component: RecoveryFlowLayout };
+}
+
 export async function loadForgotPasswordPage() {
   const { ForgotPasswordPage } = await import('./pages/ForgotPasswordPage');
   return { Component: ForgotPasswordPage };

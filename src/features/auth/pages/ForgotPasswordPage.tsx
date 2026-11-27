@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router';
 import { applyServerValidationErrors, authService, toAppError } from '@/shared/api';
 import { Button, Input } from '@/shared/ui';
 import { AuthLayout } from '../components/AuthLayout';
+import { useRecoveryFlow } from '../context/RecoveryFlowContext';
 import { useRateLimitCountdown } from '../hooks/useRateLimitCountdown';
 import { useRecoveryMetaReferrer } from '../hooks/useRecoveryMetaReferrer';
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../schemas/auth.schemas';
@@ -13,13 +14,14 @@ import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../schemas/
 const KNOWN_FIELDS: readonly (keyof ForgotPasswordFormValues)[] = ['email'];
 
 /**
- * Forgot Password step (§12.2, ID-21): keeps email in React Router state rather than URLs
- * and follows the same non-enumerating flow regardless of whether an account exists.
+ * Forgot Password step (§12.2, ID-21): keeps email in auth-scoped memory rather than URLs
+ * or history.state and follows the same non-enumerating flow regardless of account existence.
  */
 export function ForgotPasswordPage() {
   useRecoveryMetaReferrer();
 
   const navigate = useNavigate();
+  const { startRecovery } = useRecoveryFlow();
   const rateLimit = useRateLimitCountdown();
 
   const forgotMutation = useMutation({
@@ -39,12 +41,8 @@ export function ForgotPasswordPage() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       const response = await forgotMutation.mutateAsync({ email: values.email });
-      navigate('/verify-code', {
-        state: {
-          email: values.email,
-          expiresInMinutes: response.expires_in_minutes,
-        },
-      });
+      startRecovery(values.email, response.expires_in_minutes);
+      navigate('/verify-code');
     } catch (error) {
       const appError = toAppError(error);
       if (appError.kind === 'rate_limited') {

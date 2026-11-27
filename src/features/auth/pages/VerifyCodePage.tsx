@@ -2,11 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router';
+import { Link, Navigate, useNavigate } from 'react-router';
 import { applyServerValidationErrors, authService, toAppError } from '@/shared/api';
 import { Button } from '@/shared/ui';
 import { AuthLayout } from '../components/AuthLayout';
 import { OtpInputGroup } from '../components/OtpInputGroup';
+import { useRecoveryFlow } from '../context/RecoveryFlowContext';
 import { useRateLimitCountdown } from '../hooks/useRateLimitCountdown';
 import { useRecoveryMetaReferrer } from '../hooks/useRecoveryMetaReferrer';
 import { verifyOtpSchema, type VerifyOtpFormValues } from '../schemas/auth.schemas';
@@ -14,31 +15,6 @@ import { verifyOtpSchema, type VerifyOtpFormValues } from '../schemas/auth.schem
 const RESEND_COOLDOWN_SECONDS = 60;
 const DEFAULT_EXPIRY_MINUTES = 10;
 const KNOWN_FIELDS: readonly (keyof VerifyOtpFormValues)[] = ['otp'];
-
-interface VerifyLocationState {
-  email: string;
-  expiresInMinutes: number;
-}
-
-function readVerifyLocationState(state: unknown): VerifyLocationState | null {
-  if (
-    typeof state === 'object' &&
-    state !== null &&
-    'email' in state &&
-    typeof state.email === 'string' &&
-    state.email.trim().length > 0
-  ) {
-    const expiresRaw =
-      'expiresInMinutes' in state && typeof state.expiresInMinutes === 'number'
-        ? state.expiresInMinutes
-        : DEFAULT_EXPIRY_MINUTES;
-    return {
-      email: state.email.trim(),
-      expiresInMinutes: expiresRaw > 0 ? expiresRaw : DEFAULT_EXPIRY_MINUTES,
-    };
-  }
-  return null;
-}
 
 function formatCountdown(totalSeconds: number): string {
   const safe = Math.max(0, totalSeconds);
@@ -54,19 +30,18 @@ function formatCountdown(totalSeconds: number): string {
 export function VerifyCodePage() {
   useRecoveryMetaReferrer();
 
-  const location = useLocation();
   const navigate = useNavigate();
+  const { recovery, updateExpiry, setVerifiedOtp, clearRecovery } = useRecoveryFlow();
   const rateLimit = useRateLimitCountdown();
-  const recoveryState = readVerifyLocationState(location.state);
 
   const [expirySeconds, setExpirySeconds] = useState(
-    () => (recoveryState?.expiresInMinutes ?? DEFAULT_EXPIRY_MINUTES) * 60,
+    () => (recovery?.expiresInMinutes ?? DEFAULT_EXPIRY_MINUTES) * 60,
   );
   const [resendSeconds, setResendSeconds] = useState(RESEND_COOLDOWN_SECONDS);
   const [resendNotice, setResendNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!recoveryState) {
+    if (!recovery) {
       return;
     }
 
@@ -78,7 +53,7 @@ export function VerifyCodePage() {
     return () => {
       globalThis.clearInterval(interval);
     };
-  }, [recoveryState]);
+  }, [recovery]);
 
   const verifyMutation = useMutation({
     mutationFn: authService.verifyResetOtp,
@@ -99,7 +74,7 @@ export function VerifyCodePage() {
     defaultValues: { otp: '' },
   });
 
-  if (!recoveryState) {
+  if (!recovery) {
     return <Navigate to="/forgot-password" replace />;
   }
 
@@ -107,15 +82,11 @@ export function VerifyCodePage() {
     setResendNotice(null);
     try {
       await verifyMutation.mutateAsync({
-        email: recoveryState.email,
+        email: recovery.email,
         otp: values.otp,
       });
-      navigate('/reset-password', {
-        state: {
-          email: recoveryState.email,
-          otp: values.otp,
-        },
-      });
+      setVerifiedOtp(values.otp);
+      navigate('/reset-password', { replace: true });
     } catch (error) {
       const appError = toAppError(error);
       if (appError.kind === 'rate_limited') {
@@ -133,7 +104,8 @@ export function VerifyCodePage() {
     setResendNotice(null);
     clearErrors('root.serverError');
     try {
-      const result = await resendMutation.mutateAsync({ email: recoveryState.email });
+      const result = await resendMutation.mutateAsync({ email: recovery.email });
+      updateExpiry(result.expires_in_minutes);
       setExpirySeconds(result.expires_in_minutes * 60);
       setResendSeconds(RESEND_COOLDOWN_SECONDS);
       setResendNotice(result.message);
@@ -152,9 +124,13 @@ export function VerifyCodePage() {
   return (
     <AuthLayout
       title="Verify code"
-      subtitle={`Enter the 6-digit code sent to ${recoveryState.email}`}
+      subtitle={`Enter the 6-digit code sent to ${recovery.email}`}
       footer={
-        <Link to="/forgot-password" className="font-medium text-link hover:underline">
+        <Link
+          to="/forgot-password"
+          onClick={clearRecovery}
+          className="font-medium text-link hover:underline"
+        >
           Use a different email
         </Link>
       }
