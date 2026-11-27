@@ -3,7 +3,7 @@ import { useEffect, useId, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router';
 import { useSession } from '@/features/auth';
 import { toSafeExternalUrl } from '@/shared/lib';
-import { Avatar, cn, DropdownMenu, type DropdownMenuItem } from '@/shared/ui';
+import { Avatar, cn, DropdownMenu, getInitials, type DropdownMenuItem } from '@/shared/ui';
 
 interface PrimaryNavItem {
   to: string;
@@ -136,13 +136,13 @@ export function Navbar() {
             trigger={(triggerProps) => (
               <button
                 type="button"
-                aria-label={`${displayName} ${displayRole} User menu`}
+                aria-label={`${getInitials(displayName)} ${displayName} ${displayRole} User menu`}
                 className="flex min-h-touch items-center gap-2.5 rounded-pill border border-border-subtle bg-surface px-2.5 py-1 text-left transition-colors hover:bg-surface-input cursor-pointer"
                 {...triggerProps}
               >
                 <span aria-hidden="true">
                   <Avatar name={displayName} src={toSafeExternalUrl(user?.avatar_url)} size="sm" />
-                </span>
+                </span>{' '}
                 <span className="hidden xl:flex flex-col leading-tight">
                   <span className="text-sm font-medium text-ink">{displayName}</span>{' '}
                   <span className="text-xs text-gray-500">{displayRole}</span>
