@@ -81,11 +81,12 @@ These changes crossed the shared-surface ownership boundary and must be recorded
 
 ## Gate 1 carryovers and WI-11 delivery
 
-Finding D's documentation correction is present in `docs/api/plain.md` and `docs/discovery/api-authenticated-shapes.md`. The owner waived the remaining review sequence on #12.
+The owner waived the remaining review sequence on #12 after the historical Finding D status recorded below.
 
 | Requirement                                                                        | Status  | Evidence or remaining check                                                                                                                                                             |
 | ---------------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Finding C: Admin and PM login, reload, protected route, sign-out and old-token 401 | PASS    | `wi11-real-read` passed on run 46041554260 for both roles.                                                                                                                              |
+| Finding D: API documentation evidence consistency                                  | BLOCKED | Content correction is present in `docs/api/plain.md` and `docs/discovery/api-authenticated-shapes.md`; the owner's focused-review waiver and Gate 1 confirmation remain pending on #12. |
 | L-1 avatar host vs `img-src`                                                       | BLOCKED | Record as a Production precondition in ADR-12 and verify the actual avatar host before enforcing CSP.                                                                                   |
 | L-2 ADR-12 Report-Only wording                                                     | PASS    | ADR-12 explicitly states that no `report-to`/`Reporting-Endpoints` collector is configured and names browser-console/Playwright evidence.                                               |
 | L-3 `engines.node` vs ADR-11                                                       | PASS    | ADR-11 now records the existing Node `24.x` runtime and CI constraint.                                                                                                                  |
