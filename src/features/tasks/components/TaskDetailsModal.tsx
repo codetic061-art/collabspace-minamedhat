@@ -16,7 +16,7 @@ import {
   type TaskResource,
   type TaskStatus,
 } from '@/shared/api';
-import { hasCapability } from '@/shared/lib';
+import { hasCapability, toSafeExternalUrl } from '@/shared/lib';
 import {
   Avatar,
   BlockErrorState,
@@ -164,7 +164,11 @@ export function TaskDetailsModal({
                 <dd className="flex items-center gap-2">
                   {task.assignee ? (
                     <>
-                      <Avatar name={task.assignee.name} src={task.assignee.avatar_url} size="xs" />
+                      <Avatar
+                        name={task.assignee.name}
+                        src={toSafeExternalUrl(task.assignee.avatar_url)}
+                        size="xs"
+                      />
                       {task.assignee.name}
                       {task.assignee.job_title ? ` · ${task.assignee.job_title}` : ''}
                     </>

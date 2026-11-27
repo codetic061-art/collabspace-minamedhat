@@ -105,6 +105,20 @@ describe('Profile', () => {
     expect(screen.getByRole('tabpanel', { name: 'overview' })).toBeVisible();
   });
 
+  it('does not render an insecure API avatar URL', () => {
+    Object.assign(me.user, { avatar_url: 'http://example.test/avatar.png' });
+    try {
+      renderWithProviders(
+        <MemoryRouter>
+          <ProfilePage />
+        </MemoryRouter>,
+      );
+      expect(screen.getByRole('img', { name: 'Example User' }).tagName).not.toBe('IMG');
+    } finally {
+      Object.assign(me.user, { avatar_url: null });
+    }
+  });
+
   it('preserves settings and maps server validation onto the field', async () => {
     mswServer.use(
       http.post(`${base}/auth/profile`, () =>

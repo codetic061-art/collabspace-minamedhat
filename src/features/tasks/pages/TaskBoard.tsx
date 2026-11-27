@@ -12,7 +12,7 @@ import {
   type TaskResource,
   type TaskStatus,
 } from '@/shared/api';
-import { hasCapability } from '@/shared/lib';
+import { hasCapability, toSafeExternalUrl } from '@/shared/lib';
 import { Avatar, BlockErrorState, Button, Skeleton, SkeletonRegion } from '@/shared/ui';
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
 import { TaskFormModal } from '../components/TaskFormModal';
@@ -175,7 +175,7 @@ export function TaskBoard({ projectId }: { projectId: number }) {
                         <>
                           <Avatar
                             name={task.assignee.name}
-                            src={task.assignee.avatar_url}
+                            src={toSafeExternalUrl(task.assignee.avatar_url)}
                             size="xs"
                           />
                           <span>{task.assignee.name}</span>

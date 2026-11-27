@@ -10,6 +10,7 @@ import {
   type AvailabilityStatus,
   type ProfileMeData,
 } from '@/shared/api';
+import { toSafeExternalUrl } from '@/shared/lib';
 import { Avatar, Button, Card, Field, Input, Skeleton, SkeletonRegion } from '@/shared/ui';
 
 interface SettingsValues {
@@ -206,7 +207,7 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
   return (
     <div className="space-y-10">
       <div className="flex items-center gap-5">
-        <Avatar name={user.name} src={user.avatar_url} size="xl" />
+        <Avatar name={user.name} src={toSafeExternalUrl(user.avatar_url)} size="xl" />
         <div>
           <h1 className="text-3xl font-bold">Profile settings</h1>
           <Link to="/profile" className="text-sm text-primary">
