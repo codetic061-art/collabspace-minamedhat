@@ -197,7 +197,7 @@ jobs:
           WI11_ADMIN_PASSWORD: ${{ secrets.WI11_ADMIN_PASSWORD }}
           WI11_PM_EMAIL: ${{ secrets.WI11_PM_EMAIL }}
           WI11_PM_PASSWORD: ${{ secrets.WI11_PM_PASSWORD }}
-        run: npx playwright test e2e/preview-verify.spec.ts e2e/wi11-integrated.spec.ts e2e/wi11-real-read.spec.ts e2e/wi11-browser-coverage.spec.ts
+        run: npx playwright test e2e/preview-verify.spec.ts e2e/wi11-integrated.spec.ts e2e/wi11-real-read.spec.ts e2e/wi11-browser-coverage.spec.ts e2e/wi11-visual-states.spec.ts
 
       - name: Upload preview verification evidence
         if: always()
