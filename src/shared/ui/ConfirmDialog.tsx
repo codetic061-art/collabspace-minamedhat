@@ -34,6 +34,7 @@ export function ConfirmDialog({
       onClose={onClose}
       title={title}
       description={description}
+      children={null}
       size="sm"
       isSubmitting={isConfirming}
       submittingLabel={confirmingLabel}

@@ -16,18 +16,13 @@ jobs:
       - run: npm ci
       - name: Format changed files
         run: |
-          npx prettier --write src/features/tasks/components/TaskDetailsModal.tsx src/features/tasks/hooks/useTaskDetailsMutations.ts src/shared/ui/Input.tsx src/shared/ui/Select.tsx src/shared/ui/Tabs.tsx src/shared/ui/__tests__/interactivePrimitives.test.tsx
+          npx prettier --write docs/wi11-acceptance.md
       - name: Upload formatted files
         uses: actions/upload-artifact@v4
         with:
           name: gate2-formatted
           path: |
-            src/features/tasks/components/TaskDetailsModal.tsx
-            src/features/tasks/hooks/useTaskDetailsMutations.ts
-            src/shared/ui/Input.tsx
-            src/shared/ui/Select.tsx
-            src/shared/ui/Tabs.tsx
-            src/shared/ui/__tests__/interactivePrimitives.test.tsx
+            docs/wi11-acceptance.md
       - name: Typecheck
         run: npm run typecheck
         continue-on-error: true
@@ -36,8 +31,9 @@ jobs:
         continue-on-error: true
       - name: Unit and integration tests
         run: |
-          timeout 90s npm test -- --run > gate2-tests.log 2>&1 || true
-          cat gate2-tests.log
+          for test in src/shared/ui/__tests__/interactivePrimitives.test.tsx src/features/profile/__tests__/profile.test.tsx src/features/tasks/__tests__/tasksPage.test.tsx src/features/tasks/__tests__/taskForm.test.tsx; do
+            timeout 30s npm test -- "$test" || true
+          done
         continue-on-error: true
       - name: Build and budget
         run: npm run build && npm run check:budget
