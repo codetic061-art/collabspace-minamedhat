@@ -1,5 +1,7 @@
 name: WI-11 temporary formatting
-on: workflow_dispatch
+on:
+  push:
+    branches: [feat/wi-11-integration]
 permissions:
   contents: read
 jobs:
