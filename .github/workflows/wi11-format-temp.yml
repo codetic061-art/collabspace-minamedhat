@@ -1,0 +1,29 @@
+name: WI-11 temporary formatting
+on:
+  push:
+    branches: [feat/wi-11-integration]
+permissions:
+  contents: read
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx prettier --write docs/FINAL_PROJECT_REPORT.md docs/wi11-acceptance.md src/features/profile/__tests__/profile.test.tsx src/features/tasks/__tests__/taskBoard.test.tsx src/features/tasks/pages/TaskBoard.tsx src/shared/ui/__tests__/interactivePrimitives.test.tsx src/shared/ui/Input.tsx src/shared/ui/Select.tsx
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formatted-wi11
+          path: |
+            docs/FINAL_PROJECT_REPORT.md
+            docs/wi11-acceptance.md
+            src/features/profile/__tests__/profile.test.tsx
+            src/features/tasks/__tests__/taskBoard.test.tsx
+            src/features/tasks/pages/TaskBoard.tsx
+            src/shared/ui/__tests__/interactivePrimitives.test.tsx
+            src/shared/ui/Input.tsx
+            src/shared/ui/Select.tsx
