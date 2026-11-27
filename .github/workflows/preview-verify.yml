@@ -1,0 +1,52 @@
+name: Preview Verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: 'Vercel Preview base URL to verify'
+        required: true
+        type: string
+      spec:
+        description: 'Playwright spec path to run'
+        required: false
+        default: 'e2e/preview-verify.spec.ts'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  preview-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright preview verification
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ inputs.preview_url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: npx playwright test "${{ inputs.spec }}"
+
+      - name: Upload preview evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-evidence
+          path: |
+            test-results/
+            preview-shots/
+          if-no-files-found: ignore
