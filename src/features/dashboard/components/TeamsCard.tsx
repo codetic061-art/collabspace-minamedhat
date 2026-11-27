@@ -76,9 +76,7 @@ function TeamsCardBody({ query, selectedTeamId, onSelectTeam }: TeamsCardBodyPro
         aria-label="Select a team"
         placeholder="Select a team"
         value={selectedTeamId === null ? '' : String(selectedTeamId)}
-        onChange={(event) =>
-          onSelectTeam(event.target.value ? Number(event.target.value) : null)
-        }
+        onChange={(event) => onSelectTeam(event.target.value ? Number(event.target.value) : null)}
         options={teams.map((team) => ({ value: String(team.id), label: team.name }))}
       />
       {selectedTeamId === null ? (

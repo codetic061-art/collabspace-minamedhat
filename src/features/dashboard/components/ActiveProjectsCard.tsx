@@ -33,8 +33,7 @@ export function ActiveProjectsCard({
         <ul className="space-y-3">
           {data.active_projects.items.map((project) => {
             const accent = projectAccent(project.id);
-            const hasTaskCounts =
-              project.tasks_total !== null && project.tasks_completed !== null;
+            const hasTaskCounts = project.tasks_total !== null && project.tasks_completed !== null;
             return (
               <li
                 key={project.id}

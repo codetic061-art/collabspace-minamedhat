@@ -47,9 +47,7 @@ describe('ProjectOverviewChart', () => {
       />,
     );
 
-    expect(
-      screen.getByText('Monthly created and completed tasks for 2026.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Monthly created and completed tasks for 2026.')).toBeInTheDocument();
     expect(container.querySelector('.recharts-responsive-container')).not.toBeNull();
   });
 });

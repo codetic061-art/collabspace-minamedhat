@@ -41,8 +41,7 @@ export function MeetingsCard({
                   {formatDisplayDate(meeting.date)}
                 </span>
                 <span>
-                  {formatDisplayTime(meeting.start_time)} -{' '}
-                  {formatDisplayTime(meeting.end_time)}
+                  {formatDisplayTime(meeting.start_time)} - {formatDisplayTime(meeting.end_time)}
                 </span>
               </div>
               {meeting.participants.length > 0 ? (

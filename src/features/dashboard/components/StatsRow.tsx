@@ -38,12 +38,7 @@ function StatCard({ title, value, total, percentage, tone, icon }: StatCardProps
       <p className="mt-4 text-xs text-body">
         {value}/{total}
       </p>
-      <ProgressBar
-        value={percentage}
-        tone={tone}
-        label={`${title} percentage`}
-        className="mt-2"
-      />
+      <ProgressBar value={percentage} tone={tone} label={`${title} percentage`} className="mt-2" />
     </Card>
   );
 }

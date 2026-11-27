@@ -226,9 +226,7 @@ describe('DashboardPage', () => {
         name: "You don't have access to this page.",
       }),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('region', { name: 'Workspace statistics' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Workspace statistics' })).not.toBeInTheDocument();
   });
 
   it('renders nothing on 401 because the session layer owns the redirect', async () => {
