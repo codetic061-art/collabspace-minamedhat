@@ -63,6 +63,23 @@ export default defineConfig(() => {
 
   return {
     plugins,
+    build: {
+      rolldownOptions: {
+        output: {
+          strictExecutionOrder: true,
+          codeSplitting: {
+            groups: [
+              {
+                name: 'shared-feature',
+                test: /[/\\]src[/\\]shared[/\\](ui|api)[/\\]/,
+                entriesAware: true,
+                includeDependenciesRecursively: false,
+              },
+            ],
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
