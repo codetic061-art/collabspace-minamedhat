@@ -153,7 +153,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
 
     const controller = new AbortController();
-    void restoreSession({ signal: controller.signal });
+    void Promise.resolve().then(() => {
+      if (!controller.signal.aborted) void restoreSession({ signal: controller.signal });
+    });
     return () => {
       controller.abort();
     };
