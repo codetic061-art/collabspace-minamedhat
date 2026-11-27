@@ -4,6 +4,7 @@ Status is recorded against integrated head `bbcd278c9358fe01bf29616b57bc212a1007
 
 Evidence anchors:
 
+- [Correction CI run 46057960450](https://github.com/codetic061-art/collabspace-minamedhat/actions/runs/46057960450) passed 109 unit and integration tests, one smoke test and nine Preview tests on `4af9676a58751a012023ff7623e86756beaf96b4`. Initial JavaScript was 121.24 KB gzip.
 - [Correction review rerun 46052770056 attempt 3](https://github.com/codetic061-art/collabspace-minamedhat/actions/runs/46052770056/attempts/3) passed 105 unit and integration tests, one smoke test and nine Preview tests on `0c1139ed00e5634698d2d7fc37ed45f87bf87078`. The initial bundle was 121.21 KB gzip. Later corrections require their own run.
 - [exact-head CI run 46041554260](https://github.com/codetic061-art/collabspace-minamedhat/actions/runs/46041554260) passed verify, e2e and preview-verify.
 - The `preview-evidence` artifact contains the sanitized fixture screenshots and browser checks.
