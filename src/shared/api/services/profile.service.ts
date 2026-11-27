@@ -189,10 +189,11 @@ export function updateProfile(payload: UpdateProfilePayload): Promise<UserResour
   ];
 
   for (const [key, value] of scalarEntries) {
-    if (value === undefined || value === null) {
+    if (value === undefined) {
       continue;
     }
-    formData.append(key, String(value));
+    // Laravel converts empty multipart fields to null; omission leaves the field unchanged.
+    formData.append(key, value === null ? '' : String(value));
   }
 
   return requestJson<UserResource>(PROFILE_PATHS.update, {

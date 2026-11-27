@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw/http';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
+import { profileService } from '@/shared/api';
 import { renderWithProviders } from '@/test/render';
 import { mswServer } from '@/test/setup';
 import { ProfilePage } from '../ProfilePage';
@@ -30,6 +31,18 @@ vi.mock('@/features/auth', () => ({ useSession: () => ({ me, retryRestore: vi.fn
 const base = 'https://collabspace.huma-volve.com/api/v1';
 
 describe('Profile', () => {
+  it('sends a null current project as an empty multipart field', async () => {
+    let project: FormDataEntryValue | null = null;
+    mswServer.use(
+      http.post(`${base}/auth/profile`, async ({ request }) => {
+        const data = await request.formData();
+        project = data.get('current_project_id');
+        return HttpResponse.json({ success: true, data: me.user });
+      }),
+    );
+    await profileService.updateProfile({ current_project_id: null });
+    expect(project).toBe('');
+  });
   it('shows session data and groups assigned tasks', async () => {
     mswServer.use(
       http.get(`${base}/auth/profile/tasks`, () =>

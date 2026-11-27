@@ -176,12 +176,16 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
         years_of_experience: Number(values.years_of_experience),
         current_project_id: values.current_project_id
           ? Number(values.current_project_id)
-          : undefined,
+          : null,
         about: values.about.trim(),
         avatar,
       });
       await retryRestore();
     } catch (error) {
+      const appError = toAppError(error);
+      if (appError.kind === 'validation' && appError.errors.avatar?.[0]) {
+        setAvatarError(appError.errors.avatar[0]);
+      }
       applyServerValidationErrors(error, setError, settingsFields);
     }
   });
