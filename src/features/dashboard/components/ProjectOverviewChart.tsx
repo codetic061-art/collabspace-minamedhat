@@ -67,6 +67,7 @@ export default function ProjectOverviewChart({ points, year }: ProjectOverviewCh
               stroke="var(--color-primary)"
               strokeWidth={2}
               fill="url(#createdTasksGradient)"
+              isAnimationActive={false}
             />
             <Area
               type="monotone"
@@ -75,6 +76,7 @@ export default function ProjectOverviewChart({ points, year }: ProjectOverviewCh
               stroke="var(--color-success)"
               strokeWidth={2}
               fill="url(#completedTasksGradient)"
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>
