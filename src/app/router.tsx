@@ -71,15 +71,15 @@ export function createAppRoutes(): RouteObject[] {
             {
               path: '/projects',
               lazy: async () => {
-                const { ProjectsPlaceholderPage } = await import('./PlaceholderPages');
-                return { Component: ProjectsPlaceholderPage };
+                const { loadProjectsListPage } = await import('@/features/projects');
+                return loadProjectsListPage();
               },
             },
             {
               path: '/projects/:projectId',
               lazy: async () => {
-                const { ProjectDetailsPlaceholderPage } = await import('./PlaceholderPages');
-                return { Component: ProjectDetailsPlaceholderPage };
+                const { loadProjectDetailsPage } = await import('@/features/projects');
+                return loadProjectDetailsPage();
               },
             },
             {
