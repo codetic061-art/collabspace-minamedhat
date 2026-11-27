@@ -108,7 +108,20 @@ describe('DashboardPage', () => {
 
     renderDashboard();
 
-    expect(screen.getAllByRole('status').length).toBeGreaterThan(0);
+    for (const label of [
+      'Loading Pending Tasks',
+      'Loading In Progress',
+      'Loading Completed',
+      'Loading Completion Rate',
+      'Loading Project overview',
+      'Loading Active Projects',
+      'Loading Recent Files',
+      'Loading Tasks',
+      'Loading teams',
+      'Loading Upcoming meetings',
+    ]) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument();
+    }
 
     expect(await screen.findByRole('heading', { name: 'Pending Tasks' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'In Progress' })).toBeInTheDocument();
@@ -202,7 +215,7 @@ describe('DashboardPage', () => {
     renderDashboard();
 
     const retries = await screen.findAllByRole('button', { name: 'Retry' });
-    expect(retries.length).toBeGreaterThanOrEqual(6);
+    expect(retries).toHaveLength(10);
     expect(screen.queryByRole('heading', { name: 'Pending Tasks' })).not.toBeInTheDocument();
 
     const firstRetry = retries[0];
@@ -293,6 +306,27 @@ describe('DashboardPage', () => {
     expect(member.querySelector('img')).toBeNull();
     expect(within(member).queryByRole('progressbar')).not.toBeInTheDocument();
     expect(within(member).queryByText(/\d+\s*\/\s*\d+/)).not.toBeInTheDocument();
+  });
+
+  it('shows an empty member state after selecting a team with no members', async () => {
+    installHandlers();
+    mswServer.use(
+      http.get(`${BASE}/teams/:teamId`, () =>
+        HttpResponse.json({
+          success: true,
+          data: { ...teamDetailFixture, members: [] },
+        }),
+      ),
+    );
+
+    renderDashboard();
+
+    await userEvent.selectOptions(
+      await screen.findByRole('combobox', { name: 'Select a team' }),
+      '5',
+    );
+    expect(await screen.findByText('This team has no members.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Active Projects' })).toBeInTheDocument();
   });
 
   it('is accessible and never renders unsafe URLs or file download links', async () => {
