@@ -1,0 +1,21 @@
+name: WI-10 formatting
+on: push
+permissions:
+  contents: read
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx prettier --write src/features/profile src/shared/api/services/profile.service.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wi10-formatted
+          path: |
+            src/features/profile
+            src/shared/api/services/profile.service.ts

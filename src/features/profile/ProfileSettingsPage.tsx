@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
 import { useSession } from '@/features/auth';
@@ -146,6 +146,8 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
   const { user, projects } = me;
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarError, setAvatarError] = useState('');
+  const [validatingAvatar, setValidatingAvatar] = useState(false);
+  const avatarSelection = useRef(0);
   const [removing, setRemoving] = useState(false);
   const {
     register,
@@ -165,7 +167,7 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
     },
   });
   const submit = handleSubmit(async (values) => {
-    if (avatarError) return;
+    if (avatarError || validatingAvatar) return;
     try {
       await profileService.updateProfile({
         name: values.name.trim(),
@@ -278,8 +280,12 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
                     const file = event.target.files?.[0];
                     setAvatar(null);
                     setAvatarError('');
+                    const selection = ++avatarSelection.current;
+                    setValidatingAvatar(Boolean(file));
                     if (file)
                       void validateAvatar(file).then((message) => {
+                        if (selection !== avatarSelection.current) return;
+                        setValidatingAvatar(false);
                         setAvatarError(message ?? '');
                         if (!message) setAvatar(file);
                       });
@@ -364,7 +370,7 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
           type="submit"
           fullWidth
           isLoading={isSubmitting}
-          disabled={removing}
+          disabled={removing || validatingAvatar}
           loadingText="Saving..."
         >
           Save
