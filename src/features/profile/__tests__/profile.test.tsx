@@ -36,12 +36,40 @@ describe('Profile', () => {
   it('unlocks saving when an avatar is removed during image validation', async () => {
     Object.assign(me.user, { avatar_url: 'https://example.test/avatar.png' });
     const NativeURL = URL;
-    vi.stubGlobal('URL', class extends NativeURL { static createObjectURL() { return 'blob:test'; } static revokeObjectURL() {} });
-    vi.stubGlobal('Image', class { onload = null; onerror = null; set src(_value: string) {} });
-    mswServer.use(http.delete(`${base}/auth/profile/avatar`, () => HttpResponse.json({ success: true, data: { ...me.user, avatar_url: null } })));
+    vi.stubGlobal(
+      'URL',
+      class extends NativeURL {
+        static createObjectURL() {
+          return 'blob:test';
+        }
+        static revokeObjectURL() {}
+      },
+    );
+    vi.stubGlobal(
+      'Image',
+      class {
+        onload = null;
+        onerror = null;
+        set src(_value: string) {}
+      },
+    );
+    mswServer.use(
+      http.delete(`${base}/auth/profile/avatar`, () =>
+        HttpResponse.json({ success: true, data: { ...me.user, avatar_url: null } }),
+      ),
+    );
     try {
-      renderWithProviders(<MemoryRouter><ToastProvider><ProfileSettingsPage /></ToastProvider></MemoryRouter>);
-      await userEvent.upload(screen.getByLabelText('Avatar'), new File(['image'], 'avatar.png', { type: 'image/png' }));
+      renderWithProviders(
+        <MemoryRouter>
+          <ToastProvider>
+            <ProfileSettingsPage />
+          </ToastProvider>
+        </MemoryRouter>,
+      );
+      await userEvent.upload(
+        screen.getByLabelText('Avatar'),
+        new File(['image'], 'avatar.png', { type: 'image/png' }),
+      );
       expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
       await userEvent.click(screen.getByRole('button', { name: 'Remove avatar' }));
       await waitFor(() => expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled());

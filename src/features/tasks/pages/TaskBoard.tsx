@@ -261,7 +261,9 @@ export function TaskBoard({ projectId }: { projectId: number }) {
           }}
           onStatus={statusMutation.changeStatus}
           isStatusPending={statusMutation.pendingIds.has(taskId)}
-          statusMessage={statusMutation.failure?.taskId === taskId ? statusMutation.failure.message : ''}
+          statusMessage={
+            statusMutation.failure?.taskId === taskId ? statusMutation.failure.message : ''
+          }
         />
       )}
       {form && (

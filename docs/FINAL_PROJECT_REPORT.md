@@ -4,18 +4,18 @@
 
 The Tier 1 project implements a responsive collaboration workspace using the supplied Figma designs and existing REST API. Product decisions, acceptance criteria and verified API shapes are recorded in [discovery](discovery/HANDOFF.md), the [MVP specification](spec/mvp-spec.md) and [API documentation](api/plain.md).
 
-| Work item | Delivery |
-| --- | --- |
-| [WI-1](https://github.com/codetic061-art/collabspace-minamedhat/issues/1) | API discovery and contract documentation. |
-| [WI-2](https://github.com/codetic061-art/collabspace-minamedhat/issues/2) | Architecture decisions and engineering conventions. |
-| [WI-3](https://github.com/codetic061-art/collabspace-minamedhat/issues/3) | Application scaffold, configuration and automated checks. |
-| [WI-4](https://github.com/codetic061-art/collabspace-minamedhat/issues/4) | Shared design tokens and accessible UI primitives. |
-| [WI-5](https://github.com/codetic061-art/collabspace-minamedhat/issues/5) | Centralized API, domain services and error handling. |
-| [WI-6](https://github.com/codetic061-art/collabspace-minamedhat/issues/6) | Authentication, session and application shell. |
-| [WI-7](https://github.com/codetic061-art/collabspace-minamedhat/issues/7) | Dashboard summaries and charts. |
-| [WI-8](https://github.com/codetic061-art/collabspace-minamedhat/issues/8) | Project listing and details. |
-| [WI-9](https://github.com/codetic061-art/collabspace-minamedhat/issues/9) | Tasks, task details and Kanban. |
-| [WI-10](https://github.com/codetic061-art/collabspace-minamedhat/issues/10) | Profile and settings. |
+| Work item                                                                   | Delivery                                                     |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| [WI-1](https://github.com/codetic061-art/collabspace-minamedhat/issues/1)   | API discovery and contract documentation.                    |
+| [WI-2](https://github.com/codetic061-art/collabspace-minamedhat/issues/2)   | Architecture decisions and engineering conventions.          |
+| [WI-3](https://github.com/codetic061-art/collabspace-minamedhat/issues/3)   | Application scaffold, configuration and automated checks.    |
+| [WI-4](https://github.com/codetic061-art/collabspace-minamedhat/issues/4)   | Shared design tokens and accessible UI primitives.           |
+| [WI-5](https://github.com/codetic061-art/collabspace-minamedhat/issues/5)   | Centralized API, domain services and error handling.         |
+| [WI-6](https://github.com/codetic061-art/collabspace-minamedhat/issues/6)   | Authentication, session and application shell.               |
+| [WI-7](https://github.com/codetic061-art/collabspace-minamedhat/issues/7)   | Dashboard summaries and charts.                              |
+| [WI-8](https://github.com/codetic061-art/collabspace-minamedhat/issues/8)   | Project listing and details.                                 |
+| [WI-9](https://github.com/codetic061-art/collabspace-minamedhat/issues/9)   | Tasks, task details and Kanban.                              |
+| [WI-10](https://github.com/codetic061-art/collabspace-minamedhat/issues/10) | Profile and settings.                                        |
 | [WI-11](https://github.com/codetic061-art/collabspace-minamedhat/issues/11) | Integrated routes, Preview evidence and acceptance tracking. |
 
 The application uses React, Vite, TypeScript, React Router and TanStack Query. Services share one HTTP client. Feature folders isolate domain UI and data access, and route splitting and lazy chart loading control bundle size. Capability checks govern available actions. ADRs and the API contract provide implementation details.

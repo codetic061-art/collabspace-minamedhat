@@ -78,9 +78,31 @@ describe('task board', () => {
   it('does not show another task’s status error in the details dialog', async () => {
     registerReads();
     mswServer.use(
-      http.patch(`${base}/tasks/1/status`, () => HttpResponse.json({ success: false, message: 'Permission denied' }, { status: 403 })),
-      http.get(`${base}/tasks/2`, () => HttpResponse.json({ success: true, data: { ...task, id: 2, name: 'Other task' } })),
-      http.get(`${base}/projects/1/tasks/kanban`, () => HttpResponse.json({ success: true, data: { project: { id: 1, name: 'Example', progress_percentage: 0 }, total_tasks: 2, columns: { Pending: { name: 'Pending', count: 2, tasks: [task, { ...task, id: 2, name: 'Other task' }] }, 'In Progress': { name: 'In Progress', count: 0, tasks: [] }, 'In Review': { name: 'In Review', count: 0, tasks: [] }, Completed: { name: 'Completed', count: 0, tasks: [] } } } })),
+      http.patch(`${base}/tasks/1/status`, () =>
+        HttpResponse.json({ success: false, message: 'Permission denied' }, { status: 403 }),
+      ),
+      http.get(`${base}/tasks/2`, () =>
+        HttpResponse.json({ success: true, data: { ...task, id: 2, name: 'Other task' } }),
+      ),
+      http.get(`${base}/projects/1/tasks/kanban`, () =>
+        HttpResponse.json({
+          success: true,
+          data: {
+            project: { id: 1, name: 'Example', progress_percentage: 0 },
+            total_tasks: 2,
+            columns: {
+              Pending: {
+                name: 'Pending',
+                count: 2,
+                tasks: [task, { ...task, id: 2, name: 'Other task' }],
+              },
+              'In Progress': { name: 'In Progress', count: 0, tasks: [] },
+              'In Review': { name: 'In Review', count: 0, tasks: [] },
+              Completed: { name: 'Completed', count: 0, tasks: [] },
+            },
+          },
+        }),
+      ),
     );
     const user = userEvent.setup();
     renderBoard('/tasks?taskId=1');

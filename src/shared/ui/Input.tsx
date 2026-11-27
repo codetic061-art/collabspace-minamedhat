@@ -59,7 +59,13 @@ export function Input({
       rest['aria-describedby'] ?? a11y?.['aria-describedby'] ?? field?.describedBy;
     const standaloneErrorId = !field && error ? `${effectiveId}-error` : undefined;
     const effectiveDescribedBy =
-      [describedBy, !field && label === undefined && hint ? `${effectiveId}-hint` : undefined, standaloneErrorId].filter(Boolean).join(' ') || undefined;
+      [
+        describedBy,
+        !field && label === undefined && hint ? `${effectiveId}-hint` : undefined,
+        standaloneErrorId,
+      ]
+        .filter(Boolean)
+        .join(' ') || undefined;
 
     return (
       <div

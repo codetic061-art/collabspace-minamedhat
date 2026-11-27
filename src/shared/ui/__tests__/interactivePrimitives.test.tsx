@@ -19,7 +19,13 @@ import { expectNoA11yViolations } from '@/test/a11y';
 
 describe('Select and NativeSelect', () => {
   it('associates standalone hints with each control', () => {
-    render(<div><Input id="hint-input" hint="Input hint" /><Select id="hint-select" hint="Select hint" options={[]} /><NativeSelect id="hint-native" hint="Native hint" options={[]} /></div>);
+    render(
+      <div>
+        <Input id="hint-input" hint="Input hint" />
+        <Select id="hint-select" hint="Select hint" options={[]} />
+        <NativeSelect id="hint-native" hint="Native hint" options={[]} />
+      </div>,
+    );
     expect(document.getElementById('hint-input')).toHaveAccessibleDescription('Input hint');
     expect(document.getElementById('hint-select')).toHaveAccessibleDescription('Select hint');
     expect(document.getElementById('hint-native')).toHaveAccessibleDescription('Native hint');

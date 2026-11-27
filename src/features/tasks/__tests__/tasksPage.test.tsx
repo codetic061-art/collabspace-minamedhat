@@ -112,3 +112,21 @@ it('keeps board filters and the selected project when details close', async () =
   expect(screen.getByLabelText('Search tasks')).toHaveValue('Project B');
   expect(screen.getByLabelText('Project')).toHaveValue('2');
 });
+
+it('clears the team filter when switching projects', async () => {
+  mswServer.use(
+    http.get(`${base}/projects/:id/teams`, ({ params }) =>
+      HttpResponse.json({
+        success: true,
+        data: params.id === '1' ? [{ id: 7, name: 'Team A' }] : [],
+      }),
+    ),
+  );
+  const user = userEvent.setup();
+  renderPage('/tasks');
+  await screen.findByRole('option', { name: 'Team A' });
+  await user.selectOptions(screen.getByLabelText('Team filter'), '7');
+  await user.selectOptions(screen.getByLabelText('Project'), '2');
+  expect(await screen.findByRole('button', { name: 'Project B task' })).toBeVisible();
+  expect(screen.getByLabelText('Team filter')).toHaveValue('');
+});
