@@ -65,18 +65,11 @@ export default defineConfig(() => {
     plugins,
     build: {
       rolldownOptions: {
-        output: {
-          strictExecutionOrder: true,
-          codeSplitting: {
-            groups: [
-              {
-                name: 'shared-feature',
-                test: /[/\\]src[/\\]shared[/\\](ui|api)[/\\]/,
-                entriesAware: true,
-                includeDependenciesRecursively: false,
-              },
-            ],
-          },
+        treeshake: {
+          moduleSideEffects: (id) =>
+            !/[/\\]src[/\\]shared[/\\](ui[/\\](Avatar|Badge|ProgressBar|Select|StatePrimitives)|api[/\\](dates|services[/\\](dashboard|teams)\.service))\.(ts|tsx)$/.test(
+              id,
+            ),
         },
       },
     },
