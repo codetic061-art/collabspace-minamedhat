@@ -41,22 +41,18 @@ export function ProjectDetailsHeader({ project, canEdit, onEdit }: ProjectDetail
     : `${due.days_remaining} ${due.days_remaining === 1 ? 'day' : 'days'} left`;
 
   const renderProjectsLink = (label: string, className: string) => (
-    <Link to="/projects" className={className}>
-      {label}
-    </Link>
+    <Link to="/projects" className={className}>{label}</Link>
   );
+
+  const dueStatusClass = due.is_overdue
+    ? 'text-xs font-medium text-danger'
+    : 'text-xs font-medium text-body';
 
   return (
     <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="space-y-2">
         <Breadcrumb
-          items={[
-            {
-              label: 'Projects',
-              renderLink: renderProjectsLink,
-            },
-            { label: project.name },
-          ]}
+          items={[{ label: 'Projects', renderLink: renderProjectsLink }, { label: project.name }]}
         />
 
         <div className="flex flex-wrap items-center gap-3">
@@ -80,15 +76,7 @@ export function ProjectDetailsHeader({ project, canEdit, onEdit }: ProjectDetail
         <Card variant="bordered" className="w-full sm:w-80 space-y-2.5 p-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-ink">Due Date</h2>
-            <span
-              className={
-                due.is_overdue
-                  ? 'text-xs font-medium text-danger'
-                  : 'text-xs font-medium text-body'
-              }
-            >
-              {dueStatusText}
-            </span>
+            <span className={dueStatusClass}>{dueStatusText}</span>
           </div>
 
           <ProgressBar

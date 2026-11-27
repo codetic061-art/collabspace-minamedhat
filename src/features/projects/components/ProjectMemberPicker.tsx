@@ -175,7 +175,9 @@ export function ProjectMemberPicker({
                               size="sm"
                             />
                             <span className="min-w-0">
-                              <span className="block truncate font-medium text-ink">{user.name}</span>
+                              <span className="block truncate font-medium text-ink">
+                                {user.name}
+                              </span>
                               <span className="block truncate text-xs text-body">
                                 {user.job_title ?? user.email}
                               </span>
