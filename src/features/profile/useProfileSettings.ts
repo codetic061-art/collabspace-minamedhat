@@ -82,32 +82,33 @@ export function useProfileSettings(me: ProfileMeData) {
       about: user.about ?? '',
     },
   });
-  const submit: FormEventHandler<HTMLFormElement> = (event) => void handleSubmit(async (values) => {
-    if (avatarError || validatingAvatar) return;
-    try {
-      await profileService.updateProfile({
-        name: values.name.trim(),
-        email: values.email.trim(),
-        phone: values.phone.trim(),
-        available_status: values.available_status,
-        job_title: values.job_title.trim(),
-        years_of_experience: Number(values.years_of_experience),
-        current_project_id: values.current_project_id ? Number(values.current_project_id) : null,
-        about: values.about.trim(),
-        avatar,
-      });
-      setAvatar(null);
-      if (avatarInput.current) avatarInput.current.value = '';
-      showToast({ message: 'Profile updated.', tone: 'success' });
-      void refreshMe();
-    } catch (error) {
-      const appError = toAppError(error);
-      if (appError.kind === 'validation' && appError.errors.avatar?.[0]) {
-        setAvatarError(appError.errors.avatar[0]);
+  const submit: FormEventHandler<HTMLFormElement> = (event) =>
+    void handleSubmit(async (values) => {
+      if (avatarError || validatingAvatar) return;
+      try {
+        await profileService.updateProfile({
+          name: values.name.trim(),
+          email: values.email.trim(),
+          phone: values.phone.trim(),
+          available_status: values.available_status,
+          job_title: values.job_title.trim(),
+          years_of_experience: Number(values.years_of_experience),
+          current_project_id: values.current_project_id ? Number(values.current_project_id) : null,
+          about: values.about.trim(),
+          avatar,
+        });
+        setAvatar(null);
+        if (avatarInput.current) avatarInput.current.value = '';
+        showToast({ message: 'Profile updated.', tone: 'success' });
+        void refreshMe();
+      } catch (error) {
+        const appError = toAppError(error);
+        if (appError.kind === 'validation' && appError.errors.avatar?.[0]) {
+          setAvatarError(appError.errors.avatar[0]);
+        }
+        applyServerValidationErrors(error, setError, settingsFields);
       }
-      applyServerValidationErrors(error, setError, settingsFields);
-    }
-  })(event);
+    })(event);
   async function remove() {
     if (removing) return;
     setRemoving(true);

@@ -396,11 +396,7 @@ describe('Modal and ConfirmDialog', () => {
             footer={<Button onClick={() => setInnerOpen(false)}>Close inner</Button>}
           >
             <Button onClick={() => setInnerOpen(true)}>Open inner</Button>
-            <Modal
-              isOpen={innerOpen}
-              onClose={() => setInnerOpen(false)}
-              title="Inner dialog"
-            >
+            <Modal isOpen={innerOpen} onClose={() => setInnerOpen(false)} title="Inner dialog">
               <Button>Inner action</Button>
             </Modal>
           </Modal>

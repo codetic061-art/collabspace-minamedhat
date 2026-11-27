@@ -179,7 +179,10 @@ describe('task board', () => {
     const user = userEvent.setup();
     renderBoard();
     try {
-      await user.selectOptions(await screen.findByLabelText('Status for Write tests'), 'In Progress');
+      await user.selectOptions(
+        await screen.findByLabelText('Status for Write tests'),
+        'In Progress',
+      );
       expect(screen.getByLabelText('Status for Write tests')).toBeDisabled();
       expect(screen.getByLabelText('Status for Other task')).toBeEnabled();
     } finally {

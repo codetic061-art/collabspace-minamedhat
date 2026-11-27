@@ -151,11 +151,11 @@ describe('Profile', () => {
       await userEvent.upload(input, new File(['image'], 'avatar.png', { type: 'image/png' }));
       await userEvent.click(screen.getByRole('button', { name: 'Save' }));
       await waitFor(() => expect(update).toHaveBeenCalledTimes(1));
-      expect(update.mock.calls[0][0].avatar).toBeInstanceOf(File);
+      expect(update.mock.calls[0]?.[0].avatar).toBeInstanceOf(File);
       await waitFor(() => expect(input).toHaveValue(''));
       await userEvent.click(screen.getByRole('button', { name: 'Save' }));
       await waitFor(() => expect(update).toHaveBeenCalledTimes(2));
-      expect(update.mock.calls[1][0].avatar).toBeNull();
+      expect(update.mock.calls[1]?.[0].avatar).toBeNull();
     } finally {
       update.mockRestore();
       vi.unstubAllGlobals();
