@@ -74,6 +74,37 @@ describe('Profile', () => {
     expect(screen.getByText('Completed')).toBeInTheDocument();
   });
 
+  it('supports keyboard navigation between linked profile tabs', async () => {
+    mswServer.use(
+      http.get(`${base}/auth/profile/tasks`, () =>
+        HttpResponse.json({
+          success: true,
+          data: { current_page: 1, last_page: 1, per_page: 15, total: 0, data: [] },
+        }),
+      ),
+    );
+    renderWithProviders(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>,
+    );
+    const user = userEvent.setup();
+    const overview = screen.getByRole('tab', { name: 'overview' });
+    const tasks = screen.getByRole('tab', { name: 'tasks' });
+    overview.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(tasks).toHaveFocus();
+    expect(tasks).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel', { name: 'tasks' })).toHaveAttribute(
+      'id',
+      tasks.getAttribute('aria-controls'),
+    );
+    await user.keyboard('{Home}');
+    expect(overview).toHaveFocus();
+    expect(overview).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel', { name: 'overview' })).toBeVisible();
+  });
+
   it('preserves settings and maps server validation onto the field', async () => {
     mswServer.use(
       http.post(`${base}/auth/profile`, () =>

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { Settings } from 'lucide-react';
 import { useSession } from '@/features/auth';
 import { formatDisplayDate, profileQueries, type ProfileRawTask } from '@/shared/api';
+import { toSafeExternalUrl } from '@/shared/lib';
 import { Avatar, BlockErrorState, Card, EmptyState, Skeleton, SkeletonRegion } from '@/shared/ui';
 
 function TaskGroup({ title, tasks }: { title: string; tasks: ProfileRawTask[] }) {
@@ -76,6 +77,9 @@ function ProfileTasks() {
 export function ProfilePage() {
   const { me } = useSession();
   const [tab, setTab] = useState<'overview' | 'tasks'>('overview');
+  const tabId = useId();
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const tabs = ['overview', 'tasks'] as const;
   if (!me)
     return (
       <SkeletonRegion label="Loading profile">
@@ -88,7 +92,7 @@ export function ProfilePage() {
       <div className="flex flex-wrap items-center gap-5">
         <Avatar
           name={user.name}
-          src={user.avatar_url}
+          src={toSafeExternalUrl(user.avatar_url)}
           size="xl"
           badge={
             <Link
@@ -121,22 +125,43 @@ export function ProfilePage() {
         aria-label="Profile sections"
         className="flex gap-6 border-b border-border-subtle"
       >
-        {(['overview', 'tasks'] as const).map((item) => (
+        {tabs.map((item, index) => (
           <button
             key={item}
+            ref={(node) => {
+              tabRefs.current[index] = node;
+            }}
             type="button"
             role="tab"
+            id={`${tabId}-${item}-tab`}
+            aria-controls={`${tabId}-${item}-panel`}
             aria-selected={tab === item}
+            tabIndex={tab === item ? 0 : -1}
             className={`px-4 pb-4 capitalize ${tab === item ? 'border-b-2 border-primary text-primary' : 'text-heading'}`}
             onClick={() => setTab(item)}
+            onKeyDown={(event) => {
+              let next = index;
+              if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+              else if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
+              else if (event.key === 'Home') next = 0;
+              else if (event.key === 'End') next = tabs.length - 1;
+              else return;
+              event.preventDefault();
+              setTab(tabs[next] ?? 'overview');
+              tabRefs.current[next]?.focus();
+            }}
           >
             {item}
           </button>
         ))}
       </div>
-      {tab === 'tasks' ? (
-        <ProfileTasks />
-      ) : (
+      <div
+        role="tabpanel"
+        id={`${tabId}-overview-panel`}
+        aria-labelledby={`${tabId}-overview-tab`}
+        tabIndex={0}
+        hidden={tab !== 'overview'}
+      >
         <div className="max-w-3xl space-y-10">
           <section>
             <h2 className="mb-5 text-2xl font-medium">About</h2>
@@ -160,7 +185,16 @@ export function ProfilePage() {
             )}
           </section>
         </div>
-      )}
+      </div>
+      <div
+        role="tabpanel"
+        id={`${tabId}-tasks-panel`}
+        aria-labelledby={`${tabId}-tasks-tab`}
+        tabIndex={0}
+        hidden={tab !== 'tasks'}
+      >
+        {tab === 'tasks' && <ProfileTasks />}
+      </div>
     </section>
   );
 }

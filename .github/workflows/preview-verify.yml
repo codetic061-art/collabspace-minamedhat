@@ -47,7 +47,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: preview-evidence
-          path: |
-            test-results/
-            preview-shots/
+          path: preview-shots/
           if-no-files-found: ignore
