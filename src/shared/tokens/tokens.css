@@ -1,1 +1,146 @@
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/rubik/latin-400.css';
 @import 'tailwindcss';
+
+@theme {
+  /* Core brand and surface colors (figma.md §9.1) */
+  --color-primary: #005afb;
+  --color-primary-tint: #e6efff;
+  --color-link: #2563eb;
+  --color-blue-accent: #3b82f6;
+
+  --color-canvas: #f6f8fa;
+  --color-surface: #ffffff;
+  --color-surface-label: #f3f4f6;
+  --color-surface-input: #f9fafb;
+
+  --color-ink: #000712;
+  --color-heading: #1f2937;
+  --color-body: #718096;
+  --color-secondary: #525256;
+  --color-black-default: #191919;
+  --color-black: #252525;
+  --color-dark: #27272b;
+
+  --color-border-input: #cbd5e0;
+  --color-border-card: #c2c2c2;
+  --color-border-subtle: #f3f4f6;
+  --color-border-neutral: #e9e9ea;
+
+  --color-neutral-tint: #e9e9ea;
+  --color-neutral-100: #bcbcbd;
+  --color-gray-03: #9f9f9f;
+  --color-gray-05: #e8e8e8;
+  --color-gray-06: #f3f3f3;
+  --color-gray-30: #f2f4f7;
+  --color-gray-500: #606c80;
+
+  --color-profile-ink: #1e293b;
+  --color-profile-body: #475569;
+  --color-profile-muted: #94a3b8;
+  --color-profile-border: #cbd5e1;
+  --color-profile-divider: #e2e8f0;
+  --color-profile-surface: #f8fafc;
+
+  /* Support and status palette (figma.md §9.1) */
+  --color-success: #2ba52e;
+  --color-success-hover: #279529;
+  --color-success-tint: #eaf6ea;
+
+  --color-danger: #db302a;
+  --color-danger-tint: #fbeaea;
+
+  --color-warning: #e6ba0e;
+  --color-warning-tint: #fffae7;
+
+  --color-orange: #fa9e00;
+  --color-orange-tint: #fff5e6;
+
+  --color-pink: #fa2b75;
+  --color-pink-tint: #faecf6;
+
+  --color-violet: #7d2d7e;
+  --color-violet-tint: #f2eaf2;
+
+  --color-teal: #04b5ae;
+  --color-teal-tint: #e6f8f7;
+
+  --color-purple: #6837a4;
+
+  /* Derived project status and priority aliases (M4, M5) */
+  --color-status-pending: #606c80;
+  --color-status-in-progress: #005afb;
+  --color-status-on-hold: #fa9e00;
+  --color-status-completed: #2ba52e;
+  --color-status-cancelled: #db302a;
+  --color-priority-critical-bg: #db302a;
+  --color-priority-critical-text: #ffffff;
+
+  /* Typography (D4, figma.md §12.12) */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-wordmark: 'Rubik', 'Inter', sans-serif;
+
+  /* Radii (figma.md §9.3) */
+  --radius-pill: 100px;
+  --radius-card: 16px;
+  --radius-modal: 24px;
+  --radius-settings: 32px;
+  --radius-input: 12px;
+
+  /* Layout & touch-target spacing (figma.md §9.3, §12.11) */
+  --spacing-touch: 2.75rem;
+  --spacing-navbar: 4.5rem;
+  --spacing-page-desktop: 4rem;
+  --spacing-page-tablet: 2rem;
+  --spacing-page-mobile: 1rem;
+  --spacing-modal: 2rem;
+  --spacing-auth: 4rem;
+  --spacing-section: 1.5rem;
+  --spacing-container: 82rem;
+  --spacing-avatar-xl: 5.75rem;
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 1rem;
+
+  /* Elevation shadows (figma.md §9.3, §12.10) */
+  --shadow-auth: 0 4px 8px rgba(0, 0, 0, 0.16);
+  --shadow-modal: 0 8px 8px rgba(0, 0, 0, 0.16);
+  --shadow-popover: 0 4px 16px rgba(9, 30, 66, 0.13);
+  --shadow-navbar: 0 4px 4px rgba(9, 30, 66, 0.13);
+  --shadow-segment: 0 1px 2px rgba(0, 7, 18, 0.08);
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
