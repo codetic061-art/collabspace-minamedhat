@@ -189,9 +189,7 @@ export function ProjectMemberPicker({
 
                 {picker.lastPage > 1 ? (
                   <div className="flex items-center justify-between border-t border-border-subtle pt-2 text-xs text-body">
-                    <span>
-                      Page {picker.currentPage} of {picker.lastPage}
-                    </span>
+                    <span>Page {picker.currentPage} of {picker.lastPage}</span>
                     <div className="flex items-center gap-1.5">
                       <Button
                         variant="outline"

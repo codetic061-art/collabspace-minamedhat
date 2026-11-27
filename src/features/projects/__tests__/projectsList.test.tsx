@@ -116,10 +116,8 @@ describe('ProjectsListPage (Layer 2)', () => {
     expect(screen.queryByRole('button', { name: /Delete/i })).not.toBeInTheDocument();
 
     const table = await screen.findByRole('table');
-    expect(within(table).getByRole('link', { name: 'Alpha Launch' })).toHaveAttribute(
-      'href',
-      '/projects/1',
-    );
+    const alphaLink = within(table).getByRole('link', { name: 'Alpha Launch' });
+    expect(alphaLink).toHaveAttribute('href', '/projects/1');
     expect(within(table).getByText('In Progress')).toHaveClass('text-status-in-progress');
     expect(within(table).getByText('22 Files')).toBeVisible();
     expect(within(table).getByText('UI/UX')).toBeVisible();
@@ -195,9 +193,10 @@ describe('ProjectsListPage (Layer 2)', () => {
     renderProjectsRoute(reloadUrl, 'Project Manager');
     expect(await screen.findByDisplayValue('Gamma')).toBeVisible();
     expect(screen.getByRole('combobox', { name: 'Filter by status' })).toHaveTextContent('On Hold');
-    expect(
-      seenQueries.some((q) => q.search === 'Gamma' && q.status === 'On Hold' && q.sort === 'newest'),
-    ).toBe(true);
+    const hasExpectedQuery = seenQueries.some(
+      (q) => q.search === 'Gamma' && q.status === 'On Hold' && q.sort === 'newest',
+    );
+    expect(hasExpectedQuery).toBe(true);
   });
 
   it('hides Add Project for Team Member and handles empty, 403, 5xx retry, and 401 states', async () => {

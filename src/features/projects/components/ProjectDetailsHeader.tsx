@@ -47,9 +47,7 @@ export function ProjectDetailsHeader({ project, canEdit, onEdit }: ProjectDetail
             {
               label: 'Projects',
               renderLink: (label, className) => (
-                <Link to="/projects" className={className}>
-                  {label}
-                </Link>
+                <Link to="/projects" className={className}>{label}</Link>
               ),
             },
             { label: project.name },
