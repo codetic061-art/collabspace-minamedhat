@@ -19,10 +19,13 @@ it('reports modules added to the entry bundle by the Dashboard route', async () 
         if (!code.includes(route)) {
           throw new Error('Dashboard route was not found');
         }
-        return code.replace(route, `lazy: async () => {
+        return code.replace(
+          route,
+          `lazy: async () => {
                 const { DashboardPlaceholderPage } = await import('./PlaceholderPages');
                 return { Component: DashboardPlaceholderPage };
-              },`);
+              },`,
+        );
       },
       generateBundle(_options, bundle) {
         for (const output of Object.values(bundle)) {
@@ -44,8 +47,5 @@ it('reports modules added to the entry bundle by the Dashboard route', async () 
     name,
     added: size - (baseline.get(name) ?? 0),
   }));
-  console.log(
-    'Dashboard entry differences:',
-    differences.filter((item) => item.added > 0),
-  );
+  console.log('Dashboard entry differences:', differences.filter((item) => item.added > 0));
 }, 120_000);
