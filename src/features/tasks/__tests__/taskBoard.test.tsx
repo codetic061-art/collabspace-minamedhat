@@ -36,40 +36,57 @@ const task = {
 
 function registerReads() {
   mswServer.use(
-    http.get(`${base}/projects/1/tasks/kanban`, () => HttpResponse.json({
-      success: true,
-      data: {
-        project: { id: 1, name: 'Example', progress_percentage: 0 },
-        total_tasks: 1,
-        columns: {
-          Pending: { name: 'Pending', count: 1, tasks: [task] },
-          'In Progress': { name: 'In Progress', count: 0, tasks: [] },
-          'In Review': { name: 'In Review', count: 0, tasks: [] },
-          Completed: { name: 'Completed', count: 0, tasks: [] },
+    http.get(`${base}/projects/1/tasks/kanban`, () =>
+      HttpResponse.json({
+        success: true,
+        data: {
+          project: { id: 1, name: 'Example', progress_percentage: 0 },
+          total_tasks: 1,
+          columns: {
+            Pending: { name: 'Pending', count: 1, tasks: [task] },
+            'In Progress': { name: 'In Progress', count: 0, tasks: [] },
+            'In Review': { name: 'In Review', count: 0, tasks: [] },
+            Completed: { name: 'Completed', count: 0, tasks: [] },
+          },
         },
-      },
-    })),
+      }),
+    ),
     http.get(`${base}/projects/1/teams`, () => HttpResponse.json({ success: true, data: [] })),
     http.get(`${base}/tasks/1`, () => HttpResponse.json({ success: true, data: task })),
   );
 }
 
 function renderBoard(path = '/tasks') {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[path]}><TaskBoard projectId={1} /></MemoryRouter></QueryClientProvider>);
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter initialEntries={[path]}>
+        <TaskBoard projectId={1} />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
 }
 
 describe('task board', () => {
   it.each([403, 500])('moves a task optimistically and rolls back on %i', async (statusCode) => {
     registerReads();
     let release = () => {};
-    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
     let payload: unknown;
-    mswServer.use(http.patch(`${base}/tasks/1/status`, async ({ request }) => {
-      payload = await request.json();
-      await gate;
-      return HttpResponse.json({ success: false, message: statusCode === 403 ? 'Permission denied' : 'Error' }, { status: statusCode });
-    }));
+    mswServer.use(
+      http.patch(`${base}/tasks/1/status`, async ({ request }) => {
+        payload = await request.json();
+        await gate;
+        return HttpResponse.json(
+          { success: false, message: statusCode === 403 ? 'Permission denied' : 'Error' },
+          { status: statusCode },
+        );
+      }),
+    );
     const user = userEvent.setup();
     renderBoard();
     const card = await screen.findByRole('article');

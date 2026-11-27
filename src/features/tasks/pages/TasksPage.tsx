@@ -31,20 +31,32 @@ export function TasksPage() {
       return items;
     },
   });
-  if (projects.isPending || (taskId > 0 && detail.isPending)) return <Skeleton variant="card" />;
+  if (projects.isPending || (taskId > 0 && detail.isPending))
+    return (
+      <section className="space-y-5">
+        <h1 className="text-2xl font-semibold">Tasks</h1>
+        <Skeleton variant="card" />
+      </section>
+    );
   if (projects.error)
     return (
-      <BlockErrorState
-        message={getErrorMessage(toAppError(projects.error))}
-        onRetry={() => void projects.refetch()}
-      />
+      <section className="space-y-5">
+        <h1 className="text-2xl font-semibold">Tasks</h1>
+        <BlockErrorState
+          message={getErrorMessage(toAppError(projects.error))}
+          onRetry={() => void projects.refetch()}
+        />
+      </section>
     );
   if (taskId > 0 && detail.error)
     return (
-      <BlockErrorState
-        message={getErrorMessage(toAppError(detail.error))}
-        onRetry={() => void detail.refetch()}
-      />
+      <section className="space-y-5">
+        <h1 className="text-2xl font-semibold">Tasks</h1>
+        <BlockErrorState
+          message={getErrorMessage(toAppError(detail.error))}
+          onRetry={() => void detail.refetch()}
+        />
+      </section>
     );
   const selectedId = detail.data?.project_id ?? Number(selected);
   const projectId = projects.data.some((item) => item.id === selectedId)
