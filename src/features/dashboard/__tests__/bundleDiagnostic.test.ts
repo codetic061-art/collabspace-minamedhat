@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { build, type Plugin } from 'vite';
-import { it } from 'vitest';
+import { it, vi } from 'vitest';
+
+vi.setConfig({ testTimeout: 120_000 });
 
 it('reports modules added to the entry bundle by the Dashboard route', async () => {
   async function inspect(withDashboard: boolean) {
@@ -48,4 +50,4 @@ it('reports modules added to the entry bundle by the Dashboard route', async () 
     added: size - (baseline.get(name) ?? 0),
   }));
   console.log('Dashboard entry differences:', differences.filter((item) => item.added > 0));
-}, 120_000);
+});
