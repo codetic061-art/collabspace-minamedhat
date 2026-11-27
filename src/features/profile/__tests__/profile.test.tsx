@@ -113,4 +113,61 @@ describe('Profile', () => {
     await waitFor(() => expect(screen.getByText('Passwords must match.')).toBeInTheDocument());
     expect(calls).toBe(0);
   });
+
+  it('reports an empty assigned-task list', async () => {
+    mswServer.use(
+      http.get(`${base}/auth/profile/tasks`, () =>
+        HttpResponse.json({
+          success: true,
+          data: { current_page: 1, last_page: 1, per_page: 15, total: 0, data: [] },
+        }),
+      ),
+    );
+    renderWithProviders(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>,
+    );
+    await userEvent.click(screen.getByRole('tab', { name: 'tasks' }));
+    expect(await screen.findByText('You have no assigned tasks.')).toBeInTheDocument();
+  });
+
+  it('rejects oversized avatars before saving', async () => {
+    renderWithProviders(
+      <MemoryRouter>
+        <ProfileSettingsPage />
+      </MemoryRouter>,
+    );
+    const file = new File([new Uint8Array(2 * 1024 * 1024 + 1)], 'large.png', {
+      type: 'image/png',
+    });
+    await userEvent.upload(screen.getByLabelText('Avatar'), file);
+    expect(await screen.findByText('The image must be 2 MB or less.')).toBeInTheDocument();
+  });
+
+  it('maps password validation errors without clearing input', async () => {
+    mswServer.use(
+      http.put(`${base}/auth/password`, () =>
+        HttpResponse.json(
+          {
+            success: false,
+            message: 'Invalid.',
+            errors: { current_password: ['Incorrect password.'] },
+          },
+          { status: 422 },
+        ),
+      ),
+    );
+    renderWithProviders(
+      <MemoryRouter>
+        <ProfileSettingsPage />
+      </MemoryRouter>,
+    );
+    await userEvent.type(screen.getByLabelText('Current password'), 'wrong-password');
+    await userEvent.type(screen.getByLabelText('New password'), 'new-password');
+    await userEvent.type(screen.getByLabelText('Confirm new password'), 'new-password');
+    await userEvent.click(screen.getByRole('button', { name: 'Change password' }));
+    expect(await screen.findByText('Incorrect password.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Current password')).toHaveValue('wrong-password');
+  });
 });
