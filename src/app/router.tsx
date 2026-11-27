@@ -64,8 +64,8 @@ export function createAppRoutes(): RouteObject[] {
             {
               index: true,
               lazy: async () => {
-                const { DashboardPlaceholderPage } = await import('./PlaceholderPages');
-                return { Component: DashboardPlaceholderPage };
+                const { loadDashboardPage } = await import('@/features/dashboard');
+                return loadDashboardPage();
               },
             },
             {
