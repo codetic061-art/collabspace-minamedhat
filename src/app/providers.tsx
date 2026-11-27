@@ -22,4 +22,3 @@ export function AppProviders({ queryClient: injectedClient, children }: AppProvi
     </RootErrorBoundary>
   );
 }
-
