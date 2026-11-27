@@ -29,6 +29,8 @@ for (const role of ['ADMIN', 'PM'] as const) {
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/sign-in');
+    await expect(page.locator('input[type="email"]')).toBeVisible();
+    await expect(page.locator('input[type="password"]')).toBeVisible();
     // Avoid locator.fill call logs, which can include the literal entered value on failure.
     await page.evaluate(
       ({ emailValue, passwordValue }) => {
