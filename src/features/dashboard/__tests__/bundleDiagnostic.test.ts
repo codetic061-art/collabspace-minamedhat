@@ -4,6 +4,7 @@ import { it, vi } from 'vitest';
 
 vi.setConfig({ testTimeout: 120_000 });
 
+// prettier-ignore
 it('reports modules added to the entry bundle by the Dashboard route', async () => {
   async function inspect(withDashboard: boolean) {
     const modules = new Map<string, number>();
