@@ -128,6 +128,55 @@ function SelectedMemberRow({
   );
 }
 
+interface UserPickerListProps {
+  isLoading: boolean;
+  error: unknown;
+  users: readonly UserResource[];
+  selectedIds: ReadonlySet<number>;
+  onRetry: () => void;
+  onSelect: (user: UserResource) => void;
+}
+
+function UserPickerList({
+  isLoading,
+  error,
+  users,
+  selectedIds,
+  onRetry,
+  onSelect,
+}: UserPickerListProps) {
+  if (isLoading) {
+    return (
+      <div className="space-y-2 py-2">
+        <Skeleton variant="text" />
+        <Skeleton variant="text" />
+        <Skeleton variant="text" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <BlockErrorState message={getErrorMessage(toAppError(error))} onRetry={onRetry} />;
+  }
+
+  if (users.length === 0) {
+    return <p className="py-4 text-center text-sm text-body">No matching users found.</p>;
+  }
+
+  return (
+    <>
+      {users.map((user) => (
+        <UserOptionRow
+          key={user.id}
+          user={user}
+          isSelected={selectedIds.has(user.id)}
+          onSelect={onSelect}
+        />
+      ))}
+    </>
+  );
+}
+
 /**
  * Create-only project member picker (`D5`, `M28`, `#users-index`):
  * loads `/users` with `per_page=20` only when opened, debounces search, and filters client-side as fallback.
@@ -248,29 +297,14 @@ export function ProjectMemberPicker({
                   aria-label="Available users"
                   className="max-h-56 overflow-y-auto divide-y divide-border-subtle"
                 >
-                  {picker.isLoading ? (
-                    <div className="space-y-2 py-2">
-                      <Skeleton variant="text" />
-                      <Skeleton variant="text" />
-                      <Skeleton variant="text" />
-                    </div>
-                  ) : picker.error ? (
-                    <BlockErrorState
-                      message={getErrorMessage(toAppError(picker.error))}
-                      onRetry={() => void picker.refetch()}
-                    />
-                  ) : picker.users.length === 0 ? (
-                    <p className="py-4 text-center text-sm text-body">No matching users found.</p>
-                  ) : (
-                    picker.users.map((user) => (
-                      <UserOptionRow
-                        key={user.id}
-                        user={user}
-                        isSelected={selectedIds.has(user.id)}
-                        onSelect={toggleMember}
-                      />
-                    ))
-                  )}
+                  <UserPickerList
+                    isLoading={picker.isLoading}
+                    error={picker.error}
+                    users={picker.users}
+                    selectedIds={selectedIds}
+                    onRetry={() => void picker.refetch()}
+                    onSelect={toggleMember}
+                  />
                 </div>
 
                 {picker.lastPage > 1 ? (

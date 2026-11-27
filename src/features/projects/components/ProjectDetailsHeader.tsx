@@ -29,11 +29,14 @@ function formatDueStatus(daysRemaining: number, isOverdue: boolean): string {
 }
 
 function renderProjectsLink(label: string, className: string) {
-  return <Link to="/projects" className={className}>{label}</Link>;
+  return (
+    <Link to="/projects" className={className}>
+      {label}
+    </Link>
+  );
 }
 
-const META_ROW_CLASS =
-  'flex flex-wrap items-center justify-between gap-2 text-xs text-heading';
+const META_ROW_CLASS = 'flex flex-wrap items-center justify-between gap-2 text-xs text-heading';
 
 /**
  * Project Details header (`1:8753`, §3.5, §12.6):
