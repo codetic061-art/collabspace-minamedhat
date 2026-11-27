@@ -111,7 +111,7 @@ describe('ProjectFormModal create and edit flows (Layer 2)', () => {
       }),
     );
 
-    renderProjectsRoute('/projects', 'Administrator');
+    renderProjectsRoute('/projects', mswServer, 'Administrator');
     await user.click(await screen.findByRole('button', { name: /Add Project/i }));
 
     const dialog = await screen.findByRole('dialog', { name: 'New Project' });
@@ -241,7 +241,7 @@ describe('ProjectFormModal create and edit flows (Layer 2)', () => {
       }),
     );
 
-    renderProjectsRoute('/projects/1', 'Project Manager');
+    renderProjectsRoute('/projects/1', mswServer, 'Project Manager');
     await user.click(await screen.findByRole('button', { name: 'Edit Project' }));
 
     const dialog = await screen.findByRole('dialog', { name: 'Edit Project' });

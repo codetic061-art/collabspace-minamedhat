@@ -1,6 +1,6 @@
-import { QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
-import { http, HttpResponse } from 'msw/http';
+import { http, HttpResponse, type HttpHandler } from 'msw/http';
 import { createMemoryRouter, Outlet } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { SessionProvider } from '@/features/auth';
@@ -13,9 +13,11 @@ import {
   type SystemRole,
 } from '@/shared/lib';
 import { ToastProvider } from '@/shared/ui';
-import { createTestQueryClient } from '@/test/render';
-import { mswServer } from '@/test/setup';
 import { loadProjectDetailsPage, loadProjectsListPage } from '../index';
+
+export interface MockHandlerRegistrar {
+  use: (...handlers: HttpHandler[]) => void;
+}
 
 export const API_BASE = 'https://collabspace.huma-volve.com/api/v1';
 
@@ -66,9 +68,18 @@ export function resetSessionForTest() {
   setAuthToken('fake-test-token');
 }
 
-export function renderProjectsRoute(initialPath: string, role: SystemRole = 'Project Manager') {
-  mswServer.use(mockSessionMe(role));
-  const queryClient = createTestQueryClient();
+export function renderProjectsRoute(
+  initialPath: string,
+  server: MockHandlerRegistrar,
+  role: SystemRole = 'Project Manager',
+) {
+  server.use(mockSessionMe(role));
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false },
+    },
+  });
 
   const router = createMemoryRouter(
     [

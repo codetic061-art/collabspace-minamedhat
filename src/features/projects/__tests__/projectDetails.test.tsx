@@ -34,7 +34,7 @@ describe('ProjectDetailsPage (Layer 2)', () => {
       ),
     );
 
-    const { container } = renderProjectsRoute('/projects/1', 'Project Manager');
+    const { container } = renderProjectsRoute('/projects/1', mswServer, 'Project Manager');
 
     expect(
       await screen.findByRole('heading', { level: 1, name: 'CollabSpace Alpha' }),
@@ -95,7 +95,7 @@ describe('ProjectDetailsPage (Layer 2)', () => {
       ),
     );
 
-    const tmRender = renderProjectsRoute('/projects/1', 'Team Member');
+    const tmRender = renderProjectsRoute('/projects/1', mswServer, 'Team Member');
     await tmRender.findByRole('heading', { level: 1, name: 'CollabSpace Alpha' });
     expect(tmRender.queryByRole('button', { name: 'Edit Project' })).not.toBeInTheDocument();
     tmRender.unmount();
@@ -116,7 +116,7 @@ describe('ProjectDetailsPage (Layer 2)', () => {
       ),
     );
 
-    const notFoundRender = renderProjectsRoute('/projects/99', 'Project Manager');
+    const notFoundRender = renderProjectsRoute('/projects/99', mswServer, 'Project Manager');
     expect(
       await notFoundRender.findByRole('heading', { level: 1, name: 'Project not found' }),
     ).toBeVisible();
@@ -135,7 +135,7 @@ describe('ProjectDetailsPage (Layer 2)', () => {
       ),
     );
 
-    const forbiddenRender = renderProjectsRoute('/projects/42', 'Project Manager');
+    const forbiddenRender = renderProjectsRoute('/projects/42', mswServer, 'Project Manager');
     expect(
       await forbiddenRender.findByRole('heading', {
         level: 1,

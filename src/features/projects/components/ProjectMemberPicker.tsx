@@ -1,5 +1,5 @@
 import { Check, ChevronLeft, ChevronRight, Search, UserPlus, X } from 'lucide-react';
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { getErrorMessage, toAppError, type UserResource } from '@/shared/api';
 import { toSafeExternalUrl } from '@/shared/lib';
 import { Avatar, BlockErrorState, Button, Field, Input, Skeleton, cn } from '@/shared/ui';
@@ -174,8 +174,21 @@ export function ProjectMemberPicker(props: ProjectMemberPickerProps) {
       }
     };
 
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setIsOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+
     document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape, true);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape, true);
+    };
   }, [isOpen]);
 
   const selectedIds = new Set(value.map((member) => member.user_id));
@@ -198,16 +211,6 @@ export function ProjectMemberPicker(props: ProjectMemberPickerProps) {
     onChange(value.filter((item) => item.user_id !== userId));
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Escape' && isOpen) {
-      event.preventDefault();
-      event.stopPropagation();
-      event.nativeEvent.stopPropagation();
-      setIsOpen(false);
-      triggerRef.current?.focus();
-    }
-  };
-
   const handlePrevPage = () => {
     picker.setPage(Math.max(1, picker.currentPage - 1));
   };
@@ -224,7 +227,7 @@ export function ProjectMemberPicker(props: ProjectMemberPickerProps) {
   return (
     <Field label="Add Members" labelVariant="top" error={error}>
       {(a11yProps) => (
-        <div ref={containerRef} className="space-y-3" onKeyDown={handleKeyDown}>
+        <div ref={containerRef} className="space-y-3">
           <div className="relative">
             <button
               ref={triggerRef}
@@ -233,7 +236,6 @@ export function ProjectMemberPicker(props: ProjectMemberPickerProps) {
               disabled={disabled}
               aria-expanded={isOpen}
               aria-controls={isOpen ? panelId : undefined}
-              aria-invalid={a11yProps['aria-invalid']}
               aria-describedby={a11yProps['aria-describedby']}
               onClick={() => setIsOpen((prev) => !prev)}
               className={cn(

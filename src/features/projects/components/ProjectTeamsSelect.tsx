@@ -1,5 +1,5 @@
 import { Check, ChevronDown, Users } from 'lucide-react';
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { toAppError, getErrorMessage, type TeamResource } from '@/shared/api';
 import { Badge, BlockErrorState, Field, Skeleton, cn } from '@/shared/ui';
 
@@ -41,8 +41,21 @@ export function ProjectTeamsSelect({
       }
     };
 
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setIsOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+
     document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape, true);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape, true);
+    };
   }, [isOpen]);
 
   const selectedSet = new Set(selectedIds);
@@ -56,16 +69,6 @@ export function ProjectTeamsSelect({
     }
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Escape' && isOpen) {
-      event.preventDefault();
-      event.stopPropagation();
-      event.nativeEvent.stopPropagation();
-      setIsOpen(false);
-      triggerRef.current?.focus();
-    }
-  };
-
   const summaryLabel =
     selectedIds.length === 0
       ? 'Select teams (optional)'
@@ -76,7 +79,7 @@ export function ProjectTeamsSelect({
   return (
     <Field label="Teams" labelVariant="top" error={fieldError}>
       {(a11yProps) => (
-        <div ref={containerRef} className="relative space-y-2" onKeyDown={handleKeyDown}>
+        <div ref={containerRef} className="relative space-y-2">
           <button
             ref={triggerRef}
             id={a11yProps.id}
@@ -84,7 +87,6 @@ export function ProjectTeamsSelect({
             disabled={disabled}
             aria-expanded={isOpen}
             aria-controls={isOpen ? listboxId : undefined}
-            aria-invalid={a11yProps['aria-invalid']}
             aria-describedby={a11yProps['aria-describedby']}
             onClick={() => setIsOpen((prev) => !prev)}
             className={cn(

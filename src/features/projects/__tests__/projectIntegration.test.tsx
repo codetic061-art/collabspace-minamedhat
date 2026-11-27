@@ -81,7 +81,7 @@ describe('Projects create -> list integration (Layer 3)', () => {
       }),
     );
 
-    renderProjectsRoute('/projects', 'Administrator');
+    renderProjectsRoute('/projects', mswServer, 'Administrator');
     const table = await screen.findByRole('table');
     expect(within(table).getByText('Initial Project')).toBeVisible();
 

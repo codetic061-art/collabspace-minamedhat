@@ -1,5 +1,5 @@
 import { Search, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ProjectStatus } from '@/shared/api';
 import { Input, Select, type SelectOption } from '@/shared/ui';
 import { PROJECT_STATUSES } from '../utils/projectPresentation';
@@ -30,31 +30,29 @@ export function ProjectsFiltersToolbar({
   onStatusChange,
 }: ProjectsFiltersToolbarProps) {
   const [draftSearch, setDraftSearch] = useState(search);
-  const lastCommittedRef = useRef(search);
+  const [prevSearch, setPrevSearch] = useState(search);
 
-  useEffect(() => {
+  if (search !== prevSearch) {
+    setPrevSearch(search);
     setDraftSearch(search);
-    lastCommittedRef.current = search;
-  }, [search]);
+  }
 
   useEffect(() => {
-    if (draftSearch === lastCommittedRef.current) {
+    if (draftSearch === search) {
       return;
     }
 
     const timer = window.setTimeout(() => {
-      lastCommittedRef.current = draftSearch;
       onSearchChange(draftSearch);
     }, SEARCH_DEBOUNCE_MS);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [draftSearch, onSearchChange]);
+  }, [draftSearch, search, onSearchChange]);
 
   const handleClearSearch = () => {
     setDraftSearch('');
-    lastCommittedRef.current = '';
     onSearchChange('');
   };
 

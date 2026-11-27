@@ -109,7 +109,7 @@ describe('ProjectsListPage (Layer 2)', () => {
       }),
     );
 
-    const { container, router } = renderProjectsRoute('/projects', 'Administrator');
+    const { container, router } = renderProjectsRoute('/projects', mswServer, 'Administrator');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'All Projects' })).toBeVisible();
     expect(screen.getByRole('button', { name: /Add Project/i })).toBeVisible();
@@ -168,7 +168,7 @@ describe('ProjectsListPage (Layer 2)', () => {
       }),
     );
 
-    const firstRender = renderProjectsRoute('/projects', 'Project Manager');
+    const firstRender = renderProjectsRoute('/projects', mswServer, 'Project Manager');
     await screen.findByRole('table');
 
     await user.type(screen.getByLabelText('Search projects'), 'Gamma');
@@ -190,7 +190,7 @@ describe('ProjectsListPage (Layer 2)', () => {
     firstRender.unmount();
 
     // Reload directly at the shared URL.
-    renderProjectsRoute(reloadUrl, 'Project Manager');
+    renderProjectsRoute(reloadUrl, mswServer, 'Project Manager');
     expect(await screen.findByDisplayValue('Gamma')).toBeVisible();
     expect(screen.getByRole('combobox', { name: 'Filter by status' })).toHaveTextContent('On Hold');
     const hasExpectedQuery = seenQueries.some(
@@ -223,13 +223,13 @@ describe('ProjectsListPage (Layer 2)', () => {
     );
 
     // 1) Empty state as Team Member (unverified assumption D6: hides Add Project)
-    const emptyRender = renderProjectsRoute('/projects', 'Team Member');
+    const emptyRender = renderProjectsRoute('/projects', mswServer, 'Team Member');
     expect(await screen.findByText('No projects yet')).toBeVisible();
     expect(screen.queryByRole('button', { name: /Add Project/i })).not.toBeInTheDocument();
     emptyRender.unmount();
 
     // 2) 403 Forbidden state
-    const forbiddenRender = renderProjectsRoute('/projects', 'Team Member');
+    const forbiddenRender = renderProjectsRoute('/projects', mswServer, 'Team Member');
     expect(
       await forbiddenRender.findByRole('heading', {
         level: 1,
@@ -247,7 +247,7 @@ describe('ProjectsListPage (Layer 2)', () => {
         ),
       ),
     );
-    const errorRender = renderProjectsRoute('/projects', 'Project Manager');
+    const errorRender = renderProjectsRoute('/projects', mswServer, 'Project Manager');
     expect(
       await errorRender.findByText('Something went wrong on our side. Please try again.'),
     ).toBeVisible();
@@ -272,7 +272,7 @@ describe('ProjectsListPage (Layer 2)', () => {
         ),
       ),
     );
-    const unauthRender = renderProjectsRoute('/projects', 'Project Manager');
+    const unauthRender = renderProjectsRoute('/projects', mswServer, 'Project Manager');
     expect(await unauthRender.findByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
   }, 15000);
 });
