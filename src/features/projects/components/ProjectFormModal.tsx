@@ -102,7 +102,7 @@ function CreateProjectModal({ onClose }: { onClose: () => void }) {
       isSubmitting={isSubmitting}
       submittingLabel="Creating..."
       size="lg"
-      className="md:h-fit"
+      className="md:h-fit md:max-w-[720px]"
     >
       <form noValidate onSubmit={onSubmit} className="space-y-4">
         <ProjectSharedFields
@@ -196,7 +196,7 @@ function EditProjectModal({
       isSubmitting={isSubmitting}
       submittingLabel="Saving..."
       size="lg"
-      className="md:h-fit"
+      className="md:h-fit md:max-w-[720px]"
     >
       <form noValidate onSubmit={onSubmit} className="space-y-4">
         <ProjectSharedFields

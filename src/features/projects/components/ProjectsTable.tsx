@@ -25,7 +25,7 @@ export function ProjectsTable({ projects, isRefreshing = false }: ProjectsTableP
       {/* Desktop & tablet table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full border-separate border-spacing-y-3 text-left">
-          <thead>
+          <thead className="border-b border-border-neutral">
             <tr className="border-b border-border-neutral text-lg font-medium text-heading">
               <th scope="col" className="px-2.5 pb-2 pt-1 font-medium">
                 Project Name
