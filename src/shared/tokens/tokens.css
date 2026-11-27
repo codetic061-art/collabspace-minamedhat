@@ -19,6 +19,7 @@
 
   --color-ink: #000712;
   --color-heading: #1f2937;
+  /* Darkened from the Figma body color to meet text contrast on canvas. */
   --color-body: #606c80;
   --color-secondary: #525256;
   --color-black-default: #191919;
@@ -50,6 +51,7 @@
   --color-success-hover: #279529;
   --color-success-tint: #eaf6ea;
 
+  /* Darkened from the Figma red to meet text contrast on danger-tint. */
   --color-danger: #bf2823;
   --color-danger-tint: #fbeaea;
 

@@ -19,7 +19,7 @@ describe('Design tokens stylesheet', () => {
     expect(tokensCss).not.toContain('800');
   });
 
-  it('defines exact Figma §9 color, radius, shadow, and M4/M5 status tokens', () => {
+  it('defines design tokens including accessible body and danger text colors', () => {
     const requiredTokens = [
       '--color-primary: #005afb;',
       '--color-primary-tint: #e6efff;',
@@ -27,9 +27,9 @@ describe('Design tokens stylesheet', () => {
       '--color-surface: #ffffff;',
       '--color-ink: #000712;',
       '--color-heading: #1f2937;',
-      '--color-body: #718096;',
+      '--color-body: #606c80;',
       '--color-border-input: #cbd5e0;',
-      '--color-danger: #db302a;',
+      '--color-danger: #bf2823;',
       '--color-success: #2ba52e;',
       '--color-status-pending: #606c80;',
       '--color-status-on-hold: #fa9e00;',
