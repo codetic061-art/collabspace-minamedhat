@@ -310,25 +310,22 @@ export async function requestAction(
   };
 }
 
-function parseContentDispositionFilename(headerValue: string | null): string | null {
-  if (!headerValue) {
-    return null;
+function sanitizeDownloadFilename(rawName: string): string {
+  let cleaned = '';
+  for (const ch of rawName.trim()) {
+    const code = ch.charCodeAt(0);
+    if (code >= 32 && code !== 127 && ch !== '/' && ch !== '\\') {
+      cleaned += ch;
+    }
   }
-  const match = /filename\*?=(?:UTF-8''|"?)([^";\n]+)"?/i.exec(headerValue);
-  const rawName = match?.[1]?.trim();
-  if (!rawName) {
-    return null;
-  }
-  try {
-    return decodeURIComponent(rawName);
-  } catch {
-    return rawName;
-  }
+  const normalized = cleaned.replace(/^\.+/, '').trim();
+  return normalized.length > 0 ? normalized : 'download';
 }
 
 /**
  * Downloads an authenticated binary file (`#files-download`, `#dashboard-index`) as a `Blob`.
- * Enforces API-origin/path validation and Bearer auth without leaking tokens into URLs (ADR-05).
+ * Always sends `Accept: application/json` alongside Bearer auth so expired tokens return 401 JSON
+ * instead of HTTP 500, without leaking tokens into URLs (ADR-05).
  */
 export async function downloadBlob(
   pathOrUrl: string,
@@ -344,6 +341,7 @@ export async function downloadBlob(
   }
 
   const headers = new Headers();
+  headers.set('Accept', 'application/json');
   const token = getAuthToken();
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
@@ -364,11 +362,10 @@ export async function downloadBlob(
   }
 
   const blob = await response.blob();
-  const headerName = parseContentDispositionFilename(response.headers.get('Content-Disposition'));
 
   return {
     blob,
-    filename: options.fallbackFilename || headerName || 'download',
+    filename: sanitizeDownloadFilename(options.fallbackFilename),
   };
 }
 
