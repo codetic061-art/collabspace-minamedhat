@@ -81,9 +81,7 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
       http.get(`${BASE}/projects/:id/overview`, () =>
         HttpResponse.json({ success: false, message: 'Not found' }, { status: 404 }),
       ),
-      http.get(`${BASE}/projects/:id/teams`, () =>
-        HttpResponse.json({ success: true, data: [] }),
-      ),
+      http.get(`${BASE}/projects/:id/teams`, () => HttpResponse.json({ success: true, data: [] })),
     );
   });
 
