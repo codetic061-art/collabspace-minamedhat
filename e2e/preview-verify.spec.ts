@@ -251,5 +251,8 @@ test('renders Projects routes on Preview with a simulated API', async ({ page })
   await page.goto('/projects/1');
   await expect(page.getByText('CollabSpace Alpha').first()).toBeVisible();
   await expect(page.getByText('Team Members', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('img', { name: 'Monthly created and completed tasks chart' }),
+  ).toBeVisible();
   await page.screenshot({ path: 'preview-shots/project-details.png', fullPage: true });
 });

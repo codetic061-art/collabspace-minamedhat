@@ -68,6 +68,7 @@ export function ProjectOverviewChart({ data }: ProjectOverviewChartProps) {
             stroke="var(--color-primary)"
             strokeWidth={2}
             fill="url(#projectCreatedTasksFill)"
+            isAnimationActive={false}
           />
           <Area
             type="monotone"
@@ -76,6 +77,7 @@ export function ProjectOverviewChart({ data }: ProjectOverviewChartProps) {
             stroke="var(--color-teal)"
             strokeWidth={2}
             fill="url(#projectCompletedTasksFill)"
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
