@@ -9,12 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import {
-  profileKeys,
-  toAppError,
-  type AppError,
-  type ProfileMeData,
-} from '@/shared/api';
+import { profileKeys, toAppError, type AppError, type ProfileMeData } from '@/shared/api';
 import { logout } from '@/shared/api/services/auth.service';
 import { getMe } from '@/shared/api/services/profile.service';
 import {
