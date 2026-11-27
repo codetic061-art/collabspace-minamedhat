@@ -76,6 +76,15 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
     clearAuthToken();
     resetUnauthorizedGuard();
     registerUnauthorizedHandler(null);
+    mswServer.use(
+      http.get(`${BASE}/projects`, () => HttpResponse.json({ success: false }, { status: 500 })),
+      http.get(`${BASE}/projects/:id/overview`, () =>
+        HttpResponse.json({ success: false, message: 'Not found' }, { status: 404 }),
+      ),
+      http.get(`${BASE}/projects/:id/teams`, () =>
+        HttpResponse.json({ success: true, data: [] }),
+      ),
+    );
   });
 
   afterEach(() => {
@@ -90,7 +99,7 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
     const user = userEvent.setup();
     setAuthToken('fake-persisted-jwt');
 
-    let resolveMe!: () => void;
+    let resolveMe: (() => void) | undefined;
     mswServer.use(
       http.get(`${BASE}/auth/me`, async () => {
         await new Promise<void>((resolve) => {
@@ -106,10 +115,11 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
     // Reloading protected route holds neutral skeleton with neither sign-in nor protected heading.
     expect(await screen.findByLabelText('Loading application')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Sign in' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Projects' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'All Projects' })).not.toBeInTheDocument();
 
-    resolveMe();
-    expect(await screen.findByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
+    await waitFor(() => expect(resolveMe).toBeDefined());
+    resolveMe?.();
+    expect(await screen.findByRole('heading', { level: 1, name: 'All Projects' })).toBeVisible();
 
     // Navbar renders MVP items only (D7) and hides Tier 2 / out-of-scope entries.
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument();
@@ -157,7 +167,8 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
     await user.type(screen.getByLabelText('Password'), 'password123');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Project #42' })).toBeVisible();
+    await waitFor(() => expect(router.state.location.pathname).toBe('/projects/42'));
+    expect(await screen.findByText('Project not found')).toBeVisible();
 
     // Foreign redirect target falls back safely to Dashboard.
     clearAuthToken();
@@ -379,7 +390,7 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
     );
 
     const { router } = mountApp('/projects');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
+    expect(await screen.findByRole('heading', { level: 1, name: 'All Projects' })).toBeVisible();
 
     await expect(
       downloadBlob('/api/v1/files/7/download', { fallbackFilename: 'spec.pdf' }),
