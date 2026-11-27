@@ -1,6 +1,8 @@
 import { FolderKanban } from 'lucide-react';
 import { Link } from 'react-router';
-import { IconCircle, ProgressBar, Skeleton } from '@/shared/ui';
+import { IconCircle } from '@/shared/ui/IconCircle';
+import { ProgressBar } from '@/shared/ui/ProgressBar';
+import { Skeleton } from '@/shared/ui/StatePrimitives';
 import type { DashboardQueryResult } from '../hooks/useDashboard';
 import { projectAccent } from '../utils/projectAccent';
 import { DashboardSection, DashboardViewAllLink } from './DashboardSection';

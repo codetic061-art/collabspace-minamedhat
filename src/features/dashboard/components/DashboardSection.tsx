@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import type { DashboardData } from '@/shared/api';
-import { BlockErrorBoundary, BlockErrorState, Card, EmptyState, SkeletonRegion } from '@/shared/ui';
+import { BlockErrorBoundary } from '@/shared/ui/BlockErrorBoundary';
+import { Card } from '@/shared/ui/Card';
+import { BlockErrorState, EmptyState, SkeletonRegion } from '@/shared/ui/StatePrimitives';
 import type { DashboardQueryResult } from '../hooks/useDashboard';
 
 const VIEW_ALL_LINK_CLASS =

@@ -1,16 +1,11 @@
 import { useState } from 'react';
-import { getErrorMessage, toAppError } from '@/shared/api';
-import { toSafeExternalUrl } from '@/shared/lib';
-import {
-  Avatar,
-  Badge,
-  BlockErrorBoundary,
-  BlockErrorState,
-  EmptyState,
-  NativeSelect,
-  Skeleton,
-  SkeletonRegion,
-} from '@/shared/ui';
+import { getErrorMessage, toAppError } from '@/shared/api/errors';
+import { toSafeExternalUrl } from '@/shared/lib/safeUrl';
+import { Avatar } from '@/shared/ui/Avatar';
+import { Badge } from '@/shared/ui/Badge';
+import { BlockErrorBoundary } from '@/shared/ui/BlockErrorBoundary';
+import { NativeSelect } from '@/shared/ui/Select';
+import { BlockErrorState, EmptyState, Skeleton, SkeletonRegion } from '@/shared/ui/StatePrimitives';
 import type { DashboardQueryResult } from '../hooks/useDashboard';
 import { useTeamMembers } from '../hooks/useTeamMembers';
 import { DashboardCard } from './DashboardSection';

@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { BlockErrorBoundary, Skeleton, SkeletonRegion } from '@/shared/ui';
+import { BlockErrorBoundary } from '@/shared/ui/BlockErrorBoundary';
+import { Skeleton, SkeletonRegion } from '@/shared/ui/StatePrimitives';
 import type { DashboardQueryResult } from '../hooks/useDashboard';
 import { DashboardSection } from './DashboardSection';
 

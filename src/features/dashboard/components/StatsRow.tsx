@@ -1,17 +1,11 @@
 import type { ReactNode } from 'react';
 import { CheckCircle2, Clock, Loader } from 'lucide-react';
 import type { DashboardData } from '@/shared/api';
-import {
-  BlockErrorBoundary,
-  BlockErrorState,
-  Card,
-  Gauge,
-  IconCircle,
-  ProgressBar,
-  Skeleton,
-  SkeletonRegion,
-  type ProgressTone,
-} from '@/shared/ui';
+import { BlockErrorBoundary } from '@/shared/ui/BlockErrorBoundary';
+import { Card } from '@/shared/ui/Card';
+import { IconCircle } from '@/shared/ui/IconCircle';
+import { Gauge, ProgressBar, type ProgressTone } from '@/shared/ui/ProgressBar';
+import { BlockErrorState, Skeleton, SkeletonRegion } from '@/shared/ui/StatePrimitives';
 import type { DashboardQueryResult } from '../hooks/useDashboard';
 
 interface StatCardProps {

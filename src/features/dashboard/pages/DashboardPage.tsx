@@ -1,5 +1,5 @@
-import { toAppError } from '@/shared/api';
-import { AccessDeniedState } from '@/shared/ui';
+import { toAppError } from '@/shared/api/errors';
+import { AccessDeniedState } from '@/shared/ui/StatePrimitives';
 import { ActiveProjectsCard } from '../components/ActiveProjectsCard';
 import { MeetingsCard } from '../components/MeetingsCard';
 import { ProjectOverviewCard } from '../components/ProjectOverviewCard';

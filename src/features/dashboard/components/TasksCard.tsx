@@ -1,5 +1,6 @@
-import { formatDisplayDate } from '@/shared/api';
-import { Badge, Skeleton, StatusText } from '@/shared/ui';
+import { formatDisplayDate } from '@/shared/api/dates';
+import { Badge, StatusText } from '@/shared/ui/Badge';
+import { Skeleton } from '@/shared/ui/StatePrimitives';
 import type { DashboardQueryResult } from '../hooks/useDashboard';
 import { normalizeDashboardPriority } from '../utils/priority';
 import { dashboardStatusTone } from '../utils/taskStatus';
