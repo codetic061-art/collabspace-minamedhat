@@ -10,13 +10,13 @@ import {
 } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import {
-  authService,
   profileKeys,
-  profileService,
   toAppError,
   type AppError,
   type ProfileMeData,
 } from '@/shared/api';
+import { logout } from '@/shared/api/services/auth.service';
+import { getMe } from '@/shared/api/services/profile.service';
 import {
   broadcastSessionEvent,
   clearAuthToken,
@@ -118,7 +118,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     async ({ signal }: { signal?: AbortSignal } = {}): Promise<void> => {
       const epoch = getSessionEpoch();
       try {
-        const me = await profileService.getMe(signal);
+        const me = await getMe(signal);
         if (signal?.aborted || epoch !== getSessionEpoch()) return;
         queryClient.setQueryData(profileKeys.me(), me);
         resetUnauthorizedGuard();
@@ -206,7 +206,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setAuthToken(token, { remember: options?.remember });
       const epoch = getSessionEpoch();
       try {
-        const me = await profileService.getMe();
+        const me = await getMe();
         if (epoch !== getSessionEpoch()) throw new Error('Session changed during sign-in.');
         queryClient.setQueryData(profileKeys.me(), me);
         resetUnauthorizedGuard();
@@ -233,7 +233,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     const epoch = getSessionEpoch();
     try {
-      await authService.logout();
+      await logout();
     } catch {
       // Explicit sign-out always clears local credentials even on network/server failure (ADR-01).
     } finally {

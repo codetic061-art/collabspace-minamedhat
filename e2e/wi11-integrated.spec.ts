@@ -122,5 +122,5 @@ test('renders Tasks and Profile on Preview at supported widths with a simulated 
   await page.getByRole('tab', { name: 'tasks' }).click();
   await expect(page.getByText('Preview task')).toBeVisible();
   await page.getByRole('link', { name: 'Edit profile' }).click();
-  await expect(page.getByLabelText('Full name')).toHaveValue('Preview User');
+  await expect(page.getByLabel('Full name')).toHaveValue('Preview User');
 });
