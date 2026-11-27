@@ -93,12 +93,12 @@ function PasswordCard() {
     }
   });
   return (
-    <section className="grid gap-5 md:grid-cols-[1fr_2fr]">
+    <section className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
       <div>
         <h2 className="text-xl font-semibold">Security</h2>
         <p className="mt-2 text-sm text-body">Change your password here.</p>
       </div>
-      <Card className="space-y-5">
+      <Card className="min-w-0 space-y-5">
         <form onSubmit={submit} noValidate className="space-y-5">
           <Input
             label="Current password"
@@ -208,7 +208,7 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
     <div className="space-y-10">
       <div className="flex items-center gap-5">
         <Avatar name={user.name} src={toSafeExternalUrl(user.avatar_url)} size="xl" />
-        <div>
+        <div className="min-w-0">
           <h1 className="text-3xl font-bold">Profile settings</h1>
           <Link to="/profile" className="text-sm text-primary">
             Back to profile
@@ -216,15 +216,15 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
         </div>
       </div>
       <form onSubmit={submit} noValidate className="space-y-10">
-        <section className="grid gap-5 md:grid-cols-[1fr_2fr]">
+        <section className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
           <div>
             <h2 className="text-xl font-semibold">Personal Info</h2>
             <p className="mt-2 text-sm text-body">
               You can change your personal information settings here.
             </p>
           </div>
-          <Card className="space-y-5">
-            <div className="grid gap-5 sm:grid-cols-2">
+          <Card className="min-w-0 space-y-5">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Input
                 label="Full name"
                 labelVariant="top"
@@ -274,6 +274,7 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
                 <input
                   {...props}
                   type="file"
+                  className="w-full min-w-0 max-w-full"
                   accept="image/jpeg,image/png,image/webp"
                   onChange={(event) => {
                     const file = event.target.files?.[0];
@@ -303,12 +304,12 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
             )}
           </Card>
         </section>
-        <section className="grid gap-5 md:grid-cols-[1fr_2fr]">
+        <section className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
           <div>
             <h2 className="text-xl font-semibold">Experience</h2>
             <p className="mt-2 text-sm text-body">You can change your experience settings here.</p>
           </div>
-          <Card className="grid gap-5 sm:grid-cols-2">
+          <Card className="grid min-w-0 grid-cols-1 gap-5 sm:grid-cols-2">
             <Input
               label="Job title"
               labelVariant="top"
