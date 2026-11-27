@@ -91,17 +91,11 @@ export function createAppRoutes(): RouteObject[] {
             },
             {
               path: '/profile',
-              lazy: async () => {
-                const { ProfilePlaceholderPage } = await import('./PlaceholderPages');
-                return { Component: ProfilePlaceholderPage };
-              },
+              lazy: async () => (await import('@/features/profile')).loadProfilePage(),
             },
             {
               path: '/profile/settings',
-              lazy: async () => {
-                const { ProfileSettingsPlaceholderPage } = await import('./PlaceholderPages');
-                return { Component: ProfileSettingsPlaceholderPage };
-              },
+              lazy: async () => (await import('@/features/profile')).loadProfileSettingsPage(),
             },
           ],
         },
