@@ -1,6 +1,6 @@
 import { Check, ChevronDown, Users } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
-import { toAppError, getErrorMessage, type TeamResource } from '@/shared/api';
+import { useEffect, useId, useRef, useState, type Ref } from 'react';
+import { getErrorMessage, toAppError, type TeamResource } from '@/shared/api';
 import { Badge, BlockErrorState, Field, Skeleton, cn } from '@/shared/ui';
 
 export interface ProjectTeamsSelectProps {
@@ -12,23 +12,123 @@ export interface ProjectTeamsSelectProps {
   onRetry: () => void;
   disabled?: boolean;
   fieldError?: string;
+  triggerRef?: Ref<HTMLButtonElement>;
+}
+
+function assignRef<T>(ref: Ref<T> | undefined, value: T | null): void {
+  if (!ref) {
+    return;
+  }
+  if (typeof ref === 'function') {
+    ref(value);
+    return;
+  }
+  // Safe assignment for React RefObject alongside internal local ref.
+  (ref as { current: T | null }).current = value;
+}
+
+function formatSummaryLabel(
+  selectedIds: readonly number[],
+  selectedTeams: readonly TeamResource[],
+): string {
+  if (selectedIds.length === 0) {
+    return 'Select teams (optional)';
+  }
+  if (selectedTeams.length > 0) {
+    return selectedTeams.map((team) => team.name).join(', ');
+  }
+  const noun = selectedIds.length === 1 ? 'team' : 'teams';
+  return `${selectedIds.length} ${noun} selected`;
+}
+
+interface TeamsDropdownContentProps {
+  isLoading: boolean;
+  error: unknown;
+  teams: readonly TeamResource[];
+  selectedSet: ReadonlySet<number>;
+  onRetry: () => void;
+  onToggle: (teamId: number) => void;
+}
+
+function TeamsDropdownContent(props: TeamsDropdownContentProps) {
+  const { isLoading, error, teams, selectedSet, onRetry, onToggle } = props;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2 p-3">
+        <Skeleton variant="text" />
+        <Skeleton variant="text" />
+      </div>
+    );
+  }
+
+  if (error) {
+    const errorMessage = getErrorMessage(toAppError(error));
+    return (
+      <div className="p-2">
+        <BlockErrorState message={errorMessage} onRetry={onRetry} />
+      </div>
+    );
+  }
+
+  if (teams.length === 0) {
+    return <p className="px-4 py-3 text-sm text-body">No teams available.</p>;
+  }
+
+  return (
+    <div
+      role="listbox"
+      aria-multiselectable="true"
+      aria-label="Available teams"
+      className="divide-y divide-border-subtle"
+    >
+      {teams.map((team) => {
+        const isSelected = selectedSet.has(team.id);
+        return (
+          <button
+            key={team.id}
+            type="button"
+            role="option"
+            aria-selected={isSelected}
+            onClick={() => onToggle(team.id)}
+            className={cn(
+              'flex min-h-touch w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm transition-colors hover:bg-surface-input cursor-pointer',
+              isSelected ? 'bg-surface-input font-medium text-ink' : 'text-heading',
+            )}
+          >
+            <span className="truncate">{team.name}</span>
+            {isSelected ? (
+              <span
+                className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-pill bg-success text-surface"
+                aria-hidden="true"
+              >
+                <Check className="h-3 w-3" />
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 /** Multi-select teams dropdown matching Figma's green-check dropdown pattern (§12.6). */
-export function ProjectTeamsSelect({
-  selectedIds,
-  onChange,
-  teams,
-  isLoading,
-  error,
-  onRetry,
-  disabled = false,
-  fieldError,
-}: ProjectTeamsSelectProps) {
+export function ProjectTeamsSelect(props: ProjectTeamsSelectProps) {
+  const {
+    selectedIds,
+    onChange,
+    teams,
+    isLoading,
+    error,
+    onRetry,
+    disabled = false,
+    fieldError,
+    triggerRef,
+  } = props;
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const listboxId = useId();
+  const localTriggerRef = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
 
   useEffect(() => {
     if (!isOpen) {
@@ -36,7 +136,11 @@ export function ProjectTeamsSelect({
     }
 
     const handlePointerDown = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        event.target instanceof Node &&
+        !containerRef.current.contains(event.target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -46,7 +150,7 @@ export function ProjectTeamsSelect({
         event.preventDefault();
         event.stopImmediatePropagation();
         setIsOpen(false);
-        triggerRef.current?.focus();
+        localTriggerRef.current?.focus();
       }
     };
 
@@ -60,6 +164,7 @@ export function ProjectTeamsSelect({
 
   const selectedSet = new Set(selectedIds);
   const selectedTeams = teams.filter((team) => selectedSet.has(team.id));
+  const summaryLabel = formatSummaryLabel(selectedIds, selectedTeams);
 
   const toggleTeam = (teamId: number) => {
     if (selectedSet.has(teamId)) {
@@ -69,24 +174,20 @@ export function ProjectTeamsSelect({
     }
   };
 
-  const summaryLabel =
-    selectedIds.length === 0
-      ? 'Select teams (optional)'
-      : selectedTeams.length > 0
-        ? selectedTeams.map((team) => team.name).join(', ')
-        : `${selectedIds.length} ${selectedIds.length === 1 ? 'team' : 'teams'} selected`;
-
   return (
     <Field label="Teams" labelVariant="top" error={fieldError}>
       {(a11yProps) => (
         <div ref={containerRef} className="relative space-y-2">
           <button
-            ref={triggerRef}
+            ref={(node) => {
+              localTriggerRef.current = node;
+              assignRef(triggerRef, node);
+            }}
             id={a11yProps.id}
             type="button"
             disabled={disabled}
             aria-expanded={isOpen}
-            aria-controls={isOpen ? listboxId : undefined}
+            aria-controls={isOpen ? panelId : undefined}
             aria-describedby={a11yProps['aria-describedby']}
             onClick={() => setIsOpen((prev) => !prev)}
             className={cn(
@@ -121,51 +222,17 @@ export function ProjectTeamsSelect({
 
           {isOpen ? (
             <div
-              id={listboxId}
-              role="listbox"
-              aria-multiselectable="true"
-              aria-label="Available teams"
-              className="absolute left-0 z-30 mt-1 max-h-60 w-full overflow-auto rounded-card border border-border-subtle bg-surface py-1 shadow-popover divide-y divide-border-subtle"
+              id={panelId}
+              className="absolute left-0 z-30 mt-1 max-h-60 w-full overflow-auto rounded-card border border-border-subtle bg-surface py-1 shadow-popover"
             >
-              {isLoading ? (
-                <div className="space-y-2 p-3">
-                  <Skeleton variant="text" />
-                  <Skeleton variant="text" />
-                </div>
-              ) : error ? (
-                <div className="p-2">
-                  <BlockErrorState message={getErrorMessage(toAppError(error))} onRetry={onRetry} />
-                </div>
-              ) : teams.length === 0 ? (
-                <p className="px-4 py-3 text-sm text-body">No teams available.</p>
-              ) : (
-                teams.map((team) => {
-                  const isSelected = selectedSet.has(team.id);
-                  return (
-                    <button
-                      key={team.id}
-                      type="button"
-                      role="option"
-                      aria-selected={isSelected}
-                      onClick={() => toggleTeam(team.id)}
-                      className={cn(
-                        'flex min-h-touch w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm transition-colors hover:bg-surface-input cursor-pointer',
-                        isSelected ? 'bg-surface-input font-medium text-ink' : 'text-heading',
-                      )}
-                    >
-                      <span className="truncate">{team.name}</span>
-                      {isSelected ? (
-                        <span
-                          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-pill bg-success text-surface"
-                          aria-hidden="true"
-                        >
-                          <Check className="h-3 w-3" />
-                        </span>
-                      ) : null}
-                    </button>
-                  );
-                })
-              )}
+              <TeamsDropdownContent
+                isLoading={isLoading}
+                error={error}
+                teams={teams}
+                selectedSet={selectedSet}
+                onRetry={onRetry}
+                onToggle={toggleTeam}
+              />
             </div>
           ) : null}
         </div>

@@ -79,7 +79,7 @@ export function ProjectsFiltersToolbar({
                 type="button"
                 aria-label="Clear search"
                 onClick={handleClearSearch}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-pill text-body hover:bg-surface-label hover:text-ink cursor-pointer"
+                className="-mr-2 inline-flex min-h-touch min-w-touch items-center justify-center rounded-pill text-body hover:bg-surface-label hover:text-ink cursor-pointer"
               >
                 <X className="h-3.5 w-3.5" aria-hidden="true" />
               </button>

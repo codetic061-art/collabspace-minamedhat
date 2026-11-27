@@ -142,5 +142,9 @@ describe('ProjectDetailsPage (Layer 2)', () => {
         name: "You don't have access to this page.",
       }),
     ).toBeVisible();
+    expect(forbiddenRender.getByRole('link', { name: 'Back to Dashboard' })).toHaveAttribute(
+      'href',
+      '/',
+    );
   });
 });

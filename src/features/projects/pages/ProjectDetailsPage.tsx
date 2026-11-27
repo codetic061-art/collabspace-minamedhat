@@ -62,8 +62,8 @@ export function ProjectDetailsPage() {
       return (
         <AccessDeniedState
           action={
-            <Link to="/projects" className={buttonClassName({ variant: 'primary' })}>
-              Back to Projects
+            <Link to="/" className={buttonClassName({ variant: 'primary' })}>
+              Back to Dashboard
             </Link>
           }
         />

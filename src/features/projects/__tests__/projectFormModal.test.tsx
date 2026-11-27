@@ -188,6 +188,7 @@ describe('ProjectFormModal create and edit flows (Layer 2)', () => {
     const user = userEvent.setup();
     let capturedUpdateBody: Record<string, unknown> | null = null;
     let putAttempt = 0;
+    const putDeferred: { resolve: (() => void) | null } = { resolve: null };
 
     mswServer.use(
       http.get(`${API_BASE}/projects/1/overview`, () =>
@@ -233,6 +234,9 @@ describe('ProjectFormModal create and edit flows (Layer 2)', () => {
             { status: 403 },
           );
         }
+        await new Promise<void>((resolve) => {
+          putDeferred.resolve = resolve;
+        });
         return HttpResponse.json({
           success: true,
           message: 'Project updated.',
@@ -262,8 +266,14 @@ describe('ProjectFormModal create and edit flows (Layer 2)', () => {
     );
     expect(nameInput).toHaveValue('CollabSpace Alpha v2');
 
-    // Second save succeeds and sends UpdateProjectRequest without members.
+    // Second save stalls in flight -> Escape and Close button must not dismiss (ID-23).
     await user.click(within(dialog).getByRole('button', { name: 'Save Changes' }));
+    await waitFor(() => expect(putDeferred.resolve).not.toBeNull());
+    expect(within(dialog).getByRole('button', { name: 'Close dialog' })).toBeDisabled();
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('dialog', { name: 'Edit Project' })).toBeInTheDocument();
+
+    putDeferred.resolve?.();
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: 'Edit Project' })).not.toBeInTheDocument();
     });

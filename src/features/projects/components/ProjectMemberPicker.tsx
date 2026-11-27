@@ -1,5 +1,5 @@
 import { Check, ChevronLeft, ChevronRight, Search, UserPlus, X } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type Ref } from 'react';
 import { getErrorMessage, toAppError, type UserResource } from '@/shared/api';
 import { toSafeExternalUrl } from '@/shared/lib';
 import { Avatar, BlockErrorState, Button, Field, Input, Skeleton, cn } from '@/shared/ui';
@@ -11,6 +11,19 @@ export interface ProjectMemberPickerProps {
   onChange: (nextValue: ProjectMemberFormValue[]) => void;
   disabled?: boolean;
   error?: string;
+  triggerRef?: Ref<HTMLButtonElement>;
+}
+
+function assignRef<T>(ref: Ref<T> | undefined, value: T | null): void {
+  if (!ref) {
+    return;
+  }
+  if (typeof ref === 'function') {
+    ref(value);
+    return;
+  }
+  // Safe assignment for standard React ref objects alongside `useRef`.
+  (ref as { current: T | null }).current = value;
 }
 
 function formatTriggerLabel(count: number): string {
@@ -135,7 +148,12 @@ function UserPickerList(props: UserPickerListProps) {
   }
 
   return (
-    <>
+    <div
+      role="listbox"
+      aria-multiselectable="true"
+      aria-label="Available users"
+      className="divide-y divide-border-subtle"
+    >
       {users.map((user) => (
         <UserOptionRow
           key={user.id}
@@ -144,7 +162,7 @@ function UserPickerList(props: UserPickerListProps) {
           onSelect={onSelect}
         />
       ))}
-    </>
+    </div>
   );
 }
 
@@ -153,12 +171,12 @@ function UserPickerList(props: UserPickerListProps) {
  * loads `/users` with `per_page=20` only when opened, debounces search, and filters client-side.
  */
 export function ProjectMemberPicker(props: ProjectMemberPickerProps) {
-  const { value, onChange, disabled = false, error } = props;
+  const { value, onChange, disabled = false, error, triggerRef } = props;
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCache, setSelectedCache] = useState<Record<number, UserResource>>({});
   const containerRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const localTriggerRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
 
   const picker = useUserSearchPicker({ enabled: isOpen, searchTerm });
@@ -169,7 +187,11 @@ export function ProjectMemberPicker(props: ProjectMemberPickerProps) {
     }
 
     const handlePointerDown = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        event.target instanceof Node &&
+        !containerRef.current.contains(event.target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -179,7 +201,7 @@ export function ProjectMemberPicker(props: ProjectMemberPickerProps) {
         event.preventDefault();
         event.stopImmediatePropagation();
         setIsOpen(false);
-        triggerRef.current?.focus();
+        localTriggerRef.current?.focus();
       }
     };
 
@@ -230,7 +252,10 @@ export function ProjectMemberPicker(props: ProjectMemberPickerProps) {
         <div ref={containerRef} className="space-y-3">
           <div className="relative">
             <button
-              ref={triggerRef}
+              ref={(node) => {
+                localTriggerRef.current = node;
+                assignRef(triggerRef, node);
+              }}
               id={a11yProps.id}
               type="button"
               disabled={disabled}
@@ -268,12 +293,7 @@ export function ProjectMemberPicker(props: ProjectMemberPickerProps) {
                   leadingIcon={<Search className="h-4 w-4" aria-hidden="true" />}
                 />
 
-                <div
-                  role="listbox"
-                  aria-multiselectable="true"
-                  aria-label="Available users"
-                  className="max-h-56 overflow-y-auto divide-y divide-border-subtle"
-                >
+                <div className="max-h-56 overflow-y-auto">
                   <UserPickerList
                     isLoading={picker.isLoading}
                     error={picker.error}
