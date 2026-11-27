@@ -83,7 +83,9 @@ for (const role of ['ADMIN', 'PM'] as const) {
         response.request().method() === 'POST',
     );
     await page.getByRole('button', { name: 'User menu' }).click();
-    await expect(page.getByText(role === 'ADMIN' ? 'Administrator' : 'Project Manager').first()).toBeVisible();
+    await expect(
+      page.getByText(role === 'ADMIN' ? 'Administrator' : 'Project Manager').first(),
+    ).toBeVisible();
     await page.getByRole('menuitem', { name: 'Sign out' }).click();
     expect((await logoutResponse).status()).toBe(200);
     await expect(page).toHaveURL(/\/sign-in/);

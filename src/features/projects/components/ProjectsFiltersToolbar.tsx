@@ -94,7 +94,7 @@ export function ProjectsFiltersToolbar({
             label="Filter by status"
             labelVariant="sr-only"
             variant="pill"
-          triggerClassName="h-10 rounded-[16px] border-ink px-4 py-2.5"
+            triggerClassName="h-10 rounded-[16px] border-ink px-4 py-2.5"
             options={STATUS_FILTER_OPTIONS}
             value={status ?? ''}
             onChange={handleStatusSelect}
@@ -107,7 +107,7 @@ export function ProjectsFiltersToolbar({
             label="Sort projects"
             labelVariant="sr-only"
             variant="pill"
-          triggerClassName="h-10 rounded-[16px] border-ink px-4 py-2.5"
+            triggerClassName="h-10 rounded-[16px] border-ink px-4 py-2.5"
             options={SORT_OPTIONS}
             value={sort}
             onChange={() => {}}
