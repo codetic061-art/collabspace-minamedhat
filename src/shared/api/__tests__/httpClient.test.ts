@@ -280,13 +280,15 @@ describe('httpClient normalization & envelopes (ID-19, ADR-05)', () => {
     });
   });
 
-  it('enforces downloadBlob origin checks, Bearer auth, and retry rules', async () => {
+  it('enforces downloadBlob Accept JSON, origin, auth, and retry rules', async () => {
     setAuthToken('fake-dl-token');
     let authHeader: string | null = null;
+    let acceptHeader: string | null = null;
 
     mswServer.use(
       http.get(`${BASE}/files/7/download`, ({ request }) => {
         authHeader = request.headers.get('authorization');
+        acceptHeader = request.headers.get('accept');
         return new HttpResponse('file-bytes', {
           status: 200,
           headers: { 'Content-Type': 'text/plain' },
@@ -295,9 +297,10 @@ describe('httpClient normalization & envelopes (ID-19, ADR-05)', () => {
     );
 
     const downloaded = await downloadBlob('/api/v1/files/7/download', {
-      fallbackFilename: 'notes.txt',
+      fallbackFilename: '../notes.txt',
     });
     expect(downloaded.filename).toBe('notes.txt');
+    expect(acceptHeader).toBe('application/json');
     expect(authHeader).toBe('Bearer fake-dl-token');
 
     await expect(
@@ -313,5 +316,47 @@ describe('httpClient normalization & envelopes (ID-19, ADR-05)', () => {
     const errRate = new ApiRequestError({ kind: 'rate_limited', status: 429, message: 'Slow' });
     expect(shouldRetryQuery(0, errForbidden)).toBe(false);
     expect(shouldRetryQuery(0, errRate)).toBe(false);
+  });
+
+  it('handles 401 on downloadBlob via unauthorized handler without returning a Blob', async () => {
+    const onUnauthorized = vi.fn();
+    registerUnauthorizedHandler(onUnauthorized);
+    setAuthToken('expired-dl-token');
+    const createObjectUrlSpy = vi.spyOn(URL, 'createObjectURL');
+
+    let seenAccept: string | null = null;
+    mswServer.use(
+      http.get(`${BASE}/files/7/download`, ({ request }) => {
+        seenAccept = request.headers.get('accept');
+        if (seenAccept !== 'application/json') {
+          return HttpResponse.json(
+            { success: false, message: 'Route [login] not defined.', errors: null },
+            { status: 500 },
+          );
+        }
+        return HttpResponse.json(
+          {
+            success: false,
+            message: 'Unauthenticated. Please provide a valid Bearer token.',
+            errors: null,
+          },
+          { status: 401 },
+        );
+      }),
+    );
+
+    let capturedError: unknown = null;
+    try {
+      await downloadBlob('/api/v1/files/7/download', { fallbackFilename: 'report.pdf' });
+    } catch (error) {
+      capturedError = error;
+    }
+
+    expect(seenAccept).toBe('application/json');
+    expect(capturedError).toBeInstanceOf(ApiRequestError);
+    expect(capturedError).toMatchObject({ appError: { kind: 'unauthorized', status: 401 } });
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    expect(createObjectUrlSpy).not.toHaveBeenCalled();
+    createObjectUrlSpy.mockRestore();
   });
 });
