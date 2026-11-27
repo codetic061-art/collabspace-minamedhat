@@ -12,6 +12,7 @@ export interface ModalProps {
   title: string;
   description?: string;
   isSubmitting?: boolean;
+  submittingLabel?: string;
   size?: ModalSize;
   initialFocusRef?: RefObject<HTMLElement | null>;
   footer?: ReactNode;
@@ -46,6 +47,7 @@ export function Modal({
   title,
   description,
   isSubmitting = false,
+  submittingLabel = 'Processing...',
   size = 'md',
   initialFocusRef,
   footer,
@@ -74,10 +76,14 @@ export function Modal({
       ref={dialogRef}
       tabIndex={-1}
       aria-modal="true"
+      aria-busy={isSubmitting || undefined}
       aria-labelledby={titleId}
       aria-describedby={describedBy}
       className={dialogClass}
     >
+      <span className="sr-only" role="status" aria-live="polite">
+        {isSubmitting ? submittingLabel : ''}
+      </span>
       <ModalHeader
         titleId={titleId}
         descriptionId={descriptionId}

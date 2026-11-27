@@ -1,5 +1,7 @@
 # CollabSpace authenticated API shapes (Admin and Project Manager probe)
 
+> **Evidence status:** This document is the committed, sanitised live-probe record for the Admin, Project Manager, and people-picker read-only sessions. For day-to-day frontend contracts, use [`docs/api/plain.md`](../api/plain.md), which aligns with the recorded evidence here and downgrades unlogged claims to `DOCUMENTED`/`UNVERIFIED`.
+
 - **Target:** `https://collabspace.huma-volve.com/api/v1`
 - **Client:** Windows PowerShell 5.1, `System.Net.Http.HttpClient`, redirects and cookies disabled, `Accept: application/json` on every request.
 - **Scope (user-authorized):** 2 logins (one attempt each), 30 GETs, 2 logouts. 34 requests in total. No other POST/PUT/PATCH/DELETE was sent.
@@ -342,6 +344,8 @@ Observations:
 
 ## 6. Still unknown
 
+*(Alignment note: unless separately recorded by a later committed probe, items below remain `UNVERIFIED` / `DOCUMENTED` in [`docs/api/plain.md`](../api/plain.md).)*
+
 - **Team Member role:** visibility, 403 behavior, `roles` value, and dashboard shape for members.
 - **`permissions` item type:** empty for both roles, so strings vs objects is unknown, and so is whether any role ever has entries.
 - **403 shape on these endpoints:** no 403 was triggered. The earlier unauthenticated probe saw `{success:false, message, errors:null}` for 403 on a web route only.
@@ -354,7 +358,7 @@ Observations:
 - **Endpoints not probed:** users, audit logs, notifications (the `meta`-sibling pagination), files, meetings, messages, reports, activities, search, project teams progress (`/projects/{id}/teams`).
 - **Token lifetime / expiry:** no expiry field in the login response; `remember` behavior is untested.
 - **Rate limiting:** no rate-limit headers on any authenticated response. Limits and the 429 shape remain unknown.
-- **Whether `download_url` / file `url` need the Bearer header:** not tested (file downloads were forbidden).
+- **Whether `download_url` / file `url` need the Bearer header:** not tested in the initial authenticated probe (file downloads were forbidden). **Later Gate 1 read-only check (`#12`, 2026-11-27, unauthenticated):** `GET /api/v1/files/1/download` with `Accept: */*` returned HTTP `500` (`{"message":"Route [login] not defined."}`); the same request with `Accept: application/json` returned HTTP `401`. Authenticated `200` download streaming and headers remain unlogged (`UNVERIFIED`).
 
 ---
 
@@ -471,7 +475,7 @@ Same `TeamResource` as the `/teams` list items in section 3. **Confirms** `TeamM
 ### 8.7 Findings
 
 1. **A PM can list users.** `GET /users` returned 200 with 127 users in `meta.total`, no 403. The pagination is the `meta`-sibling shape with four keys only. **verified (PM)**
-2. **`search` is not shown to be honored.** `search=a` left `meta.total` at 127. This is **inconclusive**: a single-letter term may match every user if the backend also searches email, so the probe cannot tell "ignored" from "matched everything". A distinctive multi-character term is needed to settle it. **verified (PM)** for the count result only.
+2. **`search` is not shown to be honored.** `search=a` left `meta.total` at 127. This is **inconclusive**: a single-letter term may match every user if the backend also searches email, so the probe cannot tell "ignored" from "matched everything". A distinctive multi-character term is needed to settle it. **verified (PM)** for the count result only (multi-character `search` behaviour remains `UNVERIFIED` in `docs/api/plain.md`).
 3. **`/projects/{id}/teams` `members` is an array of objects**, not strings: `id`, `name`, `avatar_url?`, `role_in_team`, `is_leader`, `tasks_completed`, `tasks_total`, `tasks_ratio`, `progress_percentage`. `completion_percentage`, `total_tasks` and `completed_tasks` are integers. **verified (PM)**
 4. **Member fields by endpoint** **verified (PM)**:
 

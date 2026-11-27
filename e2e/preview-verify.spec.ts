@@ -68,6 +68,13 @@ test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y',
   expect(recoveryHeaders['content-type'] ?? '').toContain('text/html');
   expect(recoveryHeaders['referrer-policy']).toBe('no-referrer');
 
+  // ADR-12: missing hashed chunks under /assets/ must return 404 rather than HTML SPA fallback.
+  const missingAssetResponse = await request.get('/assets/does-not-exist.js', {
+    headers: previewBypassHeaders,
+  });
+  expect(missingAssetResponse.status()).toBe(404);
+  expect(missingAssetResponse.headers()['content-type'] ?? '').not.toContain('text/html');
+
   if (bypassSecret) {
     // Scope the bypass header strictly to the Vercel Preview origin so it never reaches third-party APIs.
     await page.route(

@@ -246,6 +246,85 @@ describe('Modal and ConfirmDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Delete' }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps keyboard focus and busy feedback inside pending task-delete confirmation', async () => {
+    const user = userEvent.setup();
+
+    function PendingDeleteHarness({
+      confirming,
+      onStartConfirm,
+    }: {
+      confirming: boolean;
+      onStartConfirm: () => void;
+    }) {
+      const [open, setOpen] = useState(false);
+
+      return (
+        <div>
+          <Button onClick={() => setOpen(true)}>Delete task</Button>
+          <Button variant="outline">Background action</Button>
+          <ConfirmDialog
+            isOpen={open}
+            onClose={() => setOpen(false)}
+            onConfirm={onStartConfirm}
+            isConfirming={confirming}
+            title='Delete task "API Integration"?'
+            description="This action permanently deletes the task."
+          />
+        </div>
+      );
+    }
+
+    const { rerender } = render(
+      <PendingDeleteHarness confirming={false} onStartConfirm={() => {}} />,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Delete task' });
+    await user.click(trigger);
+
+    const dialog = screen.getByRole('dialog', { name: 'Delete task "API Integration"?' });
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
+
+    rerender(
+      <PendingDeleteHarness
+        confirming={false}
+        onStartConfirm={() => {
+          rerender(<PendingDeleteHarness confirming onStartConfirm={() => {}} />);
+        }}
+      />,
+    );
+
+    const deleteButton = screen.getByRole('button', { name: 'Delete' });
+    await user.click(deleteButton);
+
+    expect(dialog).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('status')).toHaveTextContent('Deleting...');
+    expect(dialog).toHaveFocus();
+    expect(dialog.contains(document.activeElement)).toBe(true);
+
+    await user.keyboard('{Tab}{Tab}');
+    expect(dialog).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Background action' })).not.toHaveFocus();
+
+    await user.keyboard('{Shift>}{Tab}{Tab}{/Shift}');
+    expect(dialog).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(dialog).toHaveFocus();
+
+    await expectNoA11yViolations(document.body);
+
+    rerender(<PendingDeleteHarness confirming={false} onStartConfirm={() => {}} />);
+    expect(dialog).not.toHaveAttribute('aria-busy');
+
+    await user.keyboard('{Tab}');
+    expect(screen.getByRole('button', { name: 'Close dialog' })).toHaveFocus();
+
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
 });
 
 describe('ToastProvider and ToastRegion', () => {
