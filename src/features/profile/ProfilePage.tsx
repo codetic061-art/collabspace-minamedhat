@@ -88,7 +88,7 @@ export function ProfilePage() {
     );
   const { user, stats, recent_activities: activities } = me;
   return (
-    <section className="space-y-10">
+    <section className="space-y-10 lg:pt-8">
       <div className="flex flex-wrap items-center gap-5">
         <Avatar
           name={user.name}
@@ -111,11 +111,11 @@ export function ProfilePage() {
             {user.created_at ? ` · Joined ${formatDisplayDate(user.created_at)}` : ''}
           </p>
         </div>
-        <Card className="min-w-48 flex-1">
+        <Card className="min-w-48 flex-1 lg:w-[309px] lg:flex-none">
           <p className="text-sm">Completed Tasks</p>
           <p className="mt-4 text-3xl font-semibold">{stats.completed_tasks}</p>
         </Card>
-        <Card className="min-w-48 flex-1">
+        <Card className="min-w-48 flex-1 lg:w-[309px] lg:flex-none">
           <p className="text-sm">Hours Worked</p>
           <p className="mt-4 text-3xl font-semibold">{stats.hours_worked}</p>
         </Card>

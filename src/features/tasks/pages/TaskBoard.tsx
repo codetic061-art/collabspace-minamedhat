@@ -68,7 +68,7 @@ export function TaskBoard({ projectId }: { projectId: number }) {
   const canCreate = hasCapability(role, 'create_task');
   return (
     <section className="space-y-5" aria-label="Task board">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-4">
         <label className="w-full md:w-[326px]">
           <span className="sr-only">Search tasks</span>
           <input
@@ -136,7 +136,7 @@ export function TaskBoard({ projectId }: { projectId: number }) {
           return (
             <section
               key={status}
-              className="min-w-[324px] flex-1 snap-start overflow-hidden rounded-card border border-border-subtle bg-surface"
+              className="min-w-[304px] flex-1 snap-start overflow-hidden rounded-card border border-border-subtle bg-surface"
             >
               <h2 className={`p-5 text-base font-semibold ${tints[status]}`}>
                 {titles[status]} <span className="font-normal">({tasks.length})</span>
