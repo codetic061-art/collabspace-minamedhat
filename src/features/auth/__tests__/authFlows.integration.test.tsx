@@ -108,6 +108,7 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
     expect(screen.queryByRole('heading', { name: 'Sign in' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Projects' })).not.toBeInTheDocument();
 
+    await waitFor(() => expect(resolveMe).toBeDefined());
     resolveMe();
     expect(await screen.findByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
 

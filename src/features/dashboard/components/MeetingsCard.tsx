@@ -1,8 +1,7 @@
 import { CalendarDays } from 'lucide-react';
-import { formatDisplayDate, formatDisplayTime } from '@/shared/api/dates';
-import { toSafeExternalUrl } from '@/shared/lib/safeUrl';
-import { AvatarStack } from '@/shared/ui/Avatar';
-import { Skeleton } from '@/shared/ui/StatePrimitives';
+import { formatDisplayDate, formatDisplayTime } from '@/shared/api';
+import { toSafeExternalUrl } from '@/shared/lib';
+import { AvatarStack, Skeleton } from '@/shared/ui';
 import type { DashboardQueryResult } from '../hooks/useDashboard';
 import { DashboardSection } from './DashboardSection';
 

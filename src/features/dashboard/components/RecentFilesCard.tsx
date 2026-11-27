@@ -1,7 +1,6 @@
 import { FileText } from 'lucide-react';
-import { formatDisplayDate } from '@/shared/api/dates';
-import { IconCircle } from '@/shared/ui/IconCircle';
-import { Skeleton } from '@/shared/ui/StatePrimitives';
+import { formatDisplayDate } from '@/shared/api';
+import { IconCircle, Skeleton } from '@/shared/ui';
 import type { DashboardQueryResult } from '../hooks/useDashboard';
 import { DashboardSection } from './DashboardSection';
 
