@@ -191,10 +191,7 @@ describe('DashboardPage', () => {
       http.get(`${BASE}/dashboard`, () => {
         calls += 1;
         if (calls === 1) {
-          return HttpResponse.json(
-            { success: false, message: 'Server error.' },
-            { status: 500 },
-          );
+          return HttpResponse.json({ success: false, message: 'Server error.' }, { status: 500 });
         }
         return HttpResponse.json({ success: true, data: dashboardFixture });
       }),
@@ -222,9 +219,7 @@ describe('DashboardPage', () => {
     renderDashboard();
 
     expect(
-      await screen.findByRole('heading', {
-        name: "You don't have access to this page.",
-      }),
+      await screen.findByRole('heading', { name: "You don't have access to this page." }),
     ).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Workspace statistics' })).not.toBeInTheDocument();
   });
