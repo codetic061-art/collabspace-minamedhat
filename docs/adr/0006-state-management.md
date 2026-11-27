@@ -1,4 +1,4 @@
-﻿# ADR-06: State Management
+# ADR-06: State Management
 
 - **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
@@ -29,7 +29,7 @@ Install **no global state management library** (no Redux, no Zustand, no Jotai/M
 | **Server state** | **TanStack Query `5.108.4`** (`ADR-05`) | Single source of truth for all API responses. Never copy query results into Context or `useState` unless editing a form draft (`ID-15`, `ID-17`). |
 | **URL / shareable state** | **React Router `8.5.3` `useSearchParams` / route params** | Projects list (`search`, `status`, `sort`, `page`), selected project route (`/projects/:projectId`), and open task modal (`?taskId=...`). Survives reload and link sharing. |
 | **Tasks page last project (`M27`)** | **Browser `localStorage`** (single helper key `collabspace:lastTasksProjectId`) | Used exclusively by the Tasks page when no explicit project is in the URL; validated against the user's accessible projects list and cleared on sign-out so a different user on the same browser does not inherit an inaccessible project ID. |
-| **Ephemeral UI & form drafts** | **Local `useState` / `react-hook-form`** (`ADR-08`) | Dropdowns, modals, client-side Kanban board filters (`M26`), and unsaved form fields live inside the owning component/hook. Derived values are computed during render, never mirrored in `useEffect` (`ID-15`). |
+| **Ephemeral UI & form drafts** | **Local `useState` / `react-hook-form` / route-scoped `RecoveryFlowProvider`** (`ADR-08`, `ADR-01`) | Dropdowns, modals, client-side Kanban board filters (`M26`), and unsaved form fields live inside the owning component/hook. Transient password recovery values (`email`, `otp`) live strictly in a route-scoped in-memory `RecoveryFlowProvider` inside `src/features/auth/` (never in `history.state`, URLs, or storage). Derived values are computed during render, never mirrored in `useEffect` (`ID-15`). |
 | **App-wide client state** | **Two split React Contexts** (`SessionContext` & `ToastContext`) | Kept strictly separate so toast updates never re-render session consumers, and session updates never touch unrelated UI. `ToastContext` splits state (`toasts`) and dispatch (`toast`) into separate contexts where helpful so components calling `toast.success(...)` do not re-render when toasts dismiss. |
 
 ### Guardrails
