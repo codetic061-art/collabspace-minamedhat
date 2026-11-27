@@ -14,7 +14,7 @@ import {
 
 export function useTaskStatus(projectId: number) {
   const client = useQueryClient();
-  const [message, setMessage] = useState('');
+  const [failure, setFailure] = useState<{ taskId: number; message: string } | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<number>>(() => new Set());
   const pendingRef = useRef(new Set<number>());
   const mutationKey = [...tasksKeys.all, 'status-change', projectId];
@@ -23,7 +23,7 @@ export function useTaskStatus(projectId: number) {
     mutationFn: ({ task, status }: { task: TaskResource; status: TaskStatus }) =>
       tasksService.updateTaskStatus(task.id, { status }),
     onMutate: async ({ task, status }) => {
-      setMessage('');
+      setFailure(null);
       pendingRef.current.add(task.id);
       setPendingIds((ids) => new Set(ids).add(task.id));
       await client.cancelQueries({ queryKey: tasksKeys.board(projectId) });
@@ -47,7 +47,7 @@ export function useTaskStatus(projectId: number) {
       );
       if (context?.previousDetail)
         client.setQueryData(tasksKeys.detail(variables.task.id), context.previousDetail);
-      setMessage(getErrorMessage(toAppError(error)));
+      setFailure({ taskId: variables.task.id, message: getErrorMessage(toAppError(error)) });
     },
     onSettled: async (_data, _error, variables) => {
       pendingRef.current.delete(variables.task.id);
@@ -68,6 +68,6 @@ export function useTaskStatus(projectId: number) {
   return {
     changeStatus: (task: TaskResource, status: TaskStatus) => mutation.mutate({ task, status }),
     pendingIds,
-    message,
+    failure,
   };
 }

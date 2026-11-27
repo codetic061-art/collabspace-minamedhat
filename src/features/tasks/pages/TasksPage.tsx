@@ -103,7 +103,7 @@ export function TasksPage() {
               ))}
             </select>
           </label>
-          <TaskBoard projectId={projectId} />
+          <TaskBoard key={projectId} projectId={projectId} />
         </>
       )}
     </section>

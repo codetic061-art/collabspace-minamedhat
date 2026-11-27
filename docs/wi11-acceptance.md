@@ -4,6 +4,7 @@ Status is recorded against integrated head `bbcd278c9358fe01bf29616b57bc212a1007
 
 Evidence anchors:
 
+- [Correction review rerun 46052770056 attempt 3](https://github.com/codetic061-art/collabspace-minamedhat/actions/runs/46052770056/attempts/3) passed 105 unit and integration tests, one smoke test and nine Preview tests on `0c1139ed00e5634698d2d7fc37ed45f87bf87078`. The initial bundle was 121.21 KB gzip. Later corrections require their own run.
 - [exact-head CI run 46041554260](https://github.com/codetic061-art/collabspace-minamedhat/actions/runs/46041554260) passed verify, e2e and preview-verify.
 - The `preview-evidence` artifact contains the sanitized fixture screenshots and browser checks.
 - `wi11-real-read` exercised Administrator and Project Manager sign-in, Dashboard, reload/session restore, Projects, Tasks, Profile, sign-out and the old-token 401 response against the real API. It used GETs plus login/logout only; no live record was created or changed.
@@ -23,8 +24,8 @@ These changes crossed the shared-surface ownership boundary and must be recorded
 | `vite.config.ts`                                                                            | Keep feature modules in route chunks through the `moduleSideEffects` configuration.           | `910a326`, `65a12fd`, `452e8bc`                                  | WI-3; record the bundle-budget and route-chunk review.                   |
 | `.github/workflows/ci.yml`, `.github/workflows/wi11-format-temp.yml`                        | Add integrated Preview coverage, protect authenticated artifacts and run cloud formatting.    | `f3b9dfc`, `f1ef63d`, `90fcf37`, `7d2f55e`, `9360c1e`, `5282865` | WI-3/WI-11; record the workflow ownership and sanitized-artifact review. |
 | `src/app/AppShell.tsx`, `src/app/Navbar.tsx`                                                | Integrate the authenticated shell and accessible user-menu presentation.                      | `f3b9dfc`, `f1ef63d`, `f1e394e`, `7f42ea8`, `17f2c6e`, `bbcd278` | WI-6; record the owner review.                                           |
-| `src/features/auth/context/SessionContext.tsx`                                              | Schedule session restoration safely and coordinate the stale-session guard.                   | `8eb752b`, `54826c4`, `84a3a62`                                  | WI-6, with the shared session portion reviewed by WI-5.                  |
-| `src/shared/ui/ConfirmDialog.tsx`, `Input.tsx`, `Select.tsx`, `Tabs.tsx`, `AvatarStack.tsx` | Correct accessible descriptions, field errors, keyboard tab stops and avatar group semantics. | `aba110b`, `8cf8f21`, `479f0b4`                                  | WI-4; regression checks in shared UI tests.                              |
+| `src/features/auth/context/SessionContext.tsx`                                              | Schedule session restoration, guard stale sessions and refresh profile data in the background. | `8eb752b`, `54826c4`, `84a3a62`, `aba110b`                       | WI-6, with the shared session portion reviewed by WI-5.                  |
+| `src/shared/ui/ConfirmDialog.tsx`, `Input.tsx`, `Select.tsx`, `Tabs.tsx`, `Avatar.tsx`, `modalFocus.ts` | Correct descriptions, field errors, keyboard tab stops, avatar semantics and nested modal focus. | `aba110b`, `8cf8f21`, `479f0b4`, `dac592d` | WI-4; regression checks in shared UI tests. |
 | `src/main.tsx`                                                                              | Initialize Zod security configuration before application imports.                             | `aba110b`                                                        | WI-3/WI-5; retain configuration regression coverage.                     |
 
 ## Major feature criteria

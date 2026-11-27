@@ -198,7 +198,7 @@ export function Select({
     const describedBy = a11y?.['aria-describedby'] ?? field?.describedBy;
     const standaloneErrorId = !field && error ? `${triggerId}-error` : undefined;
     const effectiveDescribedBy =
-      [describedBy, standaloneErrorId].filter(Boolean).join(' ') || undefined;
+      [describedBy, !field && label === undefined && hint ? `${triggerId}-hint` : undefined, standaloneErrorId].filter(Boolean).join(' ') || undefined;
 
     return (
       <div ref={containerRef} className={cn('relative w-full', className)}>
@@ -370,11 +370,12 @@ export function NativeSelect({
       rest['aria-describedby'] ?? a11y?.['aria-describedby'] ?? field?.describedBy;
     const standaloneErrorId = !field && error ? `${effectiveId}-error` : undefined;
     const effectiveDescribedBy =
-      [describedBy, standaloneErrorId].filter(Boolean).join(' ') || undefined;
+      [describedBy, !field && label === undefined && hint ? `${effectiveId}-hint` : undefined, standaloneErrorId].filter(Boolean).join(' ') || undefined;
 
     return (
       <div className="relative">
         <select
+          {...rest}
           ref={ref}
           id={effectiveId}
           required={effectiveRequired}
@@ -386,7 +387,6 @@ export function NativeSelect({
             effectiveInvalid ? 'border-danger focus:border-danger' : 'border-border-input',
             className,
           )}
-          {...rest}
         >
           {placeholder ? (
             <option value="" disabled={required}>

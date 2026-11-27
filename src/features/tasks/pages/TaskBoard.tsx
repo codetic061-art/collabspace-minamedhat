@@ -133,9 +133,9 @@ export function TaskBoard({ projectId }: { projectId: number }) {
           </button>
         </p>
       )}
-      {statusMutation.message && (
+      {statusMutation.failure && (
         <p role="alert" className="text-danger">
-          {statusMutation.message}
+          {statusMutation.failure.message}
         </p>
       )}
       <div className="flex snap-x gap-8 overflow-x-auto pb-4">
@@ -261,7 +261,7 @@ export function TaskBoard({ projectId }: { projectId: number }) {
           }}
           onStatus={statusMutation.changeStatus}
           isStatusPending={statusMutation.pendingIds.has(taskId)}
-          statusMessage={statusMutation.message}
+          statusMessage={statusMutation.failure?.taskId === taskId ? statusMutation.failure.message : ''}
         />
       )}
       {form && (

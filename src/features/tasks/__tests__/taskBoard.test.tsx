@@ -75,6 +75,24 @@ function renderBoard(path = '/tasks') {
 }
 
 describe('task board', () => {
+  it('does not show another task’s status error in the details dialog', async () => {
+    registerReads();
+    mswServer.use(
+      http.patch(`${base}/tasks/1/status`, () => HttpResponse.json({ success: false, message: 'Permission denied' }, { status: 403 })),
+      http.get(`${base}/tasks/2`, () => HttpResponse.json({ success: true, data: { ...task, id: 2, name: 'Other task' } })),
+      http.get(`${base}/projects/1/tasks/kanban`, () => HttpResponse.json({ success: true, data: { project: { id: 1, name: 'Example', progress_percentage: 0 }, total_tasks: 2, columns: { Pending: { name: 'Pending', count: 2, tasks: [task, { ...task, id: 2, name: 'Other task' }] }, 'In Progress': { name: 'In Progress', count: 0, tasks: [] }, 'In Review': { name: 'In Review', count: 0, tasks: [] }, Completed: { name: 'Completed', count: 0, tasks: [] } } } })),
+    );
+    const user = userEvent.setup();
+    renderBoard('/tasks?taskId=1');
+    const first = await screen.findByRole('dialog', { name: 'Write tests' });
+    await user.selectOptions(within(first).getByLabelText('Status'), 'In Progress');
+    expect(await within(first).findByRole('alert')).toHaveTextContent(/permission/i);
+    await user.click(within(first).getByRole('button', { name: /close/i }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Other task' }));
+    const second = await screen.findByRole('dialog', { name: 'Other task' });
+    expect(within(second).queryByRole('alert')).not.toBeInTheDocument();
+  });
   it.each([403, 500])('moves a task optimistically and rolls back on %i', async (statusCode) => {
     registerReads();
     let release = () => {};

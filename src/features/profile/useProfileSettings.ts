@@ -117,6 +117,7 @@ export function useProfileSettings(me: ProfileMeData) {
       await profileService.removeAvatar();
       setAvatar(null);
       avatarSelection.current += 1;
+      setValidatingAvatar(false);
       if (avatarInput.current) avatarInput.current.value = '';
       showToast({ message: 'Avatar removed.', tone: 'success' });
       void refreshMe();
