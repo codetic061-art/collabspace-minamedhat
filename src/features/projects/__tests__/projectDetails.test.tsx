@@ -44,9 +44,9 @@ describe('ProjectDetailsPage (Layer 2)', () => {
     expect(screen.getByText('28 days left')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Edit Project' })).toBeVisible();
 
-    // Deferred Tasks tab and Tier 2 Teams/Files tabs stay hidden.
+    // Tasks is available; Tier 2 Teams/Files tabs stay hidden.
     expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.queryByRole('tab', { name: 'Tasks' })).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Tasks' })).toHaveAttribute('aria-selected', 'false');
     expect(screen.queryByRole('tab', { name: 'Teams' })).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Files' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Delete/i })).not.toBeInTheDocument();

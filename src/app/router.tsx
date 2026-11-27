@@ -85,8 +85,8 @@ export function createAppRoutes(): RouteObject[] {
             {
               path: '/tasks',
               lazy: async () => {
-                const { TasksPlaceholderPage } = await import('./PlaceholderPages');
-                return { Component: TasksPlaceholderPage };
+                const { loadTasksPage } = await import('@/features/tasks');
+                return loadTasksPage();
               },
             },
             {

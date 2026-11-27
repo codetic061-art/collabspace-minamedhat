@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 import { useSession } from '@/features/auth';
 import { getErrorMessage, toAppError } from '@/shared/api';
 import { hasCapability } from '@/shared/lib';
@@ -17,8 +17,9 @@ import { ProjectDetailsSkeleton } from '../components/ProjectDetailsSkeleton';
 import { ProjectFormModal } from '../components/ProjectFormModal';
 import { ProjectOverviewTab } from '../components/ProjectOverviewTab';
 import { parseProjectIdParam, useProjectDetails } from '../hooks/useProjectDetails';
+import { TaskBoard } from '@/features/tasks';
 
-const OVERVIEW_TAB_ITEMS: readonly TabItem[] = [{ key: 'overview', label: 'Overview' }];
+const OVERVIEW_TAB_ITEMS: readonly TabItem[] = [{ key: 'overview', label: 'Overview' }, { key: 'tasks', label: 'Tasks' }];
 
 /**
  * Project Details page (`1:8753`, §3.5, §3.6, §12.6, M17):
@@ -27,10 +28,12 @@ const OVERVIEW_TAB_ITEMS: readonly TabItem[] = [{ key: 'overview', label: 'Overv
  */
 export function ProjectDetailsPage() {
   const { projectId: rawProjectId } = useParams();
+  const [searchParams] = useSearchParams();
   const projectId = parseProjectIdParam(rawProjectId);
   const { role } = useSession();
   const canEditProject = hasCapability(role, 'edit_project');
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(() => searchParams.has('taskId') ? 'tasks' : 'overview');
   const tabsId = useId();
 
   const { overviewQuery, teamsQuery } = useProjectDetails(projectId);
@@ -101,16 +104,15 @@ export function ProjectDetailsPage() {
         onEdit={() => setIsEditOpen(true)}
       />
 
-      {/* WI-9 Tasks tab is intentionally hidden until WI-9 exports its public Board component; Teams & Files tabs are Tier 2. */}
       <Tabs
         idPrefix={tabsId}
         ariaLabel="Project sections"
         items={OVERVIEW_TAB_ITEMS}
-        activeKey="overview"
-        onChange={() => {}}
+        activeKey={activeTab}
+        onChange={setActiveTab}
       />
 
-      <TabPanel idPrefix={tabsId} tabKey="overview" isActive>
+      <TabPanel idPrefix={tabsId} tabKey="overview" isActive={activeTab === 'overview'}>
         <ProjectOverviewTab
           project={project}
           teams={teamsQuery.data ?? []}
@@ -118,6 +120,9 @@ export function ProjectDetailsPage() {
           teamsError={teamsQuery.error}
           onRetryTeams={() => void teamsQuery.refetch()}
         />
+      </TabPanel>
+      <TabPanel idPrefix={tabsId} tabKey="tasks" isActive={activeTab === 'tasks'}>
+        <TaskBoard projectId={projectId} />
       </TabPanel>
 
       {canEditProject ? (
