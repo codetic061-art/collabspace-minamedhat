@@ -1,4 +1,4 @@
-﻿# ADR-05: API Layer, Data Fetching, Caching, Retry, and Timeout
+# ADR-05: API Layer, Data Fetching, Caching, Retry, and Timeout
 
 - **Status:** Approved (2026-11-26)
 - **Date:** 2026-11-26
@@ -10,7 +10,7 @@
 
 CollabSpace consumes an existing Laravel 13 REST API (`https://collabspace.huma-volve.com/api/v1`) whose authoritative contract and WI-1 D10 read-only Project Manager verification results are recorded in `docs/api/plain.md` (`HANDOFF.md` §4, `ID-6`, `ID-19`):
 
-1. **Mandatory header (`docs/api/plain.md` — *Required Headers*, `VERIFIED`):** Every JSON request MUST include `Accept: application/json`; omitting it on a protected route without a valid token causes Laravel to return HTTP `500` (`"Route [login] not defined."`) instead of `401`. The sole exception is binary streaming on `GET /files/{file}/download` (`#files-download`).
+1. **Mandatory header (`docs/api/plain.md` — *Required Headers*, `VERIFIED`):** Every `/api/v1/*` request — **including `GET /files/{file}/download`** (`#files-download`) — MUST include `Accept: application/json`; omitting it (e.g., `Accept: */*` or `Accept: text/html`) on a protected route without a valid token causes Laravel to return HTTP `500` (`"Route [login] not defined."`) instead of `401`.
 2. **Six response envelope variants (`E1`–`E6`, `docs/api/plain.md` — *Response Envelope Variants*):**
    - `E1` Standard: `{ success: true, message: string, data: T }` (most endpoints).
    - `E2` No-`message`: `{ success: true, data: T }` or `{ success: true, data: T[], meta }` (`#dashboard-index`, `#users-index`, `#users-show`, `#audit-logs-index`, `#ai-settings-index` `VERIFIED`; `#ai-ask` `DOCUMENTED`).
@@ -65,10 +65,10 @@ Adopt a **single native `fetch` HTTP client** (`src/shared/api/httpClient.ts`) r
 - **401 hook:** Invokes the single `onUnauthorized` callback (`ADR-01`) unless the request explicitly opts out (`POST /auth/login` `#auth-login`, where `401` is a credential error).
 - **429 `Retry-After` parsing:** Reads `Retry-After` (delta-seconds or HTTP-date) only when present and readable cross-origin; never invents a countdown when omitted or hidden by CORS (`BR-6`, `ADR-13`).
 - **Authenticated binary file downloads (`downloadBlob`, `#files-download`, `#dashboard-index`, `#files-index`):**
-  - Because D10 verified that `/api/v1/files/{id}/download` requires `Authorization: Bearer <token>` (returning `401` JSON unauthenticated) and omits `Access-Control-Expose-Headers` (making `Content-Disposition` unreadable cross-origin), `httpClient.ts` exposes a dedicated `downloadBlob(pathOrUrl, { fallbackFilename, signal })` method:
+  - Because unauthenticated `GET /api/v1/files/{id}/download` returns HTTP `500` (`"Route [login] not defined."`) when `Accept: */*` is sent and HTTP `401` JSON when `Accept: application/json` is sent, and CORS omits `Access-Control-Expose-Headers` (making `Content-Disposition` unreadable cross-origin), `httpClient.ts` exposes `downloadBlob(pathOrUrl, { fallbackFilename, signal })`:
     1. Resolves root-relative `/api/v1/...` paths (`#dashboard-index` `recent_files.items[].download_url`) against the API origin (`https://collabspace.huma-volve.com`) and validates absolute URLs (`FileAttachmentResource.url`) through `src/shared/lib/safeUrl.ts` — rejecting any URL outside the configured API origin or `/api/v1/files/` path.
-    2. Sends `GET` with `Authorization: Bearer <token>` (omitting `Accept: application/json` for binary `200` streaming, while inspecting `Content-Type` / JSON error payloads on non-2xx responses so `401`, `403`, `404`, and `5xx` normalize to `AppError` identically to JSON requests).
-    3. Reads `response.blob()`, uses `fallbackFilename` from file metadata (`DashboardFileResource.name` / `FileAttachmentResource.name`) — falling back to `Content-Disposition` only if `BR-6` later exposes it — triggers a programmatic download via `URL.createObjectURL` + transient `<a download>`, and immediately calls `URL.revokeObjectURL`. Untrusted HTML/SVG bytes are never rendered inline (`BR-8`).
+    2. Always sends `Accept: application/json` alongside `Authorization: Bearer <token>` so expired or revoked sessions return HTTP `401` JSON and trigger `notifyUnauthorized()` before `response.blob()` rather than failing with HTTP `500`. Non-2xx responses normalize to `AppError` identically to JSON requests.
+    3. Reads `response.blob()`, sanitizes `fallbackFilename` from file metadata (`DashboardFileResource.name` / `FileAttachmentResource.name`) — because `Content-Disposition` is not exposed cross-origin (`BR-6`) — triggers a programmatic download via `URL.createObjectURL` + transient `<a download>`, and immediately calls `URL.revokeObjectURL`. Untrusted HTML/SVG bytes are never rendered inline (`BR-8`).
 
 ### 2. Pagination (`P1`–`P4`), `/users` Member Picker (`D5`), and Date modules (`src/shared/api/`)
 
