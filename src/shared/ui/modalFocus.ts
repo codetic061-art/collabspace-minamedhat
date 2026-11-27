@@ -59,15 +59,21 @@ function handleTabTrap(event: globalThis.KeyboardEvent, dialogEl: HTMLDialogElem
 
   if (!first || !last) {
     event.preventDefault();
+    dialogEl.focus();
     return;
   }
 
   const active = document.activeElement;
-  const atStart = active === first || active === dialogEl;
-  if (event.shiftKey && atStart) {
+  if (!active || !dialogEl.contains(active) || active === dialogEl) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+    return;
+  }
+
+  if (event.shiftKey && active === first) {
     event.preventDefault();
     last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
+  } else if (!event.shiftKey && active === last) {
     event.preventDefault();
     first.focus();
   }
@@ -143,12 +149,26 @@ export function useModalDialog({
       }
     };
 
-    dialogEl.addEventListener('keydown', onKeyDown);
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target;
+      if (target instanceof HTMLElement) {
+        const insideDialog = dialogEl.contains(target);
+        const insideToast = Boolean(target.closest('[data-toast-region]'));
+        if (!insideDialog && !insideToast) {
+          const fallbackTarget = getFocusableElements(dialogEl)[0] ?? dialogEl;
+          fallbackTarget.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('focusin', onFocusIn);
     dialogEl.addEventListener('cancel', onCancel);
     dialogEl.addEventListener('click', onClick);
 
     return () => {
-      dialogEl.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('focusin', onFocusIn);
       dialogEl.removeEventListener('cancel', onCancel);
       dialogEl.removeEventListener('click', onClick);
       if (dialogEl.open) {
@@ -160,6 +180,23 @@ export function useModalDialog({
       }
     };
   }, [isOpen, initialFocusRef]);
+
+  useEffect(() => {
+    if (!isOpen || !isSubmitting) {
+      return;
+    }
+
+    const dialogEl = dialogRef.current;
+    if (!dialogEl) {
+      return;
+    }
+
+    const active = document.activeElement;
+    const isDisabledActive = active instanceof HTMLElement && active.hasAttribute('disabled');
+    if (!active || !dialogEl.contains(active) || isDisabledActive) {
+      dialogEl.focus();
+    }
+  }, [isOpen, isSubmitting]);
 
   return dialogRef;
 }

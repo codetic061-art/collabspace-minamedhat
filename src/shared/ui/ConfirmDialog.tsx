@@ -35,6 +35,7 @@ export function ConfirmDialog({
       title={title}
       size="sm"
       isSubmitting={isConfirming}
+      submittingLabel={confirmingLabel}
       initialFocusRef={cancelButtonRef}
       footer={
         <>
