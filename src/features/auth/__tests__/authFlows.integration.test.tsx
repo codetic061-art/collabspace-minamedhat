@@ -389,6 +389,7 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
 
     const { router } = mountApp('/projects');
     expect(await screen.findByRole('heading', { level: 1, name: 'All Projects' })).toBeVisible();
+    await waitFor(() => expect(router.state.location.search).toBe('?sort=newest'));
 
     await expect(
       downloadBlob('/api/v1/files/7/download', { fallbackFilename: 'spec.pdf' }),
@@ -397,6 +398,6 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
     expect(seenAccept).toBe('application/json');
     expect(getAuthToken()).toBeNull();
     await waitFor(() => expect(router.state.location.pathname).toBe('/sign-in'));
-    expect(router.state.location.search).toBe('?redirectTo=%2Fprojects');
+    expect(router.state.location.search).toBe('?redirectTo=%2Fprojects%3Fsort%3Dnewest');
   });
 });
