@@ -205,7 +205,7 @@ function ProjectSharedFields<TFields extends BaseProjectFields>({
           <ProjectTeamsSelect
             selectedIds={
               Array.isArray(field.value)
-                ? field.value.filter((item): item is number => typeof item === 'number')
+                ? field.value.filter((item: unknown): item is number => typeof item === 'number')
                 : []
             }
             onChange={field.onChange}
