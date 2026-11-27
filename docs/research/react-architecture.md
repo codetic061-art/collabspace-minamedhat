@@ -405,3 +405,49 @@ PROPOSAL — requires ADR: start with option 1 plus per-feature ESLint overrides
 - https://www.jsboundaries.dev/docs/overview/ timed out; the GitHub README was used instead.
 - https://eslint.org/docs/latest/rules/no-restricted-imports timed out twice; the GitHub docs source was used instead.
 - https://github.com/react-hook-form/resolvers/blob/main/README.md returned 404; the npm registry README was used instead.
+
+---
+
+## Addendum (2026-11-26): Styling, Icons, Charts, Fonts, A11y, Compiler, and Deployment Verification
+
+Checked on **2026-11-26** directly against `https://registry.npmjs.org/<pkg>/latest` (and specific pinned versions where noted) and official documentation URLs (HTTP 200 verified, zero search-redirect URLs). Local inspection confirmed clean branch `docs/wi-2-adrs`, Node `v24.18.0`, npm `11.16.0`, and no `package.json` in the repository yet.
+
+### A1. Additional verified npm packages and peer constraints (2026-11-26)
+
+| Package | Verified Version | Node engine | Verified peer / dependency constraints | Notes for ADRs |
+|---|---|---|---|---|
+| `@tailwindcss/vite` | `4.3.5` | — | `vite: ^5.2.0 \|\| ^6 \|\| ^7 \|\| ^8` | First-party Tailwind v4 Vite plugin; full Vite 8 support; CSS-first `@theme` tokens (`tailwindcss` `4.3.5`). |
+| `lucide-react` | `1.81.0` | — | `react: ^16.5.1 \|\| ^17 \|\| ^18 \|\| ^19`, `@types/react: *` | Full React 19 support; ESM tree-shakable icons. |
+| `recharts` | `3.11.1` | `>=18` | `react: ^16.8..^19`, `react-dom: ^16..^19`, `react-is: ^16.8..^19`, `@types/react: *` | Native React 19 support; declares `react-is` as a peer dependency (not bundled as an older direct dep). Install `react-is@19.3.1` directly to match `react@19.3.1` cleanly (add npm `overrides` only if a transitive package pins an older `react-is`). Note: renders runtime inline `style` attributes for `ResponsiveContainer` and `Tooltip` positioning. |
+| `react-is` | `19.3.1` | — | — | Exact major/minor/patch match for `react@19.3.1`. |
+| `@fontsource/inter` | `5.3.0` | — | — | Static package; verified exports include `./latin-400.css`, `./latin-500.css`, `./latin-600.css`, `./latin-700.css` (normal style, latin subset). Matches D4 literally without pulling weights 100–300 or 800–900. |
+| `@fontsource-variable/inter` | `5.3.0` | — | — | Variable font covering 100–900; does not provide per-subset CSS imports (relies on `unicode-range`). |
+| `@fontsource/rubik` | `5.3.0` | — | — | Static package; verified `./latin-400.css` export for the "Collabspace" wordmark per D4. |
+| `prettier` | `3.10.1` | `>=14` | — | Official docs recommend `--save-dev --save-exact`. |
+| `axe-core` | `4.14.1` | `>=4` | — | Actively maintained; callable directly (`axe.run(container)`) in Vitest + jsdom tests without an outdated wrapper. |
+| `vitest-axe` | `0.1.0` | — | `vitest: >=0.16.0`; direct dep `axe-core: ^4.4.2` | Stale `0.1.0` wrapper pinned to `axe-core ^4.4.2`; rejected in favour of calling `axe-core@4.14.1` directly in Vitest and `@axe-core/playwright@4.14.1` in Playwright. |
+| `@axe-core/playwright` | `4.14.1` | `>=22.12.0` | `playwright-core: >=1.0.0` | Official Deque Playwright integration (`AxeBuilder`); compatible with `@playwright/test@1.65.1` and Node 22.22.2+ / 24 LTS. |
+| `@eslint/js` (pinned for ESLint 9) | `9.39.5` (latest is `10.0.1`) | `^18.18 \|\| ^20.9 \|\| >=21.1` | Matches `eslint@9.39.5` | **Critical peer finding:** `@eslint/js@10.0.1` requires `eslint: ^10.0.0`. Because `eslint-plugin-jsx-a11y@6.10.2` caps `eslint` at `^9`, both `eslint` and `@eslint/js` must pin to `9.39.5`. |
+| `globals` | `17.14.0` | — | — | Browser/Node global definitions for ESLint 9 flat config. |
+| `@types/react` / `@types/react-dom` | `19.3.3` / `19.3.0` | — | `@types/react-dom` peer `@types/react: ^19.3.0` | Match `react@19.3.1`. |
+| `@types/node` (24 LTS line) | `24.19.4` (latest is `26.6.11`) | — | — | Matches Node 24 LTS CI environment and `vite@8.4.0` peer `@types/node: ^20.19 \|\| >=22.12`. |
+| `@babel/core` / `@rolldown/plugin-babel` | `8.1.3` / `0.3.1` | `>=22.12` / `^24` | `@rolldown/plugin-babel` peers: `vite: ^8`, `rolldown: ^1.0.0-rc.5`, `@babel/core: ^7.29 \|\| ^8.0.0-rc.1` | Optional peers of `@vitejs/plugin-react@6.3.0` needed only if Babel-based `babel-plugin-react-compiler@1.0.0` is enabled. Because `@rolldown/plugin-babel` is pre-1.0 (`0.3.1`), introduces Babel into Vite 8's Oxc pipeline, and `eslint-plugin-react-hooks@7.1.1` already enforces all compiler rules statically, ADR-09 defers the build-time compiler plugin for MVP. |
+
+### A2. Additional verified official documentation sources (checked 2026-11-26)
+
+- https://tailwindcss.com/docs/installation/using-vite (Tailwind CSS 4.3.5): official `@tailwindcss/vite` setup and `@import "tailwindcss";`.
+- https://tailwindcss.com/docs/theme (Tailwind CSS 4.3.5): CSS-first `@theme` design token variables generating utility classes and CSS custom properties.
+- https://lucide.dev/guide/react (`lucide-react` 1.81.0): React installation, tree-shakable ESM imports, and SVG prop forwarding (canonical target of `/guide/packages/lucide-react`).
+- https://recharts.github.io/en-US/guide/installation/ and https://github.com/recharts/recharts/wiki/3.0-migration-guide (Recharts 3.11.1): React 19 compatibility and `react-is` requirement.
+- https://prettier.io/docs/install and https://prettier.io/docs/configuration (Prettier 3.10.1): `--save-dev --save-exact` installation and project-local config.
+- https://playwright.dev/docs/accessibility-testing (`@playwright/test` 1.65.1 + `@axe-core/playwright` 4.14.1): `AxeBuilder` WCAG tag filtering and modal/state scanning.
+- https://github.com/dequelabs/axe-core (`axe-core` 4.14.1) and https://github.com/chaance/vitest-axe (`vitest-axe` 0.1.0): direct `axe.run()` vs unmaintained wrapper pinned to `axe-core ^4.4.2`.
+- https://github.com/bvaughn/react-error-boundary (`react-error-boundary` 6.1.6): `ErrorBoundary` fallback/reset API for block-level boundaries.
+- https://github.com/btd/rollup-plugin-visualizer (`rollup-plugin-visualizer` 7.3.0): Rolldown 1.x / Vite 8 bundle visualization support.
+- https://vercel.com/docs/project-configuration, https://vercel.com/docs/project-configuration/vercel-json, https://vercel.com/docs/headers/response-headers, and https://vercel.com/docs/deployments/environments: `vercel.json` SPA rewrites, `/assets/*` immutable caching, response security headers, and Preview vs Production environments.
+- https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/dialog (MDN current): native `<dialog>` `showModal()` Top Layer, built-in `inert`, Escape handling, and focus management.
+- https://www.w3.org/WAI/ARIA/apg/patterns/listbox/ and https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/ (W3C WAI-ARIA APG): keyboard navigation and ARIA roles for custom selects and menus.
+- https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static and https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/any_static (MDN current): combining TanStack Query's `AbortSignal` with a `15_000 ms` request timeout without leaks.
+- https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/style-src (MDN current): `style-src` directive semantics and `'unsafe-inline'` trade-offs for runtime inline style attributes.
+- https://fontsource.org/fonts/inter/install and https://fontsource.org/fonts/rubik/install (`@fontsource/inter` 5.3.0, `@fontsource/rubik` 5.3.0): static per-weight latin CSS imports (`latin-400.css`..`latin-700.css`).
+- https://www.typescriptlang.org/docs/handbook/tsconfig-json.html (TypeScript 6.0.3): `tsconfig.json` compiler options.
