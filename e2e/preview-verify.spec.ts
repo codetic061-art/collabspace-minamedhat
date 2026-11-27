@@ -177,7 +177,9 @@ test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y',
   await page.screenshot({ path: 'preview-shots/wi3-1440.png', fullPage: true });
 });
 
-test('renders the Dashboard on Preview at supported widths with a simulated API', async ({ page }) => {
+test('renders the Dashboard on Preview at supported widths with a simulated API', async ({
+  page,
+}) => {
   const previewBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
   if (!previewBaseUrl) {
     test.skip(true, 'Requires a Vercel Preview deployment.');
@@ -187,11 +189,14 @@ test('renders the Dashboard on Preview at supported widths with a simulated API'
   const previewOrigin = new URL(previewBaseUrl).origin;
   const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim() ?? '';
   if (bypassSecret) {
-    await page.route((url) => url.origin === previewOrigin, async (route) => {
-      await route.continue({
-        headers: { ...route.request().headers(), 'x-vercel-protection-bypass': bypassSecret },
-      });
-    });
+    await page.route(
+      (url) => url.origin === previewOrigin,
+      async (route) => {
+        await route.continue({
+          headers: { ...route.request().headers(), 'x-vercel-protection-bypass': bypassSecret },
+        });
+      },
+    );
   }
 
   const apiPaths: string[] = [];
