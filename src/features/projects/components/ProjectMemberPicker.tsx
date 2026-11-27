@@ -30,10 +30,7 @@ export function ProjectMemberPicker({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
 
-  const picker = useUserSearchPicker({
-    enabled: isOpen,
-    searchTerm,
-  });
+  const picker = useUserSearchPicker({ enabled: isOpen, searchTerm });
 
   useEffect(() => {
     if (!isOpen) {
@@ -164,11 +161,13 @@ export function ProjectMemberPicker({
                           )}
                         >
                           <span className="flex min-w-0 items-center gap-2.5">
-                            <Avatar name={user.name} src={toSafeExternalUrl(user.avatar_url)} size="sm" />
+                            <Avatar
+                              name={user.name}
+                              src={toSafeExternalUrl(user.avatar_url)}
+                              size="sm"
+                            />
                             <span className="min-w-0">
-                              <span className="block truncate font-medium text-ink">
-                                {user.name}
-                              </span>
+                              <span className="block truncate font-medium text-ink">{user.name}</span>
                               <span className="block truncate text-xs text-body">
                                 {user.job_title ?? user.email}
                               </span>

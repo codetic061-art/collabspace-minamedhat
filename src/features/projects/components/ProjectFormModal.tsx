@@ -84,6 +84,18 @@ interface ProjectSharedFieldsProps<TFields extends BaseProjectFields> {
   onRetryTeams: () => void;
 }
 
+function getFieldError(fieldError: unknown): string | undefined {
+  if (
+    typeof fieldError === 'object' &&
+    fieldError !== null &&
+    'message' in fieldError &&
+    typeof fieldError.message === 'string'
+  ) {
+    return fieldError.message;
+  }
+  return undefined;
+}
+
 function ProjectSharedFields<TFields extends BaseProjectFields>({
   register,
   control,
@@ -111,7 +123,7 @@ function ProjectSharedFields<TFields extends BaseProjectFields>({
         required
         placeholder="Enter project name"
         leadingIcon={<FolderKanban className="h-4 w-4" aria-hidden="true" />}
-        error={typeof errors.name?.message === 'string' ? errors.name.message : undefined}
+        error={getFieldError(errors.name)}
         disabled={isSubmitting}
         {...register(nameField)}
       />
@@ -121,9 +133,7 @@ function ProjectSharedFields<TFields extends BaseProjectFields>({
         labelVariant="notch"
         rows={3}
         placeholder="Describe the project goals and scope"
-        error={
-          typeof errors.description?.message === 'string' ? errors.description.message : undefined
-        }
+        error={getFieldError(errors.description)}
         disabled={isSubmitting}
         {...register(descriptionField)}
       />
@@ -140,9 +150,7 @@ function ProjectSharedFields<TFields extends BaseProjectFields>({
               options={PRIORITY_OPTIONS}
               value={String(field.value ?? '')}
               onChange={field.onChange}
-              error={
-                typeof errors.priority?.message === 'string' ? errors.priority.message : undefined
-              }
+              error={getFieldError(errors.priority)}
               disabled={isSubmitting}
             />
           )}
@@ -159,7 +167,7 @@ function ProjectSharedFields<TFields extends BaseProjectFields>({
               options={STATUS_OPTIONS}
               value={String(field.value ?? '')}
               onChange={field.onChange}
-              error={typeof errors.status?.message === 'string' ? errors.status.message : undefined}
+              error={getFieldError(errors.status)}
               disabled={isSubmitting}
             />
           )}
@@ -173,9 +181,7 @@ function ProjectSharedFields<TFields extends BaseProjectFields>({
           type="date"
           required
           leadingIcon={<Calendar className="h-4 w-4" aria-hidden="true" />}
-          error={
-            typeof errors.start_date?.message === 'string' ? errors.start_date.message : undefined
-          }
+          error={getFieldError(errors.start_date)}
           disabled={isSubmitting}
           {...register(startDateField)}
         />
@@ -186,7 +192,7 @@ function ProjectSharedFields<TFields extends BaseProjectFields>({
           type="date"
           required
           leadingIcon={<Calendar className="h-4 w-4" aria-hidden="true" />}
-          error={typeof errors.deadline?.message === 'string' ? errors.deadline.message : undefined}
+          error={getFieldError(errors.deadline)}
           disabled={isSubmitting}
           {...register(deadlineField)}
         />
@@ -208,7 +214,7 @@ function ProjectSharedFields<TFields extends BaseProjectFields>({
             error={teamsError}
             onRetry={onRetryTeams}
             disabled={isSubmitting}
-            fieldError={typeof errors.teams?.message === 'string' ? errors.teams.message : undefined}
+            fieldError={getFieldError(errors.teams)}
           />
         )}
       />

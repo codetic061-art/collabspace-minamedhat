@@ -58,7 +58,9 @@ export function ProjectDetailsHeader({ project, canEdit, onEdit }: ProjectDetail
 
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl sm:text-3xl font-semibold text-ink">{project.name}</h1>
-          <Badge variant="completion">{Math.round(project.progress_percentage)}% Completed</Badge>
+          <Badge variant="completion">
+            {Math.round(project.progress_percentage)}% Completed
+          </Badge>
         </div>
       </div>
 

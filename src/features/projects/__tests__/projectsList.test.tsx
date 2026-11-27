@@ -53,8 +53,11 @@ describe('ProjectsListPage (Layer 2)', () => {
 
   it('renders loading, server pagination, team chips (+N), status colors, and excludes delete', async () => {
     const user = userEvent.setup();
-    const seenRequests: Array<{ page: string | null; perPage: string | null; sort: string | null }> =
-      [];
+    const seenRequests: Array<{
+      page: string | null;
+      perPage: string | null;
+      sort: string | null;
+    }> = [];
 
     mswServer.use(
       http.get(`${API_BASE}/projects`, ({ request }) => {
@@ -143,8 +146,11 @@ describe('ProjectsListPage (Layer 2)', () => {
 
   it('syncs search, status filter, and sort=newest with URL and survives reload', async () => {
     const user = userEvent.setup();
-    const seenQueries: Array<{ search: string | null; status: string | null; sort: string | null }> =
-      [];
+    const seenQueries: Array<{
+      search: string | null;
+      status: string | null;
+      sort: string | null;
+    }> = [];
 
     mswServer.use(
       http.get(`${API_BASE}/projects`, ({ request }) => {
