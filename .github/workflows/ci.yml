@@ -62,7 +62,7 @@ jobs:
         run: npm audit signatures
 
       - name: Check formatting
-        run: npm run format:check || { npx prettier --write e2e/preview-verify.spec.ts; git diff -- e2e/preview-verify.spec.ts; exit 1; }
+        run: npm run format:check
 
       - name: Typecheck
         run: npm run typecheck

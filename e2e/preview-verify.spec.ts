@@ -244,9 +244,9 @@ test('renders the Dashboard on Preview at supported widths with a simulated API'
   for (const width of [1440, 1024, 768, 360]) {
     await page.setViewportSize({ width, height: 900 });
     await expect(page.getByRole('heading', { name: 'Pending Tasks' })).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
-      true,
-    );
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
     await page.screenshot({ path: `preview-shots/dashboard-${width}.png`, fullPage: true });
   }
 });
