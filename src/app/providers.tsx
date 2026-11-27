@@ -1,7 +1,5 @@
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
-import { Outlet } from 'react-router';
-import { SessionProvider } from '@/features/auth';
 import { createAppQueryClient } from '@/shared/api';
 import { ToastProvider } from '@/shared/ui';
 import { RootErrorBoundary } from './RootErrorBoundary';
@@ -25,11 +23,3 @@ export function AppProviders({ queryClient: injectedClient, children }: AppProvi
   );
 }
 
-/** Root route wrapper binding `SessionProvider` cleanly inside React Router navigation context. */
-export function SessionRoot() {
-  return (
-    <SessionProvider>
-      <Outlet />
-    </SessionProvider>
-  );
-}

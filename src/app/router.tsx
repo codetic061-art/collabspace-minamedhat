@@ -7,7 +7,6 @@ import {
   loadSignUpPage,
   loadVerifyCodePage,
 } from '@/features/auth';
-import { SessionRoot } from './providers';
 import { RouteErrorBoundary } from './RouteErrorBoundary';
 
 /**
@@ -17,7 +16,10 @@ import { RouteErrorBoundary } from './RouteErrorBoundary';
 export function createAppRoutes(): RouteObject[] {
   return [
     {
-      element: <SessionRoot />,
+      lazy: async () => {
+        const { SessionRoot } = await import('./SessionRoot');
+        return { Component: SessionRoot };
+      },
       errorElement: <RouteErrorBoundary />,
       children: [
         {
