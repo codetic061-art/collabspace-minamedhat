@@ -176,9 +176,7 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
         available_status: values.available_status,
         job_title: values.job_title.trim(),
         years_of_experience: Number(values.years_of_experience),
-        current_project_id: values.current_project_id
-          ? Number(values.current_project_id)
-          : null,
+        current_project_id: values.current_project_id ? Number(values.current_project_id) : null,
         about: values.about.trim(),
         avatar,
       });
