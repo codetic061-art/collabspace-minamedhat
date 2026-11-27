@@ -18,7 +18,7 @@ Every endpoint, field, and behaviour in this document carries one of four eviden
 
 | Level | Meaning |
 |---|---|
-| **`VERIFIED`** | Observed in a live sanitised HTTP response (unauthenticated discovery probe, Admin/PM authenticated probes, people-picker probe, or the WI-1 D10 PM verification session). |
+| **`VERIFIED`** | Observed in a live sanitised HTTP response with recorded evidence in `docs/discovery/api-probe.md`, `docs/discovery/api-authenticated-shapes.md`, or recorded Gate 1 read-only checks (Issue `#12`). |
 | **`DOCUMENTED`** | Stated in the public OpenAPI 3.1.2 spec (`/docs/api.json`) and/or the Postman collection, but not yet observed live. |
 | **`UNVERIFIED`** | Inferred or untested (for example, missing response schemas, undocumented query parameters, or Team Member role behaviour per D6). Implementers must code defensively for absence or variance. |
 | **`CONFLICT`** | Sources disagree (live response vs. OpenAPI vs. Postman body vs. Postman description). Each source's claim and the authoritative resolution are stated explicitly. |
@@ -82,7 +82,7 @@ Every endpoint, field, and behaviour in this document carries one of four eviden
 
 | Header | When required | Notes |
 |---|---|---|
-| `Accept: application/json` | **Every JSON request (mandatory).** | **Critical (`VERIFIED`):** If `Accept: application/json` is omitted (e.g. `Accept: text/html`) on a protected route without a valid token, Laravel attempts to redirect to a non-existent web `login` route and returns **`500 Internal Server Error`** with `{"success":false,"message":"Route [login] not defined.","errors":null}` instead of `401`. Only `GET /files/{file}/download` omits or overrides `Accept` when expecting binary bytes (though sending `Accept: application/json` on an unauthenticated download request cleanly yields a JSON `401`). |
+| `Accept: application/json` | **Every `/api/v1/*` request (mandatory), including `GET /files/{file}/download`.** | **Critical (`VERIFIED`):** If `Accept: application/json` is omitted (e.g. `Accept: */*` or `Accept: text/html`) on a protected route without a valid token, Laravel attempts to redirect to a non-existent web `login` route and returns **`500 Internal Server Error`** with `{"success":false,"message":"Route [login] not defined.","errors":null}` instead of `401` (`VERIFIED` on `/api/v1/projects` in `api-probe.md` #13 and on `/api/v1/files/1/download` during Gate 1 Issue `#12` review). Sending `Accept: application/json` on an unauthenticated download request cleanly returns `401` JSON (`VERIFIED`). |
 | `Authorization: Bearer <token>` | Every protected endpoint (all 85 non-public operations). | Sanctum personal access token obtained from `data.token` on login/register/social-callback. No refresh token or expiry field is returned (`VERIFIED`). |
 | `Content-Type: application/json` | Every JSON request body (`POST`, `PUT`, `PATCH`). | Omit on bodyless requests. |
 | `Content-Type: multipart/form-data; boundary=...` | File uploads only: `POST /auth/profile`, `PUT /auth/profile`, `POST /files`. | Let `FormData` / the HTTP client generate the boundary automatically; do not set a manual `Content-Type` header without a boundary. |
@@ -102,21 +102,21 @@ Verified against `http://localhost:3000`, `http://localhost:5173`, and `https://
 
 ### Response Envelope Variants
 
-Client envelope unwrapping MUST handle all six variants below (`VERIFIED` except where noted):
+Client envelope unwrapping MUST handle all six variants below (evidence level per row):
 
 | Variant | Structure | Endpoints | Evidence |
 |---|---|---|---|
-| **E1. Standard success** | `{ "success": true, "message": string, "data": T }` | Most endpoints (`auth/*`, `profile/*`, `projects/*`, `tasks/*`, `teams/*`, `files/*`, `meetings/*`, `notifications/*`, `messages/*`, `reports/*`, `ai/settings` PUT, `users` POST/PUT). | `VERIFIED` |
-| **E2. No-`message` success** | `{ "success": true, "data": T }` or `{ "success": true, "data": T[], "meta": {...} }` | `GET /dashboard`, `GET /users`, `GET /users/{user}`, `GET /audit-logs`, `GET /ai/settings` (`VERIFIED`); `POST /ai/ask` (`DOCUMENTED`). Client parsers must treat `message` as optional (`string \| undefined`). | `VERIFIED` / `DOCUMENTED` |
-| **E3. `data: null` success** | `{ "success": true, "message": string, "data": null }` | `POST /auth/logout` (`VERIFIED`); `POST /auth/verify-reset-otp`, `POST /auth/reset-password`, `PUT /auth/password`, and `DELETE` on projects, tasks, teams, meetings, comments, notes, files, messages, notifications (`DOCUMENTED`). | `VERIFIED` / `DOCUMENTED` |
+| **E1. Standard success** | `{ "success": true, "message": string, "data": T }` | `VERIFIED`: `POST /auth/login`, `GET /auth/me`, `GET /auth/profile/tasks`, `GET /projects`, `GET /projects/{id}`, `GET /projects/{id}/overview`, `GET /projects/{id}/teams`, `GET /tasks`, `GET /tasks/{id}`, `GET /projects/{id}/tasks/kanban`, `GET /teams`, `GET /teams/{id}`, `GET /team-roles`. `DOCUMENTED`: write endpoints (`POST`/`PUT`/`PATCH`) and unprobed domains (`files/*`, `meetings/*`, `notifications/*`, `messages/*`, `reports/*`, `ai/settings` PUT, `users` POST/PUT). | `VERIFIED` (probed reads & login) / `DOCUMENTED` (writes & unprobed) |
+| **E2. No-`message` success** | `{ "success": true, "data": T }` or `{ "success": true, "data": T[], "meta": {...} }` | `GET /dashboard`, `GET /users` (`VERIFIED`); `GET /users/{user}`, `GET /audit-logs`, `GET /ai/settings` (`UNVERIFIED` — no committed probe log); `POST /ai/ask` (`DOCUMENTED`). Client parsers must treat `message` as optional (`string \| undefined`). | `VERIFIED` (`/dashboard`, `/users`) / `DOCUMENTED` / `UNVERIFIED` |
+| **E3. `data: null` success** | `{ "success": true, "message": string, "data": null }` | `POST /auth/logout` (`VERIFIED`); `POST /auth/verify-reset-otp`, `POST /auth/reset-password`, `PUT /auth/password`, and `DELETE` on projects, tasks, teams, meetings, comments, notes, files, messages, notifications (`DOCUMENTED`). | `VERIFIED` (logout) / `DOCUMENTED` |
 | **E4. No-`data` success** | `{ "success": true, "message": string }` (no `data` key) | `DELETE /users/{user}` only. | `DOCUMENTED` |
 | **E5. Bare object (no envelope)** | `{ ... }` (no `success`/`message`/`data`) | `GET /broadcasting/auth` only. | `DOCUMENTED` |
-| **E6. Binary stream** | Raw file bytes + `Content-Type: <mime>` + `Content-Disposition: attachment; filename=...` | `GET /files/{file}/download` (200 only; errors return JSON). | `VERIFIED` |
+| **E6. Binary stream** | Raw file bytes + `Content-Type: <mime>` + `Content-Disposition: attachment; filename=...` | `GET /files/{file}/download` (200 only; unauthenticated error responses return `401` with `Accept: application/json` or `500` with `Accept: */*`, `VERIFIED`). | `DOCUMENTED` (`200` stream) / `VERIFIED` (`401`/`500`) |
 
 ### Error Envelopes & Mapping to ID-19 `AppError` Kinds
 
 > **`CONFLICT` — Error envelope shape:**
-> - **Live server (`VERIFIED` for 401, 403, 404, 405, 500) & Postman saved examples (`DOCUMENTED` for 422):** `{ "success": false, "message": string, "errors": null | Record<string, string[]> }`.
+> - **Live server (`VERIFIED` for `401`, `404` route-not-found, `405`, `500`, and web `/broadcasting/auth` `403`) & Postman saved examples (`DOCUMENTED` for `422`):** `{ "success": false, "message": string, "errors": null | Record<string, string[]> }`.
 > - **OpenAPI `components.responses` (`DOCUMENTED`):** omits `success` (lists `{ "message": string }` for 401/403/404 and `{ "message": string, "errors": Record<string, string[]> }` for 422), except social-auth inline 400/422 which include `success` and `errors: null`.
 > - **Authoritative resolution:** Expect `{ success?: false, message: string, errors?: Record<string, string[]> | null }`. Treat `success` as optional when parsing errors so both live and spec-conformant error bodies normalize cleanly.
 
@@ -129,8 +129,8 @@ Every failure normalizes to one of the 12 `AppError` kinds defined in Spec ID-19
 | `aborted` | `AbortSignal` triggered by navigation or superseded query | N/A | `DOCUMENTED` | Swallow silently; never render to user. |
 | `bad_request` | `400` | `{ "success": false, "message": string, "errors": null }` (documented on social callback) | `DOCUMENTED` | Surface server `message`. |
 | `unauthorized` | `401` | `{ "success": false, "message": "Unauthenticated. Please provide a valid Bearer token.", "errors": null }` | `VERIFIED` | On `/auth/login`, treat as credential error (do not redirect). Elsewhere: clear token + cache, broadcast logout, single redirect to Sign in with return path. |
-| `forbidden` | `403` | `{ "success": false, "message": "This action is unauthorized.", "errors": null }` (live API route; web `/broadcasting/auth` returned `"You do not have permission to perform this action."`) | `VERIFIED` | Keep user signed in. Mutations show permission toast & roll back optimistic update. Pages show access-denied state (never empty state). |
-| `not_found` | `404` | `{ "success": false, "message": "No query results for model [App\\Models\\Project] <id>", "errors": null }` or `"The route api/v1/... could not be found."` | `VERIFIED` | Show safe not-found state (do not leak raw PHP model class names to end users). |
+| `forbidden` | `403` | Web `/broadcasting/auth` returned `{ "success": false, "message": "You do not have permission to perform this action.", "errors": null }` (`VERIFIED` in `api-probe.md` #29); OpenAPI `AuthorizationException` documents `"This action is unauthorized."` (not observed live on `/api/v1/*` in committed logs). | `VERIFIED` (web `403`) / `DOCUMENTED` (API `403`) | Keep user signed in. Mutations show permission toast & roll back optimistic update. Pages show access-denied state (never empty state). |
+| `not_found` | `404` | Route-not-found (`VERIFIED`): `{ "success": false, "message": "The route api/v1/... could not be found.", "errors": null }`. Model-not-found (`DOCUMENTED` / `UNVERIFIED`): `"No query results for model [App\\Models\\Project] <id>"`. | `VERIFIED` (route) / `UNVERIFIED` (model string) | Show safe not-found state (do not leak raw PHP model class names to end users). |
 | `conflict` | `409` | Not observed or documented on any current endpoint; reserved for future conflict responses (`{ "success": false, "message": string, "errors": null }`). | `UNVERIFIED` | Surface server `message` only if an endpoint documents 409. |
 | `validation` | `422` | `{ "success": false, "message": string, "errors": { "<field>": ["<error>", ...], "members.0.role_in_team": ["..."] } }` (Laravel dot-notation for nested array items). Note: social-auth 422 uses `errors: null`. | `DOCUMENTED` (Postman saved examples + OpenAPI) | Map `errors[field][0]` to matching form inputs; unknown keys/null `errors` go to form alert; preserve input values; focus first invalid field. |
 | `rate_limited` | `429` | Not yet observed live; no `X-RateLimit-*` or `Retry-After` headers seen on probed routes. Postman documents 10 req/min/IP on password-reset endpoints. | `UNVERIFIED` | Show `"Too many attempts. Please wait and try again."`. Read `Retry-After` only if exposed/readable; never invent countdown; never auto-retry. |
@@ -141,12 +141,12 @@ Every failure normalizes to one of the 12 `AppError` kinds defined in Spec ID-19
 
 The API uses **four distinct pagination shapes**. The shared pagination module must normalize all four (Spec ID-19):
 
-| ID | Name | Verified Endpoints | Exact Structure | Evidence |
+| ID | Name | Endpoints (with Evidence) | Exact Structure | Evidence |
 |---|---|---|---|---|
-| **`P1`** | **Laravel API-resource collection nested inside `data`** | `GET /projects`, `GET /tasks`, `GET /teams`, `GET /meetings`, `GET /files`, `GET /auth/profile/files` | `data: { data: T[], links: { first: string, last: string, prev: string \| null, next: string \| null }, meta: { current_page: integer, from: integer \| null, last_page: integer, links: Array<{ url: string \| null, label: string, page?: integer \| null, active: boolean }>, path: string, per_page: integer, to: integer \| null, total: integer } }` | `VERIFIED` |
+| **`P1`** | **Laravel API-resource collection nested inside `data`** | `VERIFIED`: `GET /projects`, `GET /tasks`, `GET /teams`. `UNVERIFIED` (no committed probe log): `GET /meetings`, `GET /files`, `GET /auth/profile/files`. | `data: { data: T[], links: { first: string, last: string, prev: string \| null, next: string \| null }, meta: { current_page: integer, from: integer \| null, last_page: integer, links: Array<{ url: string \| null, label: string, page?: integer \| null, active: boolean }>, path: string, per_page: integer, to: integer \| null, total: integer } }` | `VERIFIED` (projects, tasks, teams) / `UNVERIFIED` (meetings, files, profile-files) |
 | **`P2`** | **Raw Laravel `LengthAwarePaginator` inside `data`** | `GET /auth/profile/tasks` | `data: { current_page: integer, data: T[], first_page_url: string, from: integer \| null, last_page: integer, last_page_url: string, links: Array<{ url: string \| null, label: string, page?: integer \| null, active: boolean }>, next_page_url: string \| null, path: string, per_page: integer, prev_page_url: string \| null, to: integer \| null, total: integer }` | `VERIFIED` |
 | **`P3`** | **Dashboard widget block pagination** | `GET /dashboard` (`active_projects`, `tasks`, `teams`, `recent_files`, `recent_activity`; note `upcoming_meetings` has no `pagination`) | `{ items: T[], pagination: { current_page: integer, per_page: integer, total: integer } }` *(CONFLICT: OpenAPI types pagination numbers as `string`; live returns `integer`)* | `VERIFIED` |
-| **`P4`** | **Sibling `meta` next to `data` (no `links`)** | `GET /users` (no `message`), `GET /audit-logs` (no `message`), `GET /notifications` (has `message` + `meta.unread_count`) | `{ success: true, message?: string, data: T[], meta: { current_page: integer, last_page: integer, per_page: integer, total: integer, unread_count?: integer } }` | `VERIFIED` |
+| **`P4`** | **Sibling `meta` next to `data` (no `links`)** | `GET /users` (no `message`, `VERIFIED`); `GET /audit-logs` and `GET /notifications` (`DOCUMENTED` / `UNVERIFIED` — no committed probe log) | `{ success: true, message?: string, data: T[], meta: { current_page: integer, last_page: integer, per_page: integer, total: integer, unread_count?: integer } }` | `VERIFIED` (`/users`) / `DOCUMENTED` |
 
 Notes on `P1`–`P4`:
 - Default `per_page` is `15` on `P1`/`P2` (verified on projects, tasks, teams; Postman uses `20` for messages/audit logs).
@@ -172,21 +172,21 @@ Request date/time input formatting:
 
 | Enum | Allowed Values | Where Used | Evidence |
 |---|---|---|---|
-| **`TaskStatus`** | `"Pending"`, `"In Progress"`, `"In Review"`, `"Completed"` | `TaskResource.status`, `StoreTaskRequest`, `UpdateTaskRequest`, `UpdateTaskStatusRequest`, `Kanban` column keys & `name`, `DashboardTaskResource.status_label`. *(Note: `DashboardTaskResource.status` uses lowercase snake_case: `"pending"`, `"in_progress"`, `"in_review"`, `"completed"` — `VERIFIED`.)* | `VERIFIED` |
+| **`TaskStatus`** | `"Pending"`, `"In Progress"`, `"In Review"`, `"Completed"` | `TaskResource.status`, `StoreTaskRequest`, `UpdateTaskRequest`, `UpdateTaskStatusRequest`, `Kanban` column keys (`VERIFIED`; exact `columns[key].name` display strings `UNVERIFIED`), `DashboardTaskResource.status_label`. *(Note: `DashboardTaskResource.status` uses lowercase snake_case: `"pending"`, `"in_progress"`, `"in_review"`, `"completed"` — `VERIFIED`.)* | `VERIFIED` |
 | **`TaskPriority`** | `"Low"`, `"Medium"`, `"High"`, `"Critical"` | `TaskResource.priority`, `StoreTaskRequest`, `UpdateTaskRequest`, `CreateTasksFromSummaryRequest.default_priority`. *(Note: `DashboardTaskResource.priority` uses lowercase: `"low"`, `"medium"`, `"high"`, `"critical"` — `VERIFIED`.)* | `VERIFIED` |
 | **`ProjectStatus`** | `"Pending"`, `"In Progress"`, `"On Hold"`, `"Completed"`, `"Cancelled"` | `ProjectStatus` schema, `StoreProjectRequest`, `UpdateProjectRequest`, `ProjectOverviewResource`, `GET /projects`. **`CONFLICT`:** Postman descriptions list `"Planning"` instead of `"Pending"` and omit `"Cancelled"`. Live data confirmed `"Pending"` (no `"Planning"`). `"Cancelled"` is `DOCUMENTED` (not yet seen in live data). | `CONFLICT` / `VERIFIED` |
 | **`ProjectPriority`** | `"Low"`, `"Medium"`, `"High"`, `"Critical"` | `ProjectPriority` schema, `StoreProjectRequest`, `UpdateProjectRequest`, `ProjectOverviewResource`, `GET /projects`. (`Critical`, `High`, `Medium` seen live; `Low` `DOCUMENTED`.) | `VERIFIED` (`Low` `DOCUMENTED`) |
-| **`MeetingStatus`** | `"Scheduled"`, `"Completed"`, `"Cancelled"` | `MeetingResource.status`, `UpdateMeetingRequest.status`. (`Completed`, `Cancelled` seen live; `Scheduled` `DOCUMENTED`.) | `VERIFIED` (`Scheduled` `DOCUMENTED`) |
+| **`MeetingStatus`** | `"Scheduled"`, `"Completed"`, `"Cancelled"` | `MeetingResource.status`, `UpdateMeetingRequest.status`. | `DOCUMENTED` |
 | **System Roles** | `"Administrator"`, `"Project Manager"`, `"Team Member"` | `UserResource.roles` (`string[]`, 1 element observed), `StoreUserRequest.role`, `UpdateUserRequest.role`. All three strings observed live in `UserResource.roles`. | `VERIFIED` |
 | **User Account `status`** | `"active"`, `"inactive"` | `StoreUserRequest.status`, `UpdateUserRequest.status`, `UserResource.status` (`"active"` observed live). | `VERIFIED` (`inactive` `DOCUMENTED`) |
 | **`AvailabilityStatus`** | `"available"`, `"busy"`, `"away"`, `"offline"` | `UserResource.available_status` (`"available"` observed live), `UpdateProfileRequest.available_status`. Distinct from account `status`. | `VERIFIED` (others `DOCUMENTED`) |
-| **`TeamRole`** (`role_in_team`, 19 values; default `"Member"`) | **Leaders (`is_leader: true`):** `"Team Lead"`, `"Tech Lead"`<br>**Non-leaders (`is_leader: false`):** `"Product Owner"`, `"Scrum Master"`, `"Backend Developer"`, `"Frontend Developer"`, `"Mobile Developer"`, `"Full-Stack Developer"`, `"UI/UX Designer"`, `"QA Engineer"`, `"DevOps Engineer"`, `"Data Engineer"`, `"AI/ML Engineer"`, `"Security Engineer"`, `"Business Analyst"`, `"Support Engineer"`, `"Mentor"`, `"Intern"`, `"Member"` | `GET /team-roles`, `TeamMemberResource.role_in_team`, `StoreTeamRequest.members[].role_in_team`, `AssignMembersRequest.members[].role_in_team`. All 19 values verified live on `GET /team-roles`; leader mapping confirmed by Postman saved example. | `VERIFIED` |
+| **`TeamRole`** (`role_in_team`, 19 values; default `"Member"`) | **Leaders (`is_leader: true`):** `"Team Lead"`, `"Tech Lead"` (`DOCUMENTED`)<br>**Non-leaders (`is_leader: false`):** `"Product Owner"`, `"Scrum Master"`, `"Backend Developer"`, `"Frontend Developer"`, `"Mobile Developer"`, `"Full-Stack Developer"`, `"UI/UX Designer"`, `"QA Engineer"`, `"DevOps Engineer"`, `"Data Engineer"`, `"AI/ML Engineer"`, `"Security Engineer"`, `"Business Analyst"`, `"Support Engineer"`, `"Mentor"`, `"Intern"`, `"Member"` | `GET /team-roles`, `TeamMemberResource.role_in_team`, `StoreTeamRequest.members[].role_in_team`, `AssignMembersRequest.members[].role_in_team`. All 19 `value` strings verified live on `GET /team-roles` (`api-authenticated-shapes.md:270`); per-value leader mapping from Postman saved example is `DOCUMENTED` (`api-authenticated-shapes.md:348`). | `VERIFIED` (19 values) / `DOCUMENTED` (leader mapping) |
 | **`AuditLogCategory`** | `"auth"`, `"project"`, `"task"`, `"file"`, `"chat"`, `"meeting"`, `"ai"` | `AuditLogResource.category`, `GET /audit-logs?category=`, `GET /activities?category=`, `DashboardActivityResource.category`, `/auth/me` `recent_activities[].category`. (`auth`, `project`, `task` seen live; others `DOCUMENTED`.) | `VERIFIED` (subset) / `DOCUMENTED` |
 | **Dashboard `period`** | `"year"`, `"6_months"`, `"3_months"`, `"30_days"`, `"7_days"`, `"custom"` | `GET /dashboard?period=`. (`"year"` observed live as default.) | `VERIFIED` (default) / `DOCUMENTED` |
 | **Project Overview `period`** | `"year"`, `"6_months"` | `GET /projects/{project}/overview?period=`. (`"year"` observed live as default.) | `VERIFIED` (default) / `DOCUMENTED` |
 | **Report `performance_level`** | `"Outstanding"`, `"High Performer"`, `"Good"`, `"Needs Improvement"` | `GET /reports/users/{id}` `data.productivity.performance_level`. | `DOCUMENTED` |
 | **AI Ask `source`** | `"gemini"` (const in OpenAPI; Postman notes local NLP fallback for summaries) | `POST /ai/ask` `data.source`. | `DOCUMENTED` |
-| **Notification `type`** | Not enumerated in OpenAPI. Observed live: `"task_assigned"`, `"meeting_scheduled"`. Postman mentions mentions/invites. | `NotificationResource.type` and `NotificationResource.data.type`. Treat as open `string` with known discriminant branches. | `VERIFIED` (partial) / `UNVERIFIED` (full set) |
+| **Notification `type`** | Not enumerated in OpenAPI. Possible/documented types include `"task_assigned"`, `"meeting_scheduled"`, mentions/invites. | `NotificationResource.type` and `NotificationResource.data.type`. Treat as open `string`. | `UNVERIFIED` |
 | **Project Direct-Member `role`** | **Free text** (`string <= 100`). Observed live: `"Owner"`, `"Project Owner"`, `"Contributor"`, `"Meeting Participant"`, `"Reviewer"`, `"Stakeholder"`, `"Tech Lead"`, `"Technical Lead"`. | `StoreProjectRequest.members[].role`, `ProjectOverviewResource.direct_members[].role`, `/auth/me` `projects[].pivot.role`. Do NOT validate against `TeamRole`. | `VERIFIED` |
 
 ---
@@ -353,7 +353,7 @@ Referenced across endpoint sections below. Notation: `?` = nullable (`T | null`)
 }
 ```
 
-### `FileAttachmentResource` (`VERIFIED` on `GET /files`, `GET /auth/profile/files`)
+### `FileAttachmentResource` (`DOCUMENTED` / `UNVERIFIED` — no committed live probe log)
 ```ts
 {
   id: number;
@@ -362,10 +362,10 @@ Referenced across endpoint sections below. Notation: `?` = nullable (`T | null`)
   file_size: number;             // bytes
   file_size_formatted: string;   // e.g. "5.36 KB"
   mime_type: string | null;      // e.g. "image/png", "text/markdown"
-  url: string;                   // absolute URL: "https://collabspace.huma-volve.com/api/v1/files/{id}/download" (requires Bearer auth!)
+  url: string;                   // requires Bearer auth + Accept: application/json (401/500 verified unauthenticated)
   project_id: number | null;
   task_id: number | null;
-  uploaded_by: string;           // uploader display name string (NOT an object or ID!)
+  uploaded_by: string;           // uploader display name string per OpenAPI/Postman (unprobed)
   uploaded_by_id: number;
   project: { id: number; name: string } | null;
   task: { id: number; name: string } | null;
@@ -375,18 +375,18 @@ Referenced across endpoint sections below. Notation: `?` = nullable (`T | null`)
 }
 ```
 
-### `MeetingResource` & `MeetingSummaryResource` (`VERIFIED` on `GET /meetings`)
+### `MeetingResource` & `MeetingSummaryResource` (`DOCUMENTED` / `UNVERIFIED` — no committed live probe log)
 ```ts
-// MeetingSummaryResource
+// MeetingSummaryResource (code defensively for polymorphic action_items / assigned_tasks)
 {
   id: number;
   meeting_id: number;
   summary: string;
   decisions_made: string[];
-  action_items: Array<           // VERIFIED polymorphic: strings AND structured objects observed live!
+  action_items: Array<           // UNVERIFIED defensive union: handle strings and structured objects
     string | { title: string; suggested_assignee?: string | null; priority?: string | null }
   >;
-  assigned_tasks: string[] | Record<string, string>; // VERIFIED polymorphic: array AND name->task map observed live!
+  assigned_tasks: string[] | Record<string, string>; // UNVERIFIED defensive union: handle array or map
   risks: string[];
   next_steps: string[];
   generated_by_ai: boolean;
@@ -423,32 +423,30 @@ Referenced across endpoint sections below. Notation: `?` = nullable (`T | null`)
 }
 ```
 
-### `NotificationResource` (`VERIFIED` on `GET /notifications`)
+### `NotificationResource` (`DOCUMENTED` / `UNVERIFIED` — no committed live probe log)
 ```ts
 {
-  id: string;                    // UUID string (NOT integer)
-  type: string;                  // observed: "task_assigned", "meeting_scheduled"
+  id: string;                    // UUID string (OpenAPI string; exact format UNVERIFIED)
+  type: string;                  // DOCUMENTED / UNVERIFIED examples: "task_assigned", "meeting_scheduled"
   title: string;
   message: string;
-  data: {                        // CONFLICT: OpenAPI types `data` as array; live is a JSON object (VERIFIED)
-    type: string;
-    title: string;
-    message: string;
+  data: {                        // CONFLICT / UNVERIFIED: OpenAPI types `data` as array; guard for object shape defensively
+    type?: string;
+    title?: string;
+    message?: string;
     project_id?: number;
     project_name?: string;
-    // task_assigned fields:
     task_id?: number;
     task_name?: string;
     assigned_by_id?: number;
     assigned_by_name?: string;
-    // meeting_scheduled fields:
     meeting_id?: number;
     meeting_title?: string;
     host_id?: number;
     host_name?: string;
     start_time?: string;         // HH:MM:SS
     [extra: string]: unknown;
-  };
+  } | unknown[];
   is_read: boolean;
   read_at: string | null;        // ISO+offset
   created_at: string;            // ISO+offset
@@ -491,18 +489,18 @@ Referenced across endpoint sections below. Notation: `?` = nullable (`T | null`)
 
 ---
 
-## D10 Verification Summary (Project Manager Read-Only Session)
+## D10 Verification Status (Evidence Audit)
 
-Executed in one in-memory session as **Project Manager** (`roles: ["Project Manager"]`), **GET-only** after login, with no Team Member authentication (D6) and no credentials, tokens, or PII persisted.
+> **Evidence boundary:** The earlier WI-1 handoff referenced an extra D10 Project Manager GET-only session, but no sanitised probe log for that session was committed under `docs/discovery/`. Claims that rest solely on that unlogged session are therefore downgraded below to `DOCUMENTED` or `UNVERIFIED` (while keeping defensive schema notes), and only behaviours backed by committed evidence in `docs/discovery/api-probe.md`, `docs/discovery/api-authenticated-shapes.md`, or recorded Gate 1 read-only checks (Issue `#12`) keep the `VERIFIED` label.
 
-| D10 Item | Requests Sent | Verified Outcome | Evidence |
-|---|---|---|---|
-| **1. `/users` `search` & max `per_page`** | `GET /users?per_page=5&search=zzzz_no_match_probe_99`; `GET /users?per_page=100`; `GET /users?per_page=250` | **`search` IS honored:** non-matching term reduced `meta.total` from `127` to `0` (`data: []`). **`per_page` is not capped up to 250:** `per_page=100` returned 100 items (`last_page: 2`); `per_page=250` returned all 127 items (`meta.per_page: 250`, `last_page: 1`, `200 OK`). | `VERIFIED` |
-| **2. `download_url` & file `url` auth** | Inspected `GET /dashboard` (`recent_files.items[0].download_url`) and `GET /files?per_page=1` (`url`); sent unauthenticated `GET` and Bearer-authenticated `GET` (discarding bytes). | Dashboard `download_url` is a **relative path** `/api/v1/files/{id}/download`; `FileAttachmentResource.url` is absolute `https://collabspace.huma-volve.com/api/v1/files/{id}/download`. **Both require Bearer auth:** unauthenticated `GET` returned **`401`** JSON (`"Unauthenticated. Please provide a valid Bearer token."`). Bearer `GET` returned **`200`**, `Content-Type: image/png`, `Content-Disposition: attachment; filename=<masked>`, `Access-Control-Allow-Origin: *`, and **`Access-Control-Expose-Headers` absent**. | `VERIFIED` |
-| **3. Kanban column `name` values** | `GET /projects/{id}/tasks/kanban` (PM's first visible project) | `columns` keys are in exact order `["Pending", "In Progress", "In Review", "Completed"]`. Each `columns[key].name` equals its Title-case key (`"Pending"`, `"In Progress"`, `"In Review"`, `"Completed"`). | `VERIFIED` |
-| **4. `403` response body structure** | GET-only probes: `GET /ai/settings` (`200`), `GET /audit-logs?per_page=1` (`200`), `GET /users/{id}` (`200`), `GET /reports/users/{id}` (`200`), `GET /projects/{non_existent}` (`404`), `GET /projects/{non_visible_existing}` (`403`). | **`403` body confirmed:** `{ "success": false, "message": "This action is unauthorized.", "errors": null }` (keys: `success`, `message`, `errors`). Also confirmed `404` model-not-found body: `{ "success": false, "message": "No query results for model [App\\Models\\Project] <id>", "errors": null }`, and confirmed PM has read access (`200`) to `/ai/settings`, `/audit-logs`, `/users/{id}`, and `/reports/users/{id}`. | `VERIFIED` |
-| **5. Tier 2 list shapes** | `GET /notifications?per_page=2`, `GET /notifications/unread-count`, `GET /meetings?per_page=2`, `GET /meetings?per_page=2&time_filter=upcoming`, `GET /files?per_page=2`, `GET /auth/profile/files?per_page=2` | - `/notifications`: **P4** (`meta` sibling with `unread_count`), **`data` on each item is a JSON object** (contradicts OpenAPI `array`).<br>- `/notifications/unread-count`: `{ success, message, data: { unread_count: integer } }`.<br>- `/meetings`: **P1**, `time_filter=upcoming` honored (`total` 52 → 4); `summary.action_items` is polymorphic (`string \| object`) and `summary.assigned_tasks` is polymorphic (`string[] \| Record<string, string>`).<br>- `/files` & `/auth/profile/files`: **P1** with `FileAttachmentResource` (confirming `uploaded_by: string` and `uploader: {id, name, email}`). | `VERIFIED` |
-| **Session teardown & revocation** | `POST /auth/logout` → `GET /auth/me` with revoked token | Logout returned `200` (`data: null`). Subsequent `GET /auth/me` returned `401` (`"Unauthenticated. Please provide a valid Bearer token."`). **Revocation: Confirmed.** | `VERIFIED` |
+| Topic | What IS Supported by Recorded Evidence | Still Unlogged / Unverified (`UNVERIFIED` or `DOCUMENTED`) |
+|---|---|---|
+| **1. `/users` `search` & `per_page`** | PM `200 OK`, `E2` no-`message`, `P4` sibling `meta` (`total: 127`) are `VERIFIED` in `api-authenticated-shapes.md` §8. | Multi-character `search` filtering (`api-authenticated-shapes.md:474` marked `search=a` inconclusive) and `per_page=100/250` upper cap remain `UNVERIFIED`. |
+| **2. File downloads (`/files/{id}/download`)** | Unauthenticated `GET /api/v1/files/1/download` with `Accept: */*` -> `500` (`"Route [login] not defined."`) and with `Accept: application/json` -> `401` (`VERIFIED` in Gate 1 Issue `#12` check); Dashboard `download_url` & `uploaded_by` shapes `VERIFIED` in `api-authenticated-shapes.md:155-156`. | Authenticated `200` download headers (`Content-Type`, `Content-Disposition`, `Access-Control-Expose-Headers` on `/download`) and Dashboard `download_url` path string format remain `DOCUMENTED` / `UNVERIFIED`. |
+| **3. Kanban column keys & `name`** | `columns` keys `["Pending", "In Progress", "In Review", "Completed"]` and `columns[key].name: string` are `VERIFIED` in `api-authenticated-shapes.md:230-248`. | Exact string values of `columns[key].name` were explicitly unrecorded in `api-authenticated-shapes.md:349` (`UNVERIFIED`). |
+| **4. `403` & `404` error shapes** | Web `/broadcasting/auth` `403` and API `404` route-not-found are `VERIFIED` in `api-probe.md`; PM `200 OK` on visible `/projects/{id}` is `VERIFIED` in `api-authenticated-shapes.md`. | API-route `403`, PHP model-not-found `404` string, and PM read access on `/ai/settings`, `/audit-logs`, `/users/{id}`, and `/reports/users/{id}` remain `DOCUMENTED` / `UNVERIFIED`. |
+| **5. Tier 2 list shapes** | `GET /notifications` `401` is `VERIFIED` in `api-probe.md` #8. | `GET /notifications`, `/notifications/unread-count`, `/meetings`, `/files`, `/auth/profile/files` `200` payloads, `P1`/`P4` pagination, `NotificationResource.data` object/sub-keys, and `MeetingSummaryResource` polymorphism remain `DOCUMENTED` / `UNVERIFIED`. |
+| **Session teardown & revocation** | `POST /auth/logout` (`200`, `data: null`) -> subsequent `GET /auth/me` (`401`) for Admin and PM is `VERIFIED` in `api-authenticated-shapes.md` §7 & §8.7. | Team Member login & revocation remain `UNVERIFIED` per `D6`. |
 
 ---
 
@@ -569,7 +567,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
    }
    ```
    *(Sanitised illustrative example; invalid credentials may return `401` or `422` — handle `401` on `/auth/login` as credential failure, never as session-loss redirect per ID-19.)*
-9. **Status Codes:** `200` (`VERIFIED`), `401` (`DOCUMENTED`/ID-19), `422` (`DOCUMENTED`), `405` (`VERIFIED` on `GET /auth/login`)
+9. **Status Codes:** `200` (`VERIFIED`), `401` (`UNVERIFIED`; frontend handles `401` on `/auth/login` as credential failure per Spec ID-19), `422` (`DOCUMENTED`), `405` (`VERIFIED` on `GET /auth/login`)
 10. **Side Effects:** Issues a new Sanctum Bearer token in the database; writes an `auth` audit log entry (`VERIFIED` via `/auth/me` recent activities). Rate-limit behaviour on login is `UNVERIFIED`.
 11. **Evidence Level:** `VERIFIED` (Admin & PM `200` response shape; `405` on `GET`). `remember` token lifetime and login throttling are `UNVERIFIED`; Team Member login is `UNVERIFIED` (D6).
 
@@ -669,7 +667,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 8. **Validation Errors (`422`):** N/A — no validated input.
 9. **Status Codes:** `200` (`VERIFIED`), `401` (`VERIFIED` when token missing/revoked)
 10. **Side Effects:** Immediately deletes/revokes the current Sanctum token in the database. Verified: subsequent `GET /auth/me` with the revoked token returns `401` (`Revocation: Confirmed` for both Admin and PM).
-11. **Evidence Level:** `VERIFIED` (Admin & PM + D10 revocation check).
+11. **Evidence Level:** `VERIFIED` (`api-authenticated-shapes.md` §7 Admin & §8.7 PM revocation checks).
 
 ### <a id="auth-social-redirect"></a> `auth-social-redirect` — GET /auth/social/{provider}/redirect
 
@@ -908,18 +906,18 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 ### <a id="profile-files"></a> `profile-files` — GET /auth/profile/files
 
 1. **Method & Path:** `GET /auth/profile/files` (`operationId: profile.files`)
-2. **Auth & Role Restrictions:** Bearer required. Returns files uploaded by the authenticated user. Verified for PM (D10); Team Member `UNVERIFIED` (D6).
+2. **Auth & Role Restrictions:** Bearer required. Returns files uploaded by the authenticated user (`DOCUMENTED`; PM `UNVERIFIED` due to no committed probe log; Team Member `UNVERIFIED` per D6).
 3. **Required Headers:** `Accept: application/json`, `Authorization: Bearer <token>`
 4. **Parameters:**
-   - **Query:** `per_page`: `integer` (`VERIFIED` honored in D10 with `per_page=2`); `page`: `integer` (`UNVERIFIED`, standard P1). OpenAPI documents no query params.
-5. **Response Envelope & `data` Shape:** Standard (`E1`, `200 OK`, message `"Uploaded files retrieved successfully."`), **`P1`** collection of [`FileAttachmentResource`](#shared-resource-shapes).
-   - *CONFLICT:* OpenAPI left `data` untyped (`{}`). D10 `VERIFIED` that unlike `/auth/profile/tasks` (which uses `P2` + raw models), `/auth/profile/files` uses **`P1`** + `FileAttachmentResource`.
-6. **Pagination Shape:** **`P1`** (`VERIFIED` in D10).
-7. **Filter & Sort Parameters:** `per_page` (`VERIFIED`), `page` (`UNVERIFIED`). No other filters documented.
+   - **Query:** `per_page`: `integer` (`UNVERIFIED`); `page`: `integer` (`UNVERIFIED`). OpenAPI documents no query params.
+5. **Response Envelope & `data` Shape:** Standard (`E1`, `200 OK`): `{ success: true, message: string, data: P1<FileAttachmentResource> }` (exact `message` string `UNVERIFIED`).
+   - *CONFLICT:* OpenAPI left `data` untyped (`{}`). Check whether live returns **`P1`** + `FileAttachmentResource` (`UNVERIFIED` until logged; `/auth/profile/tasks` uses `P2` + raw models).
+6. **Pagination Shape:** **`P1`** (`UNVERIFIED`).
+7. **Filter & Sort Parameters:** `per_page`, `page` (`UNVERIFIED`).
 8. **Validation Errors (`422`):** N/A — no documented query validation.
-9. **Status Codes:** `200` (`VERIFIED`), `401` (`VERIFIED`)
+9. **Status Codes:** `200` (`DOCUMENTED`), `401` (`DOCUMENTED` / standard Sanctum behaviour)
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `VERIFIED` (D10 PM probe; resolves OpenAPI untyped `data`).
+11. **Evidence Level:** `UNVERIFIED` (OpenAPI leaves `data` untyped and no live probe log is committed).
 
 ---
 
@@ -968,7 +966,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
    ```
    - **`CONFLICT` #1 (`overview` & `project_overview`):** OpenAPI types both as `string` and `pagination.*` fields as `string`. **Resolution (`VERIFIED`):** Both are nested JSON objects and pagination values are `integer`s as shown above.
    - **`CONFLICT` #2 (Dashboard task enums):** `tasks.items[].status` and `.priority` are **lowercase snake_case** (`"in_progress"`, `"high"`), unlike Title-case on all other task endpoints; `status_label` carries the Title-case label (`VERIFIED`).
-   - **`CONFLICT` #3 (`download_url` & `uploaded_by`):** `recent_files.items[].download_url` is a **root-relative path** `/api/v1/files/{id}/download` requiring Bearer auth (whereas `FileAttachmentResource.url` is absolute), and `uploaded_by` is `{ id, name }` here (whereas `FileAttachmentResource.uploaded_by` is a plain string) (`VERIFIED` in D10).
+   - **`CONFLICT` #3 (`download_url` & `uploaded_by`):** `recent_files.items[].download_url` is a URL string (`VERIFIED` key/type in `api-authenticated-shapes.md:155`; root-relative `/api/v1/files/{id}/download` format `UNVERIFIED` without recorded URL dump) targeting the Bearer-protected download endpoint (`401`/`500` `VERIFIED` unauthenticated in Gate 1 `#12` check), and `uploaded_by` is `{ id, name }` here (`VERIFIED`, whereas `FileAttachmentResource.uploaded_by` is `DOCUMENTED` as a string).
 6. **Pagination Shape:** **`P3`** per block (`{ items, pagination: { current_page, per_page, total } }`), except `upcoming_meetings` which has `{ items }` only. No block-level pagination query params are documented.
 7. **Filter & Sort Parameters:** `period`, `year`, `from`, `to` (chart-only, `DOCUMENTED`; query filter runtime behaviour `UNVERIFIED`).
 8. **Validation Errors (`422`):**
@@ -985,7 +983,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
    *(Sanitised illustrative example for OpenAPI query constraints.)*
 9. **Status Codes:** `200` (`VERIFIED`), `401` (`VERIFIED`), `422` (`DOCUMENTED`)
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `CONFLICT` / `VERIFIED` (Admin & PM + D10 `download_url` check; live shape resolves OpenAPI string-typing defects).
+11. **Evidence Level:** `CONFLICT` / `VERIFIED` (Admin & PM probe in `api-authenticated-shapes.md` + Gate 1 `/files/1/download` unauthenticated check; live shape resolves OpenAPI string-typing defects).
 
 ---
 
@@ -1046,7 +1044,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 ### <a id="projects-show"></a> `projects-show` — GET /projects/{project}
 
 1. **Method & Path:** `GET /projects/{project}` (`operationId: projects.show`; **spec-only**, absent from Postman)
-2. **Auth & Role Restrictions:** Bearer required. Verified `200` for Admin and PM on visible projects; verified **`403`** for PM on an existing non-visible project (`D10`: `{"success":false,"message":"This action is unauthorized.","errors":null}`). Team Member `UNVERIFIED` (D6).
+2. **Auth & Role Restrictions:** Bearer required. Verified `200` for Admin and PM on visible projects (`api-authenticated-shapes.md:180`); `403` on non-visible projects is `DOCUMENTED` / `UNVERIFIED` (no committed probe log); Team Member `UNVERIFIED` (D6).
 3. **Required Headers:** `Accept: application/json`, `Authorization: Bearer <token>`
 4. **Parameters:**
    - **Path:** `project*`: `integer`
@@ -1055,9 +1053,9 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 6. **Pagination Shape:** `none`
 7. **Filter & Sort Parameters:** None
 8. **Validation Errors (`422`):** N/A — path parameter only.
-9. **Status Codes:** `200` (`VERIFIED`), `401` (`VERIFIED`), `403` (`VERIFIED` in D10), `404` (`VERIFIED` in D10: `"No query results for model [App\\Models\\Project] <id>"`)
+9. **Status Codes:** `200` (`VERIFIED`), `401` (`DOCUMENTED` / standard Sanctum behaviour), `403` (`DOCUMENTED`), `404` (`DOCUMENTED` / `UNVERIFIED` model-not-found string)
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `VERIFIED` (Admin & PM `200`; D10 PM `403` and `404`).
+11. **Evidence Level:** `VERIFIED` (Admin & PM `200` shape; `403`/`404` runtime strings `DOCUMENTED`/`UNVERIFIED`).
 
 ### <a id="projects-update"></a> `projects-update` — PUT /projects/{project}
 
@@ -1275,13 +1273,13 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
      };
    }
    ```
-   - **`CONFLICT`:** OpenAPI types `data` as `string`; Postman description lists snake_case column keys (`pending`, `in_progress`, `in_review`, `completed`). **Resolution (`VERIFIED` + D10):** `data` is an object with `columns` keyed by **Title-case `TaskStatus`** in exact order `["Pending", "In Progress", "In Review", "Completed"]`, every column is always present even when `count: 0`, and `columns[key].name` equals the exact Title-case key (`"Pending"`, `"In Progress"`, `"In Review"`, `"Completed"`).
+   - **`CONFLICT`:** OpenAPI types `data` as `string`; Postman description lists snake_case column keys (`pending`, `in_progress`, `in_review`, `completed`). **Resolution (`VERIFIED` keys / `UNVERIFIED` exact `name` strings):** `data` is an object with `columns` keyed by **Title-case `TaskStatus`** in exact order `["Pending", "In Progress", "In Review", "Completed"]`, every column is always present even when `count: 0`, and each column has `name: string` (likely the Title-case key, exact `name` string `UNVERIFIED` per `api-authenticated-shapes.md:349`).
 6. **Pagination Shape:** `none` (returns all tasks for the project grouped by status).
 7. **Filter & Sort Parameters:** None documented.
 8. **Validation Errors (`422`):** N/A — path parameter only.
-9. **Status Codes:** `200` (`VERIFIED`), `401` (`VERIFIED`), `403` (`DOCUMENTED`), `404` (`DOCUMENTED`)
+9. **Status Codes:** `200` (`VERIFIED`), `401` (`DOCUMENTED`), `403` (`DOCUMENTED`), `404` (`DOCUMENTED`)
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `CONFLICT` / `VERIFIED` (Admin & PM + D10 column `name` verification).
+11. **Evidence Level:** `CONFLICT` / `VERIFIED` (Admin & PM `columns` keys & `TaskResource` items; exact `columns[key].name` values `UNVERIFIED`).
 
 ### <a id="tasks-store"></a> `tasks-store` — POST /tasks
 
@@ -1424,7 +1422,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
    ```
    *(Sanitised illustrative example.)*
 9. **Status Codes:** `200`, `401`, `403`, `404`, `422`
-10. **Side Effects:** Assigns/reassigns task and creates an in-app `task_assigned` notification for the assignee (`DOCUMENTED`; `task_assigned` notification payload `VERIFIED` in D10).
+10. **Side Effects:** Assigns/reassigns task and creates an in-app `task_assigned` notification for the assignee (`DOCUMENTED`; exact notification payload `UNVERIFIED`).
 11. **Evidence Level:** `DOCUMENTED` (OpenAPI + Postman).
 
 ### <a id="tasks-destroy"></a> `tasks-destroy` — DELETE /tasks/{task}
@@ -1622,29 +1620,29 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 
 1. **Method & Path:** `GET /users` (`operationId: users.index`)
 2. **Auth & Role Restrictions:** Bearer required.
-   - **`CONFLICT`:** Postman folder & description say `"Admin only"`. **Resolution (`VERIFIED`):** Project Manager receives `200 OK` with all `127` users (people-picker probe & D10). Team Member access is `UNVERIFIED` (D6).
+   - **`CONFLICT`:** Postman folder & description say `"Admin only"`. **Resolution (`VERIFIED`):** Project Manager receives `200 OK` with `meta.total: 127` (`api-authenticated-shapes.md` §8). Team Member access is `UNVERIFIED` (D6).
 3. **Required Headers:** `Accept: application/json`, `Authorization: Bearer <token>`
 4. **Parameters:**
    - **Query:**
-     - `per_page`: `integer` (`VERIFIED` in D10: `per_page=5`, `per_page=100`, and `per_page=250` all returned `200 OK` with no cap up to 250; default `15` in Postman)
+     - `per_page`: `integer` (`VERIFIED` at `per_page=5`; upper cap / `per_page=100` / `250` `UNVERIFIED`; default `15` in Postman)
      - `page`: `integer` (`UNVERIFIED`, standard P4)
-     - `search`: `string` (`VERIFIED` honored in D10: non-matching string reduced `meta.total` from `127` to `0`)
+     - `search`: `string` (`UNVERIFIED` — `search=a` in `api-authenticated-shapes.md:474` left `meta.total` at `127` and was explicitly marked inconclusive)
      - `role`: `string` (summary mentions `"role filters"`, param name `UNVERIFIED`)
    - Note: OpenAPI documents no query parameters despite its summary mentioning search, role filters, and pagination.
 5. **Response Envelope & `data` Shape:** **`E2` (NO `message` key!)**, **`P4`**, `200 OK`:
    ```ts
    {
      success: true,
-     data: UserResource[], // without current_project; job_title, about, phone, avatar_url observed nullable
+     data: UserResource[], // without current_project; job_title, about, phone, avatar_url observed null on sampled page
      meta: { current_page: number; last_page: number; per_page: number; total: number }
    }
    ```
 6. **Pagination Shape:** **`P4`** (`VERIFIED` — sibling `meta` with 4 keys only, no `links`, no `from`/`to`).
-7. **Filter & Sort Parameters:** `search` (`VERIFIED`), `per_page` (`VERIFIED`, uncapped up to at least `250`), `page` (`UNVERIFIED`), role filter (`UNVERIFIED`).
-8. **Validation Errors (`422`):** N/A — `per_page=250` returned `200` (no validation cap observed up to 250).
-9. **Status Codes:** `200` (`VERIFIED` PM), `401` (`VERIFIED`), `403` (`DOCUMENTED`)
+7. **Filter & Sort Parameters:** `per_page` (`VERIFIED` at `5`); `search`, `page`, higher `per_page` values, and role filter (`UNVERIFIED`).
+8. **Validation Errors (`422`):** N/A — OpenAPI documents no `422` (max `per_page` limit `UNVERIFIED`).
+9. **Status Codes:** `200` (`VERIFIED` PM), `401` (`DOCUMENTED`), `403` (`DOCUMENTED`)
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `CONFLICT` (Postman Admin-only claim disproved for PM) / `VERIFIED` (people-picker probe + D10).
+11. **Evidence Level:** `CONFLICT` (Postman Admin-only claim disproved for PM) / `VERIFIED` (PM `200`, `E2`, and `P4` in people-picker probe; `search` filtering & upper `per_page` cap `UNVERIFIED`).
 
 ### <a id="users-store"></a> `users-store` — POST /users
 
@@ -1683,18 +1681,18 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 ### <a id="users-show"></a> `users-show` — GET /users/{user}
 
 1. **Method & Path:** `GET /users/{user}` (`operationId: users.show`)
-2. **Auth & Role Restrictions:** Bearer required. Verified `200 OK` for **Project Manager** in D10 (disproves folder-level Admin-only assumption). Team Member `UNVERIFIED` (D6).
+2. **Auth & Role Restrictions:** Bearer required. Postman states `Administrator` only (`DOCUMENTED`; PM/Team Member behaviour `UNVERIFIED` — no committed probe log).
 3. **Required Headers:** `Accept: application/json`, `Authorization: Bearer <token>`
 4. **Parameters:**
    - **Path:** `user*`: `integer`
-5. **Response Envelope & `data` Shape:** **`E2` (NO `message` key!)**, `200 OK` (`VERIFIED` top keys `["success", "data"]` in D10): `{ success: true, data: UserResource }`.
+5. **Response Envelope & `data` Shape:** OpenAPI documents `E1` `{ success: true, message: string, data: UserResource }`; like [`users-index`](#users-index), `message` may be omitted (`E2` — handle `message` as optional, `UNVERIFIED`).
    - **`CONFLICT`:** Postman description claims Show User returns `"projects, tasks, audit logs"`. OpenAPI `UserResource` contains none of those. **Resolution:** Treat response as `UserResource` only.
 6. **Pagination Shape:** `none`
 7. **Filter & Sort Parameters:** None
 8. **Validation Errors (`422`):** N/A — path parameter only.
-9. **Status Codes:** `200` (`VERIFIED` PM in D10), `401` (`VERIFIED`), `403` (`DOCUMENTED`), `404` (`DOCUMENTED`)
+9. **Status Codes:** `200` (`DOCUMENTED`), `401` (`DOCUMENTED`), `403` (`DOCUMENTED`), `404` (`DOCUMENTED`)
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `CONFLICT` (Postman extra fields vs. OpenAPI) / `VERIFIED` (D10 PM `200` & no-`message` envelope).
+11. **Evidence Level:** `CONFLICT` (Postman extra fields vs. OpenAPI) / `DOCUMENTED` (PM access & `E2` no-`message` shape `UNVERIFIED`).
 
 ### <a id="users-update"></a> `users-update` — PUT /users/{user}
 
@@ -1754,40 +1752,40 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 ### <a id="notifications-index"></a> `notifications-index` — GET /notifications
 
 1. **Method & Path:** `GET /notifications` (`operationId: notification.index`; 2 Postman requests: all & `?status=unread`)
-2. **Auth & Role Restrictions:** Bearer required. Scoped to current authenticated user. Verified for PM (D10); Team Member `UNVERIFIED` (D6).
+2. **Auth & Role Restrictions:** Bearer required (`401` verified live in `api-probe.md` #8). Scoped to current authenticated user (`DOCUMENTED`; Team Member `UNVERIFIED` per D6).
 3. **Required Headers:** `Accept: application/json`, `Authorization: Bearer <token>`
 4. **Parameters:**
-   - **Query:** `per_page`: `integer` (`VERIFIED` in D10 with `per_page=2`; default `15` in Postman), `page`: `integer` (`UNVERIFIED`), `status`: `"unread"` (Postman-only; `UNVERIFIED`). OpenAPI documents no query params.
-5. **Response Envelope & `data` Shape:** Standard `message` + **`P4`**, `200 OK` (message `"Notifications retrieved successfully."`):
+   - **Query:** `per_page`: `integer` (`DOCUMENTED` default `15` in Postman; `api-probe.md` #8 sent `per_page=15` -> `401`), `page`: `integer` (`UNVERIFIED`), `status`: `"unread"` (Postman-only; `UNVERIFIED`). OpenAPI documents no query params.
+5. **Response Envelope & `data` Shape:** **`P4`**, `200 OK` (exact `message` string `UNVERIFIED`):
    ```ts
    {
      success: true,
-     message: "Notifications retrieved successfully.",
-     data: NotificationResource[], // id is UUID string; data is JSON object (NOT array!)
-     meta: { current_page: number; last_page: number; per_page: number; total: number; unread_count: number }
+     message?: string,
+     data: NotificationResource[], // id may be UUID string; OpenAPI types data[] item `data` as array — guard defensively for object
+     meta: { current_page: number; last_page: number; per_page: number; total: number; unread_count?: number }
    }
    ```
-   - **`CONFLICT`:** OpenAPI types `NotificationResource.type`/`title`/`message` as untyped and `NotificationResource.data` as an untyped `array`. **Resolution (`VERIFIED` in D10):** `type`, `title`, and `message` are strings, and `data` is a structured JSON object (see [`NotificationResource`](#shared-resource-shapes)).
-6. **Pagination Shape:** **`P4`** with extra `meta.unread_count: integer` (`VERIFIED` in D10).
-7. **Filter & Sort Parameters:** `per_page` (`VERIFIED`), `page` (`UNVERIFIED`), `status=unread` (`DOCUMENTED` in Postman / `UNVERIFIED`).
+   - **`CONFLICT` / `UNVERIFIED`:** OpenAPI types `NotificationResource.type`/`title`/`message` as untyped and `NotificationResource.data` as an untyped `array`, whereas notifications commonly return a JSON object (`UNVERIFIED` — no committed live `200` probe log). Code parsers defensively for object or array `item.data`.
+6. **Pagination Shape:** **`P4`** (with optional `meta.unread_count: integer`, `UNVERIFIED`).
+7. **Filter & Sort Parameters:** `per_page`, `page`, `status=unread` (`DOCUMENTED` in Postman / `UNVERIFIED`).
 8. **Validation Errors (`422`):** N/A — OpenAPI documents no `422`.
-9. **Status Codes:** `200` (`VERIFIED`), `401` (`VERIFIED`)
+9. **Status Codes:** `200` (`DOCUMENTED`), `401` (`VERIFIED` in `api-probe.md` #8)
 10. **Side Effects:** None (read-only). No real-time WebSocket channel is documented for notifications (`UNVERIFIED`); poll [`notifications-unread-count`](#notifications-unread-count) or revalidate on focus/navigation.
-11. **Evidence Level:** `CONFLICT` / `VERIFIED` (D10 PM probe; resolves OpenAPI `data: array` defect).
+11. **Evidence Level:** `CONFLICT` / `UNVERIFIED` (route existence & `401` `VERIFIED`; `200` payload, `P4`, `data` object shape, and `meta.unread_count` unlogged).
 
 ### <a id="notifications-unread-count"></a> `notifications-unread-count` — GET /notifications/unread-count
 
 1. **Method & Path:** `GET /notifications/unread-count` (`operationId: notification.unreadCount`)
-2. **Auth & Role Restrictions:** Bearer required. Current user only. Verified for PM (D10); Team Member `UNVERIFIED` (D6).
+2. **Auth & Role Restrictions:** Bearer required. Current user only (`DOCUMENTED`; Team Member `UNVERIFIED` per D6).
 3. **Required Headers:** `Accept: application/json`, `Authorization: Bearer <token>`
 4. **Parameters:** None
-5. **Response Envelope & `data` Shape:** Standard (`E1`, `200 OK`, message `"Unread count retrieved successfully."`): `{ success: true, message: string, data: { unread_count: integer } }`.
+5. **Response Envelope & `data` Shape:** Standard (`E1`, `200 OK`): `{ success: true, message: string, data: { unread_count: integer } }`.
 6. **Pagination Shape:** `none`
 7. **Filter & Sort Parameters:** None
 8. **Validation Errors (`422`):** N/A — no validated input.
-9. **Status Codes:** `200` (`VERIFIED`), `401` (`VERIFIED`)
+9. **Status Codes:** `200` (`DOCUMENTED`), `401` (`DOCUMENTED`)
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `VERIFIED` (D10 PM probe).
+11. **Evidence Level:** `DOCUMENTED` (OpenAPI + Postman; unprobed live).
 
 ### <a id="notifications-mark-read"></a> `notifications-mark-read` — PATCH /notifications/{id}/read
 
@@ -1795,14 +1793,14 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 2. **Auth & Role Restrictions:** Bearer required. Current user's notification (`DOCUMENTED`).
 3. **Required Headers:** `Accept: application/json`, `Authorization: Bearer <token>`
 4. **Parameters:**
-   - **Path:** `id*`: **`string` (UUID)** — NOT an integer (`VERIFIED` UUID format in D10 `GET /notifications`; `string` in OpenAPI).
+   - **Path:** `id*`: `string` (UUID in Laravel database notifications / `string` in OpenAPI; exact runtime format `UNVERIFIED`).
 5. **Response Envelope & `data` Shape:** Standard (`E1`, `200 OK`): `{ success: true, message: string, data: NotificationResource }`.
 6. **Pagination Shape:** `none`
 7. **Filter & Sort Parameters:** None
 8. **Validation Errors (`422`):** N/A — path parameter only.
 9. **Status Codes:** `200`, `401`, `404` (`UNVERIFIED` — not listed in OpenAPI but possible for unknown UUID)
 10. **Side Effects:** Sets `is_read: true` and `read_at` timestamp; decrements `unread_count` (`DOCUMENTED`).
-11. **Evidence Level:** `DOCUMENTED` (OpenAPI + Postman; UUID `id` type `VERIFIED`).
+11. **Evidence Level:** `DOCUMENTED` (OpenAPI + Postman; UUID `id` format `UNVERIFIED`).
 
 ### <a id="notifications-mark-all-read"></a> `notifications-mark-all-read` — POST /notifications/mark-all-read
 
@@ -1879,18 +1877,18 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 ### <a id="files-index"></a> `files-index` — GET /files
 
 1. **Method & Path:** `GET /files` (`operationId: files.index`)
-2. **Auth & Role Restrictions:** Bearer required. Verified `200` for PM (`72` files in D10); Team Member `UNVERIFIED` (D6).
+2. **Auth & Role Restrictions:** Bearer required (`DOCUMENTED`; PM/Team Member `UNVERIFIED` — `72` reported earlier came from `GET /dashboard` `recent_files.pagination.total` in `api-authenticated-shapes.md` §4, not a `/files` probe).
 3. **Required Headers:** `Accept: application/json`, `Authorization: Bearer <token>`
 4. **Parameters:**
-   - **Query:** `per_page`: `integer` (`VERIFIED` in D10 with `per_page=1` and `per_page=2`; default `15` in Postman), `page`: `integer` (`UNVERIFIED`); Postman-only (`UNVERIFIED` by OpenAPI): `project_id`: `integer`, `task_id`: `integer`, `search`: `string`.
-5. **Response Envelope & `data` Shape:** Standard (`E1`, `200 OK`, message `"Files retrieved successfully."`), **`P1`** collection of [`FileAttachmentResource`](#shared-resource-shapes).
-   - *CONFLICT:* OpenAPI left `data` untyped (`{}`). D10 `VERIFIED` **`P1`** + `FileAttachmentResource`. Note `uploaded_by` is a plain display-name string, `uploader` is `{ id, name, email }`, and `url` is an absolute URL pointing to `/api/v1/files/{id}/download` (requires Bearer auth!).
-6. **Pagination Shape:** **`P1`** (`VERIFIED` in D10).
-7. **Filter & Sort Parameters:** `per_page` (`VERIFIED`); `page`, `project_id`, `task_id`, `search` (`DOCUMENTED` in Postman / `UNVERIFIED`).
+   - **Query:** `per_page`: `integer` (default `15` in Postman; runtime `UNVERIFIED`), `page`: `integer` (`UNVERIFIED`); Postman-only (`UNVERIFIED` by OpenAPI): `project_id`: `integer`, `task_id`: `integer`, `search`: `string`.
+5. **Response Envelope & `data` Shape:** Standard (`E1`, `200 OK`), **`P1`** collection of [`FileAttachmentResource`](#shared-resource-shapes) (`DOCUMENTED` / `UNVERIFIED`; exact `message` string `UNVERIFIED`).
+   - *CONFLICT:* OpenAPI left `data` untyped (`{}`). Postman documents `FileAttachmentResource` (`uploaded_by: string`, `uploader: { id, name, email }`, `url` targeting `/api/v1/files/{id}/download`). Live response shape remains `UNVERIFIED` (no committed `/files` probe log).
+6. **Pagination Shape:** **`P1`** (`DOCUMENTED` / `UNVERIFIED`).
+7. **Filter & Sort Parameters:** `per_page`, `page`, `project_id`, `task_id`, `search` (`DOCUMENTED` in Postman / `UNVERIFIED`).
 8. **Validation Errors (`422`):** N/A — OpenAPI documents no `422`.
-9. **Status Codes:** `200` (`VERIFIED` D10), `401` (`VERIFIED`), `403` (`DOCUMENTED`)
+9. **Status Codes:** `200` (`DOCUMENTED`), `401` (`DOCUMENTED`), `403` (`DOCUMENTED`)
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `VERIFIED` (D10 PM probe; resolves OpenAPI untyped `data`).
+11. **Evidence Level:** `UNVERIFIED` (OpenAPI leaves `data` untyped and no `/files` probe log is committed).
 
 ### <a id="files-store"></a> `files-store` — POST /files
 
@@ -1935,24 +1933,24 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 8. **Validation Errors (`422`):** N/A — path parameter only.
 9. **Status Codes:** `200`, `401`, `403`, `404`
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `DOCUMENTED` (item shape `VERIFIED` via [`files-index`](#files-index)).
+11. **Evidence Level:** `DOCUMENTED` (`FileAttachmentResource` shape `UNVERIFIED` live).
 
 ### <a id="files-download"></a> `files-download` — GET /files/{file}/download
 
-1. **Method & Path:** `GET /files/{file}/download` (`operationId: file.download`; also targeted by `GET /dashboard` relative `download_url` and `FileAttachmentResource.url`)
-2. **Auth & Role Restrictions:** Bearer required (`VERIFIED` in D10: unauthenticated `GET` returns `401` JSON). Verified `200` for PM; Team Member `UNVERIFIED` (D6).
-3. **Required Headers:** `Authorization: Bearer <token>` (optional `Accept: */*` or omit `Accept: application/json` when streaming binary; sending `Accept: application/json` without a token cleanly returns `401` JSON).
+1. **Method & Path:** `GET /files/{file}/download` (`operationId: file.download`; also targeted by `GET /dashboard` `recent_files.items[].download_url` and `FileAttachmentResource.url`)
+2. **Auth & Role Restrictions:** Bearer required (`VERIFIED` in Gate 1 Issue `#12` read-only check: unauthenticated `GET` with `Accept: application/json` returns `401` JSON, whereas `Accept: */*` returns `500` `"Route [login] not defined."`). Authenticated PM / Team Member behaviour `UNVERIFIED`.
+3. **Required Headers:** `Accept: application/json` (**mandatory** so missing/expired tokens return `401` rather than `500`), `Authorization: Bearer <token>`.
 4. **Parameters:**
    - **Path:** `file*`: `integer`
 5. **Response Envelope & `data` Shape:** **`E6` Binary stream** (`200 OK`):
-   - Observed headers (`VERIFIED` in D10): `Content-Type: <actual file MIME, e.g. image/png>` (not necessarily `application/octet-stream` as OpenAPI states), `Content-Disposition: attachment; filename=<filename>`, `Access-Control-Allow-Origin: *`, **`Access-Control-Expose-Headers` is ABSENT**.
-   - **Frontend obligation (`VERIFIED`):** Plain `<a href>` / `<img src>` tags fail with `401` because they do not send `Authorization: Bearer`. Fetch as `Blob` via the authenticated HTTP client (or BFF proxy) and derive the download filename from `FileAttachmentResource.name` / `DashboardFileResource.name` because `Content-Disposition` is unreadable cross-origin.
+   - **Expected headers (`DOCUMENTED` / `UNVERIFIED` live):** binary file body with `Content-Type` and `Content-Disposition: attachment; filename=...` (cross-origin `Access-Control-Expose-Headers` is absent on `GET /auth/me` and `OPTIONS /projects` in `api-probe.md` #14/#15, and not logged on `/files/{id}/download`, so `Content-Disposition` is treated as unreadable cross-origin).
+   - **Frontend obligation:** Plain `<a href>` / `<img src>` browser tags omit both `Authorization: Bearer` and `Accept: application/json`, so unauthenticated or direct browser navigation fails with HTTP **`500`** (`"Route [login] not defined."`, `VERIFIED` unauthenticated with `Accept: */*`) rather than `401`. Fetch downloads as a `Blob` via `httpClient.downloadBlob` sending **both** `Accept: application/json` and `Authorization: Bearer <token>`, handle `401` through the centralized session-loss handler, and derive filenames from `FileAttachmentResource.name` / `DashboardFileResource.name`.
 6. **Pagination Shape:** `none`
 7. **Filter & Sort Parameters:** None
 8. **Validation Errors (`422`):** N/A — path parameter only.
-9. **Status Codes:** `200` (`VERIFIED` binary), `401` (`VERIFIED` JSON), `403` (`DOCUMENTED`), `404` (`DOCUMENTED`)
+9. **Status Codes:** `200` (`DOCUMENTED` / `UNVERIFIED` binary), `401` (`VERIFIED` JSON with `Accept: application/json`), `500` (`VERIFIED` with `Accept: */*` unauthenticated), `403` (`DOCUMENTED`), `404` (`DOCUMENTED`)
 10. **Side Effects:** None (read-only binary download).
-11. **Evidence Level:** `VERIFIED` (D10 PM unauthenticated `401` + Bearer `200` headers check).
+11. **Evidence Level:** `VERIFIED` (unauthenticated `Accept: */*` `500` vs `Accept: application/json` `401` in Gate 1 `#12` review) / `DOCUMENTED` (`200` binary stream & headers `UNVERIFIED`).
 
 ### <a id="files-destroy"></a> `files-destroy` — DELETE /files/{file}
 
@@ -1976,18 +1974,18 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 ### <a id="meetings-index"></a> `meetings-index` — GET /meetings
 
 1. **Method & Path:** `GET /meetings` (`operationId: meetings.index`)
-2. **Auth & Role Restrictions:** Bearer required. Verified `200` for PM (`52` total; `4` upcoming in D10); Team Member `UNVERIFIED` (D6).
+2. **Auth & Role Restrictions:** Bearer required (`DOCUMENTED`; PM & Team Member `UNVERIFIED` — no committed probe log).
 3. **Required Headers:** `Accept: application/json`, `Authorization: Bearer <token>`
 4. **Parameters:**
-   - **Query:** `per_page`: `integer` (`VERIFIED` in D10 with `per_page=2`; default `15` in Postman), `time_filter`: `"upcoming" | "past" | "today"` (`VERIFIED` `"upcoming"` honored in D10, reducing `total` from `52` to `4`), `page`: `integer` (`UNVERIFIED`), `project_id`: `integer` (Postman-only; `UNVERIFIED`). OpenAPI documents no query params.
-5. **Response Envelope & `data` Shape:** Standard (`E1`, `200 OK`, message `"Meetings retrieved successfully."`), **`P1`** collection of [`MeetingResource`](#shared-resource-shapes).
-   - **`CONFLICT`:** OpenAPI left `data` untyped (`{}`), typed `meeting_date` as plain string without format, and left `summary` arrays untyped. **Resolution (`VERIFIED` in D10):** `P1` + `MeetingResource` (`meeting_date: YYYY-MM-DD`, `start_time`/`end_time: HH:MM:SS`, `summary: MeetingSummaryResource | null` where `action_items` contains BOTH strings and objects and `assigned_tasks` can be BOTH `string[]` and `Record<string, string>`!).
-6. **Pagination Shape:** **`P1`** (`VERIFIED` in D10).
-7. **Filter & Sort Parameters:** `time_filter` (`"upcoming"` `VERIFIED`; `"past"`, `"today"` `DOCUMENTED` in Postman), `per_page` (`VERIFIED`), `project_id` & `page` (`DOCUMENTED`/`UNVERIFIED`).
+   - **Query:** `per_page`: `integer` (default `15` in Postman; runtime `UNVERIFIED`), `time_filter`: `"upcoming" | "past" | "today"` (`DOCUMENTED` in Postman; runtime `UNVERIFIED`), `page`: `integer` (`UNVERIFIED`), `project_id`: `integer` (Postman-only; `UNVERIFIED`). OpenAPI documents no query params.
+5. **Response Envelope & `data` Shape:** Standard (`E1`, `200 OK`), **`P1`** collection of [`MeetingResource`](#shared-resource-shapes) (`DOCUMENTED` / `UNVERIFIED`; exact `message` string `UNVERIFIED`).
+   - **`CONFLICT` / `UNVERIFIED`:** OpenAPI left `data` untyped (`{}`), typed `meeting_date` as plain string without format, and left `summary` arrays untyped. Code defensively for **`P1`**, `YYYY-MM-DD` / `HH:MM:SS`, and polymorphic `summary` (`action_items` strings/objects, `assigned_tasks` `string[] | Record<string, string>`).
+6. **Pagination Shape:** **`P1`** (`DOCUMENTED` / `UNVERIFIED`).
+7. **Filter & Sort Parameters:** `time_filter`, `per_page`, `project_id`, `page` (`DOCUMENTED` in Postman / `UNVERIFIED`).
 8. **Validation Errors (`422`):** N/A — OpenAPI documents no `422`.
-9. **Status Codes:** `200` (`VERIFIED` D10), `401` (`VERIFIED`), `403` (`DOCUMENTED`)
+9. **Status Codes:** `200` (`DOCUMENTED`), `401` (`DOCUMENTED`), `403` (`DOCUMENTED`)
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `CONFLICT` / `VERIFIED` (D10 PM probe; resolves untyped `data` and polymorphic `summary` fields).
+11. **Evidence Level:** `CONFLICT` / `UNVERIFIED` (OpenAPI leaves `data` untyped and no `/meetings` probe log is committed).
 
 ### <a id="meetings-store"></a> `meetings-store` — POST /meetings
 
@@ -2021,7 +2019,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
    ```
    *(Sanitised illustrative example.)*
 9. **Status Codes:** `201`, `401`, `403`, `422`
-10. **Side Effects:** Schedules meeting and dispatches `meeting_scheduled` in-app notifications to participants (`VERIFIED` notification type in D10).
+10. **Side Effects:** Schedules meeting and dispatches in-app notifications (such as `meeting_scheduled`) to participants (`DOCUMENTED`; exact payload `UNVERIFIED`).
 11. **Evidence Level:** `CONFLICT` (resolved: `participants`, not `attendee_ids`) / `DOCUMENTED`.
 
 ### <a id="meetings-show"></a> `meetings-show` — GET /meetings/{meeting}
@@ -2037,7 +2035,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 8. **Validation Errors (`422`):** N/A — path parameter only.
 9. **Status Codes:** `200`, `401`, `403`, `404`
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `DOCUMENTED` (`MeetingResource` shape `VERIFIED` via [`meetings-index`](#meetings-index)).
+11. **Evidence Level:** `DOCUMENTED` (`MeetingResource` shape `UNVERIFIED` live).
 
 ### <a id="meetings-update"></a> `meetings-update` — PUT /meetings/{meeting}
 
@@ -2098,7 +2096,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
    - **Path:** `meeting*`: `integer`
    - **JSON body (`MarkAttendanceRequest`, required):**
      - `attendance*`: `Array<{ user_id*: integer, attended*: boolean }>` (`minItems: 1`)
-   - **`CONFLICT`:** Postman description mentions `user_id` + `status` (`"attended" | "absent" | "excused"`). Postman request body, OpenAPI `MarkAttendanceRequest`, and live `MeetingResource.participants[].attended` (`VERIFIED` in D10) all use boolean `attended`. **Resolution:** Send `{ attendance: [{ user_id, attended }] }`.
+   - **`CONFLICT`:** Postman description mentions `user_id` + `status` (`"attended" | "absent" | "excused"`). Postman request body and OpenAPI `MarkAttendanceRequest` (and `MeetingResource.participants[].attended`) all use boolean `attended`. **Resolution:** Send `{ attendance: [{ user_id, attended }] }`.
 5. **Response Envelope & `data` Shape:** Standard (`E1`, `200 OK`): `{ success: true, message: string, data: MeetingResource }`.
 6. **Pagination Shape:** `none`
 7. **Filter & Sort Parameters:** None
@@ -2116,7 +2114,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
    *(Sanitised illustrative example.)*
 9. **Status Codes:** `200`, `401`, `403`, `404`, `422`
 10. **Side Effects:** Updates per-participant attendance flags (feeds into user attendance rate in reports) (`DOCUMENTED`).
-11. **Evidence Level:** `CONFLICT` (resolved: boolean `attended`) / `DOCUMENTED` (`participants[].attended` boolean `VERIFIED` in D10).
+11. **Evidence Level:** `CONFLICT` (resolved: boolean `attended`) / `DOCUMENTED`.
 
 ### <a id="meetings-summary-generate"></a> `meetings-summary-generate` — POST /meetings/{meeting}/summary/generate
 
@@ -2129,7 +2127,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
      - `transcript`: `string | null` (optional; what the backend summarizes when omitted is `UNVERIFIED`)
    - **`CONFLICT`:** Postman description names `notes`; Postman body and OpenAPI `GenerateSummaryRequest` both use `transcript`. **Resolution:** Always send `transcript`.
 5. **Response Envelope & `data` Shape:** Standard (`E1`, **`200 OK`** — NOT `201`): `{ success: true, message: string, data: MeetingSummaryResource }`.
-   - Note (`VERIFIED` in D10 on `GET /meetings`): `action_items` can contain strings and/or `{ title, suggested_assignee?, priority? }` objects, and `assigned_tasks` can be `string[]` or `Record<string, string>`.
+   - Defensive note (`UNVERIFIED`): handle `action_items` containing strings and/or `{ title, suggested_assignee?, priority? }` objects, and `assigned_tasks` as `string[]` or `Record<string, string>`.
 6. **Pagination Shape:** `none`
 7. **Filter & Sort Parameters:** None
 8. **Validation Errors (`422`):**
@@ -2145,7 +2143,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
    *(Sanitised illustrative example.)*
 9. **Status Codes:** `200` (not `201`), `401`, `403`, `404`, `422`
 10. **Side Effects:** Invokes external AI provider (Google Gemini with local NLP fallback per Postman) and creates/overwrites the meeting's summary (`DOCUMENTED`). May take several seconds — allow generous timeout.
-11. **Evidence Level:** `CONFLICT` (resolved: `transcript`, not `notes`) / `DOCUMENTED` (`MeetingSummaryResource` polymorphic shape `VERIFIED` in D10).
+11. **Evidence Level:** `CONFLICT` (resolved: `transcript`, not `notes`) / `DOCUMENTED` (`MeetingSummaryResource` polymorphic variants `UNVERIFIED`).
 
 ### <a id="meetings-summary-show"></a> `meetings-summary-show` — GET /meetings/{meeting}/summary
 
@@ -2160,7 +2158,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 8. **Validation Errors (`422`):** N/A — path parameter only.
 9. **Status Codes:** `200`, `401`, `403`, `404`
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `DOCUMENTED` (`MeetingSummaryResource` shape `VERIFIED` via [`meetings-index`](#meetings-index)).
+11. **Evidence Level:** `DOCUMENTED` (`MeetingSummaryResource` polymorphic shape `UNVERIFIED`).
 
 ### <a id="meetings-summary-update"></a> `meetings-summary-update` — PUT /meetings/{meeting}/summary
 
@@ -2573,13 +2571,14 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 ### <a id="ai-settings-index"></a> `ai-settings-index` — GET /ai/settings
 
 1. **Method & Path:** `GET /ai/settings` (`operationId: aiSetting.index`)
-2. **Auth & Role Restrictions:** Bearer required. Verified `200 OK` for **Project Manager** in D10 (not Admin-only for reads); Team Member `UNVERIFIED` (D6). Out of MVP scope.
+2. **Auth & Role Restrictions:** Bearer required. **`Administrator` only** (`DOCUMENTED` in OpenAPI summary & Postman; PM/Team Member behaviour `UNVERIFIED` — no committed probe log). Out of MVP scope.
 3. **Required Headers:** `Accept: application/json`, `Authorization: Bearer <token>`
 4. **Parameters:** None
-5. **Response Envelope & `data` Shape:** **`E2` (NO `message` key!)**, `200 OK` (`VERIFIED` top keys `["success", "data"]` in D10):
+5. **Response Envelope & `data` Shape:** OpenAPI documents `E1` `{ success: true, message: string, data: ... }` (`message` may be omitted on some read routes — treat as optional `string | undefined`, `UNVERIFIED`):
    ```ts
    {
      success: true,
+     message?: string,
      data: Array<{
        id: number; key: string; value: unknown; type: string;
        description: string | null;
@@ -2591,9 +2590,9 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 6. **Pagination Shape:** `none` (plain array)
 7. **Filter & Sort Parameters:** None
 8. **Validation Errors (`422`):** N/A — no validated input.
-9. **Status Codes:** `200` (`VERIFIED` PM in D10), `401` (`VERIFIED`)
+9. **Status Codes:** `200` (`DOCUMENTED`), `401` (`DOCUMENTED`), `403` (`DOCUMENTED`)
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `VERIFIED` (D10 PM `200` & `E2` no-`message` envelope; `value` type `DOCUMENTED`/`UNVERIFIED`).
+11. **Evidence Level:** `DOCUMENTED` (`E2` no-`message` possibility & `value` type `UNVERIFIED`).
 
 ### <a id="ai-settings-update"></a> `ai-settings-update` — PUT /ai/settings
 
@@ -2695,11 +2694,11 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 
 1. **Method & Path:** `GET /reports/users` (self) and `GET /reports/users/{id}` (specific user) (`operationId: report.users`)
    - **`CONFLICT` (path representation):** OpenAPI models one route `GET /reports/users/{id}` with `x-optional: true` (`default: null`), whereas Postman splits it into two requests (`GET /reports/users` and `GET /reports/users/1`). **Resolution:** Both URLs target the same Laravel route with an optional `{id?}` segment.
-2. **Auth & Role Restrictions:** Bearer required. Omit `{id}` for own report; passing `{id}` is for `Administrator` & `Project Manager` (`VERIFIED` `200 OK` for PM on `GET /reports/users/{id}` in D10; Team Member `UNVERIFIED` per D6).
+2. **Auth & Role Restrictions:** Bearer required. Omit `{id}` for own report; passing `{id}` is for `Administrator` & `Project Manager` (`DOCUMENTED`; runtime PM & Team Member checks `UNVERIFIED`).
 3. **Required Headers:** `Accept: application/json`, `Authorization: Bearer <token>`
 4. **Parameters:**
    - **Path:** `id`: `integer | null` (optional; defaults to authenticated user when omitted)
-5. **Response Envelope & `data` Shape:** Standard (`E1`, `200 OK` — top keys `["success", "message", "data"]` `VERIFIED` in D10):
+5. **Response Envelope & `data` Shape:** Standard (`E1`, `200 OK`, `DOCUMENTED`):
    ```ts
    data: {
      user: { id: number; name: string; email: string; job_title: string | null; years_of_experience: number; roles: unknown[] };
@@ -2713,9 +2712,9 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 6. **Pagination Shape:** `none`
 7. **Filter & Sort Parameters:** None documented.
 8. **Validation Errors (`422`):** N/A — optional path parameter only.
-9. **Status Codes:** `200` (`VERIFIED` PM in D10), `401` (`VERIFIED`), `403`/`404` (`UNVERIFIED`)
+9. **Status Codes:** `200` (`DOCUMENTED`), `401` (`DOCUMENTED`), `403`/`404` (`UNVERIFIED`)
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `CONFLICT` (optional path modelling) / `VERIFIED` (`200` & `E1` envelope for PM in D10; inner `chart`/`roles` shape `DOCUMENTED`/`UNVERIFIED`).
+11. **Evidence Level:** `CONFLICT` (optional path modelling) / `DOCUMENTED` (live shape, PM `{id}` access, and inner `chart`/`roles` `UNVERIFIED`).
 
 ---
 
@@ -2753,7 +2752,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
 ### <a id="audit-logs-index"></a> `audit-logs-index` — GET /audit-logs
 
 1. **Method & Path:** `GET /audit-logs` (`operationId: auditLog.index`)
-2. **Auth & Role Restrictions:** Bearer required. **`Administrator` & `Project Manager` only** (`DOCUMENTED`; PM `200 OK` `VERIFIED` in D10; Team Member `403` `UNVERIFIED` per D6). Out of MVP scope.
+2. **Auth & Role Restrictions:** Bearer required. **`Administrator` & `Project Manager` only** (`DOCUMENTED`; PM `200` / Team Member `403` `UNVERIFIED` — no committed probe log). Out of MVP scope.
 3. **Required Headers:** `Accept: application/json`, `Authorization: Bearer <token>`
 4. **Parameters:**
    - **Query (OpenAPI; Postman shows only `per_page=20`):**
@@ -2763,10 +2762,11 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
      - `search`: `string | null` (`maxLength: 255`)
      - `per_page`: `integer | null` (`1`–`100`)
      - `page`: `integer | null` (`>= 1`)
-5. **Response Envelope & `data` Shape:** **`E2` (NO `message` key!)**, **`P4`**, `200 OK` (`VERIFIED` top keys `["success", "data", "meta"]` in D10):
+5. **Response Envelope & `data` Shape:** **`P4`**, `200 OK` (OpenAPI documents `message` key, though sibling `P4` endpoints like `/users` omit `message` — treat `message` as optional, `DOCUMENTED` / `UNVERIFIED`):
    ```ts
    {
      success: true,
+     message?: string,
      data: Array<{
        id: number;
        category: AuditLogCategory;
@@ -2780,7 +2780,7 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
      meta: { current_page: number; last_page: number; per_page: number; total: number }
    }
    ```
-6. **Pagination Shape:** **`P4`** (`VERIFIED` top-level `meta` sibling in D10).
+6. **Pagination Shape:** **`P4`** (`DOCUMENTED` sibling `meta`; `UNVERIFIED` live).
 7. **Filter & Sort Parameters:** `category`, `user_id`, `action`, `search`, `per_page` (`1`–`100`), `page` (`>= 1`) (`DOCUMENTED` in OpenAPI).
 8. **Validation Errors (`422`):**
    ```json
@@ -2794,6 +2794,6 @@ Executed in one in-memory session as **Project Manager** (`roles: ["Project Mana
    }
    ```
    *(Sanitised illustrative example.)*
-9. **Status Codes:** `200` (`VERIFIED` PM in D10), `401` (`VERIFIED`), `403` (`DOCUMENTED`), `422` (`DOCUMENTED`)
+9. **Status Codes:** `200` (`DOCUMENTED`), `401` (`DOCUMENTED`), `403` (`DOCUMENTED`), `422` (`DOCUMENTED`)
 10. **Side Effects:** None (read-only).
-11. **Evidence Level:** `VERIFIED` (D10 PM `200`, `E2` no-`message`, and `P4` sibling `meta`; query filters & `payload` item type `DOCUMENTED`/`UNVERIFIED`).
+11. **Evidence Level:** `DOCUMENTED` (OpenAPI + Postman; `E2` no-`message`, `P4` sibling `meta`, PM access, query filters, and `payload` item type `UNVERIFIED` live).
