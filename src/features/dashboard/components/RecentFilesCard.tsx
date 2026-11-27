@@ -1,5 +1,5 @@
 import { FileText } from 'lucide-react';
-import { formatDisplayDate } from '@/shared/api';
+import { formatDisplayDate } from '@/shared/api/dates';
 import { IconCircle, Skeleton } from '@/shared/ui';
 import type { DashboardQueryResult } from '../hooks/useDashboard';
 import { DashboardSection } from './DashboardSection';

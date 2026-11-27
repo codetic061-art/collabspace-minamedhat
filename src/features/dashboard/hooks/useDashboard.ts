@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { dashboardQueries } from '@/shared/api';
+import { dashboardQueries } from '@/shared/api/services/dashboard.service';
 
 /**
  * The single Dashboard data source (`GET /dashboard`, ID-5, ID-18). Every card receives
