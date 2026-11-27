@@ -205,6 +205,5 @@ jobs:
         with:
           name: preview-evidence
           path: |
-            test-results/
             preview-shots/
           if-no-files-found: ignore

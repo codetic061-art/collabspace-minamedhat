@@ -136,6 +136,7 @@ export function Navbar() {
             trigger={(triggerProps) => (
               <button
                 type="button"
+                aria-label="User menu"
                 className="flex min-h-touch items-center gap-2.5 rounded-pill border border-border-subtle bg-surface px-2.5 py-1 text-left transition-colors hover:bg-surface-input cursor-pointer"
                 {...triggerProps}
               >
