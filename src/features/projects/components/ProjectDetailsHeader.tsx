@@ -9,19 +9,19 @@ export interface ProjectDetailsHeaderProps {
   onEdit: () => void;
 }
 
-function computeTimelineProgress(
-  totalDays: number,
-  daysRemaining: number,
-  isOverdue: boolean,
-): number {
-  if (isOverdue) {
+function computeTimelineProgress(due: ProjectOverviewResource['due_date_indicator']): number {
+  if (due.is_overdue) {
     return 100;
   }
-  if (totalDays <= 0) {
+  if (due.total_days <= 0) {
     return 0;
   }
-  const elapsed = totalDays - Math.max(0, daysRemaining);
-  return Math.max(0, Math.min(100, Math.round((elapsed / totalDays) * 100)));
+  const elapsed = due.total_days - Math.max(0, due.days_remaining);
+  return Math.max(0, Math.min(100, Math.round((elapsed / due.total_days) * 100)));
+}
+
+function renderProjectsLink(label: string, className: string) {
+  return <Link to="/projects" className={className}>{label}</Link>;
 }
 
 /**
@@ -31,29 +31,24 @@ function computeTimelineProgress(
 export function ProjectDetailsHeader({ project, canEdit, onEdit }: ProjectDetailsHeaderProps) {
   const { due_date_indicator: due } = project;
   const completionPercent = Math.round(project.progress_percentage);
-  const timelineProgress = computeTimelineProgress(
-    due.total_days,
-    due.days_remaining,
-    due.is_overdue,
-  );
+  const timelineProgress = computeTimelineProgress(due);
   const dueStatusText = due.is_overdue
     ? 'Overdue'
     : `${due.days_remaining} ${due.days_remaining === 1 ? 'day' : 'days'} left`;
-
-  const renderProjectsLink = (label: string, className: string) => (
-    <Link to="/projects" className={className}>{label}</Link>
-  );
 
   const dueStatusClass = due.is_overdue
     ? 'text-xs font-medium text-danger'
     : 'text-xs font-medium text-body';
 
+  const breadcrumbItems = [
+    { label: 'Projects', renderLink: renderProjectsLink },
+    { label: project.name },
+  ];
+
   return (
     <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="space-y-2">
-        <Breadcrumb
-          items={[{ label: 'Projects', renderLink: renderProjectsLink }, { label: project.name }]}
-        />
+        <Breadcrumb items={breadcrumbItems} />
 
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl sm:text-3xl font-semibold text-ink">{project.name}</h1>

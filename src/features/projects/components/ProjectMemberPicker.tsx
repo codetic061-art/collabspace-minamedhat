@@ -13,6 +13,93 @@ export interface ProjectMemberPickerProps {
   error?: string;
 }
 
+interface UserOptionRowProps {
+  user: UserResource;
+  isSelected: boolean;
+  onSelect: (user: UserResource) => void;
+}
+
+function UserOptionRow({ user, isSelected, onSelect }: UserOptionRowProps) {
+  const rowClasses = cn(
+    'flex min-h-touch w-full items-center justify-between gap-3 px-2 py-2 text-left text-sm transition-colors hover:bg-surface-input cursor-pointer',
+    isSelected && 'bg-surface-input',
+  );
+
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={isSelected}
+      onClick={() => onSelect(user)}
+      className={rowClasses}
+    >
+      <span className="flex min-w-0 items-center gap-2.5">
+        <Avatar name={user.name} src={toSafeExternalUrl(user.avatar_url)} size="sm" />
+        <span className="min-w-0">
+          <span className="block truncate font-medium text-ink">{user.name}</span>
+          <span className="block truncate text-xs text-body">{user.job_title ?? user.email}</span>
+        </span>
+      </span>
+      {isSelected ? (
+        <span
+          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-pill bg-success text-surface"
+          aria-hidden="true"
+        >
+          <Check className="h-3 w-3" />
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+interface SelectedMemberRowProps {
+  member: ProjectMemberFormValue;
+  cachedUser: UserResource | undefined;
+  disabled: boolean;
+  onRoleChange: (userId: number, role: string) => void;
+  onRemove: (userId: number) => void;
+}
+
+function SelectedMemberRow({
+  member,
+  cachedUser,
+  disabled,
+  onRoleChange,
+  onRemove,
+}: SelectedMemberRowProps) {
+  const displayName = cachedUser?.name ?? `User #${member.user_id}`;
+
+  return (
+    <li className="flex flex-col gap-2 rounded-input border border-border-subtle bg-surface-input p-2.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <Avatar name={displayName} src={toSafeExternalUrl(cachedUser?.avatar_url)} size="xs" />
+        <span className="truncate text-sm font-medium text-ink">{displayName}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          aria-label={`Project role for ${displayName}`}
+          placeholder="Role (optional)"
+          maxLength={100}
+          disabled={disabled}
+          value={member.role}
+          onChange={(event) => onRoleChange(member.user_id, event.target.value)}
+          className="min-h-touch w-full sm:w-40 rounded-input border border-border-input bg-surface px-2.5 py-1.5 text-xs text-ink placeholder:text-body focus:border-primary focus:outline-none"
+        />
+        <button
+          type="button"
+          disabled={disabled}
+          aria-label={`Remove ${displayName}`}
+          onClick={() => onRemove(member.user_id)}
+          className="inline-flex min-h-touch min-w-touch shrink-0 items-center justify-center rounded-pill text-body hover:bg-danger-tint hover:text-danger cursor-pointer"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+    </li>
+  );
+}
+
 /**
  * Create-only project member picker (`D5`, `M28`, `#users-index`):
  * loads `/users` with `per_page=20` only when opened, debounces search, and filters client-side as fallback.
@@ -85,6 +172,11 @@ export function ProjectMemberPicker({
     picker.setPage(Math.min(picker.lastPage, picker.currentPage + 1));
   };
 
+  const triggerLabel =
+    value.length > 0
+      ? `${value.length} ${value.length === 1 ? 'member' : 'members'} selected`
+      : 'Search and add project members (optional)';
+
   return (
     <Field label="Add Members" labelVariant="top" error={error}>
       {(a11yProps) => (
@@ -107,11 +199,7 @@ export function ProjectMemberPicker({
             >
               <span className="flex items-center gap-2 text-body">
                 <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span className={value.length > 0 ? 'text-ink' : 'text-body'}>
-                  {value.length > 0
-                    ? `${value.length} ${value.length === 1 ? 'member' : 'members'} selected`
-                    : 'Search and add project members (optional)'}
-                </span>
+                <span className={value.length > 0 ? 'text-ink' : 'text-body'}>{triggerLabel}</span>
               </span>
               <span className="rounded-pill bg-dark px-3 py-1 text-xs font-medium text-surface">
                 {isOpen ? 'Done' : 'Add +'}
@@ -154,46 +242,14 @@ export function ProjectMemberPicker({
                   ) : picker.users.length === 0 ? (
                     <p className="py-4 text-center text-sm text-body">No matching users found.</p>
                   ) : (
-                    picker.users.map((user) => {
-                      const isSelected = selectedIds.has(user.id);
-                      return (
-                        <button
-                          key={user.id}
-                          type="button"
-                          role="option"
-                          aria-selected={isSelected}
-                          onClick={() => toggleMember(user)}
-                          className={cn(
-                            'flex min-h-touch w-full items-center justify-between gap-3 px-2 py-2 text-left text-sm transition-colors hover:bg-surface-input cursor-pointer',
-                            isSelected && 'bg-surface-input',
-                          )}
-                        >
-                          <span className="flex min-w-0 items-center gap-2.5">
-                            <Avatar
-                              name={user.name}
-                              src={toSafeExternalUrl(user.avatar_url)}
-                              size="sm"
-                            />
-                            <span className="min-w-0">
-                              <span className="block truncate font-medium text-ink">
-                                {user.name}
-                              </span>
-                              <span className="block truncate text-xs text-body">
-                                {user.job_title ?? user.email}
-                              </span>
-                            </span>
-                          </span>
-                          {isSelected ? (
-                            <span
-                              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-pill bg-success text-surface"
-                              aria-hidden="true"
-                            >
-                              <Check className="h-3 w-3" />
-                            </span>
-                          ) : null}
-                        </button>
-                      );
-                    })
+                    picker.users.map((user) => (
+                      <UserOptionRow
+                        key={user.id}
+                        user={user}
+                        isSelected={selectedIds.has(user.id)}
+                        onSelect={toggleMember}
+                      />
+                    ))
                   )}
                 </div>
 
@@ -230,46 +286,16 @@ export function ProjectMemberPicker({
 
           {value.length > 0 ? (
             <ul className="space-y-2" aria-label="Selected project members">
-              {value.map((member) => {
-                const cachedUser = selectedCache[member.user_id];
-                const displayName = cachedUser?.name ?? `User #${member.user_id}`;
-                return (
-                  <li
-                    key={member.user_id}
-                    className="flex flex-col gap-2 rounded-input border border-border-subtle bg-surface-input p-2.5 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Avatar
-                        name={displayName}
-                        src={toSafeExternalUrl(cachedUser?.avatar_url)}
-                        size="xs"
-                      />
-                      <span className="truncate text-sm font-medium text-ink">{displayName}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        aria-label={`Project role for ${displayName}`}
-                        placeholder="Role (optional)"
-                        maxLength={100}
-                        disabled={disabled}
-                        value={member.role}
-                        onChange={(event) => updateMemberRole(member.user_id, event.target.value)}
-                        className="min-h-touch w-full sm:w-40 rounded-input border border-border-input bg-surface px-2.5 py-1.5 text-xs text-ink placeholder:text-body focus:border-primary focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        aria-label={`Remove ${displayName}`}
-                        onClick={() => removeMember(member.user_id)}
-                        className="inline-flex min-h-touch min-w-touch shrink-0 items-center justify-center rounded-pill text-body hover:bg-danger-tint hover:text-danger cursor-pointer"
-                      >
-                        <X className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </div>
-                  </li>
-                );
-              })}
+              {value.map((member) => (
+                <SelectedMemberRow
+                  key={member.user_id}
+                  member={member}
+                  cachedUser={selectedCache[member.user_id]}
+                  disabled={disabled}
+                  onRoleChange={updateMemberRole}
+                  onRemove={removeMember}
+                />
+              ))}
             </ul>
           ) : null}
         </div>
