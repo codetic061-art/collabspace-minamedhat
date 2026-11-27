@@ -1,4 +1,3 @@
-import '@/shared/config/zod';
 import '@/shared/tokens/tokens.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

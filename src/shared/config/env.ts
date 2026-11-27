@@ -1,6 +1,3 @@
-import './zod';
-import { z } from 'zod';
-
 const TEST_DEFAULT_API_BASE_URL = 'https://collabspace.huma-volve.com/api/v1';
 
 const FORBIDDEN_PUBLIC_KEY_PATTERN = /SECRET|PRIVATE|TOKEN|PASSWORD|SALT/i;
@@ -43,30 +40,6 @@ const ALLOWED_ENV_KEYS = new Set<string>([
   ...VERCEL_PUBLIC_SYSTEM_KEYS,
 ]);
 
-const publicEnvSchema = z.object({
-  VITE_API_BASE_URL: z
-    .url('VITE_API_BASE_URL must be a valid URL.')
-    .refine(
-      (value) => value.startsWith('https://'),
-      'VITE_API_BASE_URL must use the https:// scheme.',
-    )
-    .transform((value) => value.replace(/\/+$/, '')),
-  VITE_TURNSTILE_ENABLED: z
-    .union([z.boolean(), z.string()])
-    .optional()
-    .transform((value) => value === true || value === 'true'),
-  VITE_TURNSTILE_SITEKEY: z
-    .string()
-    .optional()
-    .transform((value) => {
-      if (!value) {
-        return undefined;
-      }
-      const trimmed = value.trim();
-      return trimmed.length > 0 ? trimmed : undefined;
-    }),
-});
-
 export interface PublicEnv {
   readonly VITE_API_BASE_URL: string;
   readonly VITE_TURNSTILE_ENABLED: boolean;
@@ -88,7 +61,28 @@ export function parsePublicEnv(raw: Record<string, unknown>): PublicEnv {
     }
   }
 
-  return publicEnvSchema.parse(raw);
+  const apiBaseUrl = raw.VITE_API_BASE_URL;
+  if (typeof apiBaseUrl !== 'string' || !apiBaseUrl.startsWith('https://')) {
+    throw new Error('VITE_API_BASE_URL must be a valid HTTPS URL.');
+  }
+  try {
+    new URL(apiBaseUrl);
+  } catch {
+    throw new Error('VITE_API_BASE_URL must be a valid HTTPS URL.');
+  }
+  const enabled = raw.VITE_TURNSTILE_ENABLED;
+  if (enabled !== undefined && typeof enabled !== 'boolean' && typeof enabled !== 'string') {
+    throw new Error('VITE_TURNSTILE_ENABLED must be a boolean or string.');
+  }
+  const siteKey = raw.VITE_TURNSTILE_SITEKEY;
+  if (siteKey !== undefined && typeof siteKey !== 'string') {
+    throw new Error('VITE_TURNSTILE_SITEKEY must be a string.');
+  }
+  return {
+    VITE_API_BASE_URL: apiBaseUrl.replace(/\/+$/, ''),
+    VITE_TURNSTILE_ENABLED: enabled === true || enabled === 'true',
+    VITE_TURNSTILE_SITEKEY: siteKey?.trim() || undefined,
+  };
 }
 
 let cachedEnv: PublicEnv | null = null;

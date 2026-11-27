@@ -1,3 +1,4 @@
+import '@/shared/config/zod';
 import { z } from 'zod';
 import type { CreateProjectPayload, UpdateProjectPayload } from '@/shared/api';
 import { PROJECT_PRIORITIES, PROJECT_STATUSES } from '../utils/projectPresentation';
