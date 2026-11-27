@@ -1,12 +1,15 @@
-import { getPublicEnv } from '@/shared/config';
-import { ScaffoldNotice } from '@/shared/ui';
+import { useMemo } from 'react';
+import { RouterProvider } from 'react-router/dom';
+import { AppProviders } from './providers';
+import { createAppBrowserRouter } from './router';
 
+/** Root application component mounting providers and the lazy data router. */
 export function App() {
-  const { VITE_API_BASE_URL } = getPublicEnv();
+  const router = useMemo(() => createAppBrowserRouter(), []);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
-      <ScaffoldNotice apiBaseUrl={VITE_API_BASE_URL} />
-    </main>
+    <AppProviders>
+      <RouterProvider router={router} />
+    </AppProviders>
   );
 }
