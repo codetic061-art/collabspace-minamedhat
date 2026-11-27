@@ -67,7 +67,7 @@ export default defineConfig(() => {
       rolldownOptions: {
         treeshake: {
           moduleSideEffects: (id) =>
-            !/[/\\]src[/\\]shared[/\\](ui[/\\](Avatar|Badge|ProgressBar|Select|StatePrimitives)|api[/\\](dates|services[/\\](dashboard|teams)\.service))\.(ts|tsx)$/.test(
+            !/[/\\]src[/\\]shared[/\\](ui[/\\](Avatar|Badge|Breadcrumb|ConfirmDialog|DropdownMenu|Modal|ProgressBar|Select|StatePrimitives|Tabs)|api[/\\](dates|services[/\\](dashboard|projects|tasks|teams|users)\.service))\.(ts|tsx)$/.test(
               id,
             ),
         },
