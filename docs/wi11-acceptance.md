@@ -1,6 +1,6 @@
 # WI-11 acceptance evidence
 
-Status is recorded against integrated head `bbcd278c9358fe01bf29616b57bc212a10074b0b` and its protected Vercel Preview. This report is evidence for Gate 2 review; it is not Gate 2 approval. `PASS` means the named evidence was exercised. `BLOCKED` means the required evidence is unavailable, even when fixture-backed tests or read-only checks passed. No credentials, tokens, OTPs, email addresses or personal data belong in this report.
+The matrix retains evidence from integrated head `bbcd278c9358fe01bf29616b57bc212a10074b0b` and subsequent correction runs. `PASS` means the named evidence was exercised. `BLOCKED` means the required evidence is unavailable, even when fixture-backed tests or read-only checks passed. No credentials, tokens, OTPs, email addresses or personal data belong in this report.
 
 Evidence anchors:
 
@@ -81,10 +81,11 @@ These changes crossed the shared-surface ownership boundary and must be recorded
 
 ## Gate 1 carryovers and WI-11 delivery
 
+Finding D's documentation correction is present in `docs/api/plain.md` and `docs/discovery/api-authenticated-shapes.md`. The owner waived the remaining review sequence on #12.
+
 | Requirement                                                                        | Status  | Evidence or remaining check                                                                                                                                                             |
 | ---------------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Finding C: Admin and PM login, reload, protected route, sign-out and old-token 401 | PASS    | `wi11-real-read` passed on run 46041554260 for both roles.                                                                                                                              |
-| Finding D: API documentation evidence consistency                                  | BLOCKED | Content correction is present in `docs/api/plain.md` and `docs/discovery/api-authenticated-shapes.md`; the owner's focused-review waiver and Gate 1 confirmation remain pending on #12. |
 | L-1 avatar host vs `img-src`                                                       | BLOCKED | Record as a Production precondition in ADR-12 and verify the actual avatar host before enforcing CSP.                                                                                   |
 | L-2 ADR-12 Report-Only wording                                                     | PASS    | ADR-12 explicitly states that no `report-to`/`Reporting-Endpoints` collector is configured and names browser-console/Playwright evidence.                                               |
 | L-3 `engines.node` vs ADR-11                                                       | PASS    | ADR-11 now records the existing Node `24.x` runtime and CI constraint.                                                                                                                  |
@@ -106,9 +107,6 @@ These changes crossed the shared-surface ownership boundary and must be recorded
 - The Tasks tab is implemented by the WI-9 board export; stale comments describing it as hidden were removed.
 - L-1 is a deployment precondition, not a reason to claim CSP enforcement: the actual avatar host must be confirmed and added only if it is an approved origin.
 
-## Label recommendations (read-only; do not apply from this report)
+## Delivery exception
 
-- #1-#6: remove `ready-for-agent` after the owner records the Gate 1 waiver/approval on #12; retain `foundation` and `implemented` only where the ticket's own evidence is complete.
-- #7-#10: after the corresponding G2 corrections and per-ticket file/test records are posted, add `implemented`; do not add it solely because the integrated Preview is green.
-- #11: retain `needs-info` and do not add `implemented` while live-write authorization and Team Member credentials remain unresolved. Keep WI-11 open.
-- #12 and #13: retain `review-gate` and leave both open until the designated reviewer records `APPROVED`.
+The owner has authorized an exception to the remaining gate sequence and waived another review after automated verification. The exception is recorded on [#12](https://github.com/codetic061-art/collabspace-minamedhat/issues/12#issuecomment-7226670218) and [#13](https://github.com/codetic061-art/collabspace-minamedhat/issues/13#issuecomment-7226668764). The earlier review decisions are preserved. Closing issues under that exception does not change the blocked verification results above.
