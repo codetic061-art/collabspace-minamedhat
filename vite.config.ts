@@ -63,6 +63,16 @@ export default defineConfig(() => {
 
   return {
     plugins,
+    build: {
+      rolldownOptions: {
+        treeshake: {
+          moduleSideEffects: (id) =>
+            !/[/\\]src[/\\]shared[/\\](ui[/\\](Avatar|Badge|Breadcrumb|ConfirmDialog|DropdownMenu|Modal|ProgressBar|Select|StatePrimitives|Tabs)|api[/\\](dates|services[/\\](dashboard|profile|projects|tasks|teams|users)\.service))\.(ts|tsx)$/.test(
+              id,
+            ),
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),

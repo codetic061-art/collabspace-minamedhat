@@ -45,17 +45,27 @@ export function Input({
   ...rest
 }: InputProps) {
   const field = useFieldContext();
+  const generatedId = useId();
 
   const resolvedVariant = field ? field.labelVariant : labelVariant;
   const resolvedShape: InputShape = shape ?? (resolvedVariant === 'notch' ? 'notch' : 'pill');
 
   const renderControl = (a11y?: FieldControlA11yProps) => {
-    const effectiveId = id ?? a11y?.id ?? field?.inputId;
+    const effectiveId = id ?? a11y?.id ?? field?.inputId ?? generatedId;
     const effectiveRequired = required ?? a11y?.required ?? field?.required;
     const isFieldInvalid = error || field?.hasError ? true : undefined;
     const effectiveInvalid = rest['aria-invalid'] ?? a11y?.['aria-invalid'] ?? isFieldInvalid;
-    const effectiveDescribedBy =
+    const describedBy =
       rest['aria-describedby'] ?? a11y?.['aria-describedby'] ?? field?.describedBy;
+    const standaloneErrorId = !field && error ? `${effectiveId}-error` : undefined;
+    const effectiveDescribedBy =
+      [
+        describedBy,
+        !field && label === undefined && hint ? `${effectiveId}-hint` : undefined,
+        standaloneErrorId,
+      ]
+        .filter(Boolean)
+        .join(' ') || undefined;
 
     return (
       <div
@@ -79,6 +89,7 @@ export function Input({
         ) : null}
 
         <input
+          {...rest}
           ref={ref}
           id={effectiveId}
           required={effectiveRequired}
@@ -88,7 +99,6 @@ export function Input({
             'w-full min-w-0 bg-transparent py-2.5 text-sm text-ink placeholder:text-body focus:outline-none',
             className,
           )}
-          {...rest}
         />
 
         {trailingAdornment ? (
@@ -114,7 +124,29 @@ export function Input({
     );
   }
 
-  return renderControl();
+  if (field) {
+    return renderControl();
+  }
+
+  return (
+    <div className={wrapperClassName}>
+      {renderControl()}
+      {hint ? (
+        <p id={`${id ?? generatedId}-hint`} className="text-xs text-gray-500">
+          {hint}
+        </p>
+      ) : null}
+      {error ? (
+        <p
+          id={`${id ?? generatedId}-error`}
+          role="alert"
+          className="text-xs font-medium text-danger"
+        >
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -152,6 +184,7 @@ export function Textarea({
 
     return (
       <textarea
+        {...rest}
         ref={ref}
         id={effectiveId}
         rows={rows}
@@ -163,7 +196,6 @@ export function Textarea({
           effectiveInvalid ? 'border-danger focus:border-danger' : 'border-border-input',
           className,
         )}
-        {...rest}
       />
     );
   };

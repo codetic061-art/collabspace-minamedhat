@@ -195,7 +195,16 @@ export function Select({
     const triggerId = id ?? a11y?.id ?? field?.inputId ?? generatedId;
     const listboxId = `${triggerId}-listbox`;
     const effectiveInvalid = Boolean(error || a11y?.['aria-invalid'] || field?.hasError);
-    const effectiveDescribedBy = a11y?.['aria-describedby'] ?? field?.describedBy;
+    const describedBy = a11y?.['aria-describedby'] ?? field?.describedBy;
+    const standaloneErrorId = !field && error ? `${triggerId}-error` : undefined;
+    const effectiveDescribedBy =
+      [
+        describedBy,
+        !field && label === undefined && hint ? `${triggerId}-hint` : undefined,
+        standaloneErrorId,
+      ]
+        .filter(Boolean)
+        .join(' ') || undefined;
 
     return (
       <div ref={containerRef} className={cn('relative w-full', className)}>
@@ -302,7 +311,29 @@ export function Select({
     );
   }
 
-  return renderControl();
+  if (field) {
+    return renderControl();
+  }
+
+  return (
+    <div>
+      {renderControl()}
+      {hint ? (
+        <p id={`${id ?? generatedId}-hint`} className="text-xs text-gray-500">
+          {hint}
+        </p>
+      ) : null}
+      {error ? (
+        <p
+          id={`${id ?? generatedId}-error`}
+          role="alert"
+          className="text-xs font-medium text-danger"
+        >
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 export interface NativeSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
@@ -332,20 +363,31 @@ export function NativeSelect({
   ...rest
 }: NativeSelectProps) {
   const field = useFieldContext();
+  const generatedId = useId();
 
   const resolvedVariant = field ? field.labelVariant : labelVariant;
 
   const renderSelect = (a11y?: FieldControlA11yProps) => {
-    const effectiveId = id ?? a11y?.id ?? field?.inputId;
+    const effectiveId = id ?? a11y?.id ?? field?.inputId ?? generatedId;
     const effectiveRequired = required ?? a11y?.required ?? field?.required;
     const isFieldInvalid = error || field?.hasError ? true : undefined;
     const effectiveInvalid = rest['aria-invalid'] ?? a11y?.['aria-invalid'] ?? isFieldInvalid;
-    const effectiveDescribedBy =
+    const describedBy =
       rest['aria-describedby'] ?? a11y?.['aria-describedby'] ?? field?.describedBy;
+    const standaloneErrorId = !field && error ? `${effectiveId}-error` : undefined;
+    const effectiveDescribedBy =
+      [
+        describedBy,
+        !field && label === undefined && hint ? `${effectiveId}-hint` : undefined,
+        standaloneErrorId,
+      ]
+        .filter(Boolean)
+        .join(' ') || undefined;
 
     return (
       <div className="relative">
         <select
+          {...rest}
           ref={ref}
           id={effectiveId}
           required={effectiveRequired}
@@ -357,7 +399,6 @@ export function NativeSelect({
             effectiveInvalid ? 'border-danger focus:border-danger' : 'border-border-input',
             className,
           )}
-          {...rest}
         >
           {placeholder ? (
             <option value="" disabled={required}>
@@ -394,5 +435,27 @@ export function NativeSelect({
     );
   }
 
-  return renderSelect();
+  if (field) {
+    return renderSelect();
+  }
+
+  return (
+    <div className={wrapperClassName}>
+      {renderSelect()}
+      {hint ? (
+        <p id={`${id ?? generatedId}-hint`} className="text-xs text-gray-500">
+          {hint}
+        </p>
+      ) : null}
+      {error ? (
+        <p
+          id={`${id ?? generatedId}-error`}
+          role="alert"
+          className="text-xs font-medium text-danger"
+        >
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
 }

@@ -1,6 +1,12 @@
 import { mkdirSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { dashboardFixture } from '../src/features/dashboard/__tests__/fixtures';
+import {
+  makeProjectListItem,
+  makeProjectOverview,
+  makeProjectTeamsProgress,
+} from '../src/features/projects/__tests__/projectsFixtures';
 
 interface CspViolationEntry {
   violatedDirective: string;
@@ -174,4 +180,158 @@ test('verifies Vercel Preview headers, SPA fallback, API config, CSP, and a11y',
 
   mkdirSync('preview-shots', { recursive: true });
   await page.screenshot({ path: 'preview-shots/wi3-1440.png', fullPage: true });
+});
+
+test('renders Projects routes on Preview with a simulated API', async ({ page }) => {
+  const previewBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
+  if (!previewBaseUrl) {
+    test.skip(true, 'Requires a Vercel Preview deployment.');
+    return;
+  }
+
+  const previewOrigin = new URL(previewBaseUrl).origin;
+  const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim() ?? '';
+  if (bypassSecret) {
+    await page.route(
+      (url) => url.origin === previewOrigin,
+      async (route) => {
+        await route.continue({
+          headers: { ...route.request().headers(), 'x-vercel-protection-bypass': bypassSecret },
+        });
+      },
+    );
+  }
+
+  await page.route('https://collabspace.huma-volve.com/api/v1/**', async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    let data: unknown;
+    if (path.endsWith('/auth/me')) {
+      data = {
+        user: {
+          id: 9,
+          name: 'Preview User',
+          email: 'preview@example.test',
+          job_title: 'Project Manager',
+          roles: ['Project Manager'],
+          permissions: [],
+          avatar_url: null,
+        },
+        stats: { completed_tasks: 0, total_tasks: 0, hours_worked: 0 },
+        recent_activities: [],
+        teams: [],
+        projects: [],
+      };
+    } else if (path.endsWith('/projects/1/overview')) {
+      data = makeProjectOverview();
+    } else if (path.endsWith('/projects/1/teams')) {
+      data = makeProjectTeamsProgress();
+    } else {
+      data = {
+        data: [makeProjectListItem()],
+        links: { first: null, last: null, prev: null, next: null },
+        meta: { current_page: 1, last_page: 1, per_page: 15, total: 1 },
+      };
+    }
+    await route.fulfill({ status: 200, json: { success: true, data } });
+  });
+
+  await page.goto('/sign-in');
+  await page.evaluate(() => sessionStorage.setItem('collabspace.auth.token', 'preview-fixture'));
+  await page.goto('/projects');
+  await expect(page.getByRole('heading', { name: 'All Projects' })).toBeVisible();
+  await expect(page.getByText('CollabSpace Alpha').first()).toBeVisible();
+  mkdirSync('preview-shots', { recursive: true });
+  for (const width of [1440, 1024, 768, 360]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    await page.screenshot({ path: `preview-shots/projects-${width}.png`, fullPage: true });
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByRole('button', { name: /Add Project/i }).click();
+  await expect(page.getByRole('dialog', { name: 'New Project' })).toBeVisible();
+  await page.screenshot({ path: 'preview-shots/project-form.png', fullPage: true });
+  await page.getByRole('button', { name: /close dialog/i }).click();
+  await page.goto('/projects/1');
+  await expect(page.getByText('CollabSpace Alpha').first()).toBeVisible();
+  await expect(page.getByText('Team Members', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('img', { name: 'Monthly created and completed tasks chart' }),
+  ).toBeVisible();
+  await page.screenshot({ path: 'preview-shots/project-details.png', fullPage: true });
+});
+
+test('renders the Dashboard on Preview at supported widths with a simulated API', async ({
+  page,
+}) => {
+  const previewBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
+  if (!previewBaseUrl) {
+    test.skip(true, 'Requires a Vercel Preview deployment.');
+    return;
+  }
+
+  const previewOrigin = new URL(previewBaseUrl).origin;
+  const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim() ?? '';
+  if (bypassSecret) {
+    await page.route(
+      (url) => url.origin === previewOrigin,
+      async (route) => {
+        await route.continue({
+          headers: { ...route.request().headers(), 'x-vercel-protection-bypass': bypassSecret },
+        });
+      },
+    );
+  }
+
+  const apiPaths: string[] = [];
+  const assets: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/assets/')) assets.push(request.url());
+  });
+  await page.route('https://collabspace.huma-volve.com/api/v1/**', async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    apiPaths.push(path);
+    const data = path.endsWith('/auth/me')
+      ? {
+          user: {
+            id: 9,
+            name: 'Preview User',
+            email: 'preview@example.test',
+            job_title: 'Project Manager',
+            roles: ['Project Manager'],
+            permissions: [],
+            avatar_url: null,
+          },
+          stats: { completed_tasks: 0, total_tasks: 0, hours_worked: 0 },
+          recent_activities: [],
+          teams: [],
+          projects: [],
+        }
+      : dashboardFixture;
+    await route.fulfill({ status: 200, json: { success: true, data } });
+  });
+
+  await page.goto('/sign-in');
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+  expect(assets.some((url) => url.includes('ProjectOverviewChart'))).toBe(false);
+  await page.evaluate(() => sessionStorage.setItem('collabspace.auth.token', 'preview-fixture'));
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Pending Tasks' })).toBeVisible();
+  await expect(page.getByText('Apollo').first()).toBeVisible();
+  await expect.poll(() => assets.some((url) => url.includes('ProjectOverviewChart'))).toBe(true);
+  expect(apiPaths.filter((path) => path.endsWith('/dashboard'))).toHaveLength(1);
+  expect(apiPaths.every((path) => path.endsWith('/auth/me') || path.endsWith('/dashboard'))).toBe(
+    true,
+  );
+
+  mkdirSync('preview-shots', { recursive: true });
+  for (const width of [1440, 1024, 768, 360]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByRole('heading', { name: 'Pending Tasks' })).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+      .toBe(true);
+    await page.screenshot({ path: `preview-shots/dashboard-${width}.png`, fullPage: true });
+  }
 });

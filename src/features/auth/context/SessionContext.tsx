@@ -9,17 +9,13 @@ import {
   type ReactNode,
 } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import {
-  authService,
-  profileKeys,
-  profileService,
-  toAppError,
-  type AppError,
-  type ProfileMeData,
-} from '@/shared/api';
+import { profileKeys, toAppError, type AppError, type ProfileMeData } from '@/shared/api';
+import { logout } from '@/shared/api/services/auth.service';
+import { getMe } from '@/shared/api/services/profile.service';
 import {
   broadcastSessionEvent,
   clearAuthToken,
+  getSessionEpoch,
   hasRememberedToken,
   hasStoredToken,
   normalizeSystemRole,
@@ -40,6 +36,7 @@ export interface SessionContextValue {
   role: SystemRole | null;
   startupError: AppError | null;
   retryRestore: () => Promise<void>;
+  refreshMe: () => Promise<void>;
   completeAuth: (token: string, options?: { remember?: boolean }) => Promise<ProfileMeData>;
   signOut: () => Promise<void>;
   clearSessionAfterReset: () => void;
@@ -108,6 +105,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const locationRef = useRef(location);
   const statusRef = useRef(state.status);
+  const refreshSequence = useRef(0);
   useEffect(() => {
     locationRef.current = location;
     statusRef.current = state.status;
@@ -115,8 +113,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const restoreSession = useCallback(
     async ({ signal }: { signal?: AbortSignal } = {}): Promise<void> => {
+      const epoch = getSessionEpoch();
       try {
-        const me = await profileService.getMe(signal);
+        const me = await getMe(signal);
+        if (signal?.aborted || epoch !== getSessionEpoch()) return;
         queryClient.setQueryData(profileKeys.me(), me);
         resetUnauthorizedGuard();
         setState({
@@ -126,6 +126,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           startupError: null,
         });
       } catch (error) {
+        if (signal?.aborted || epoch !== getSessionEpoch()) return;
         const appError = toAppError(error);
         if (appError.kind === 'aborted') {
           return;
@@ -154,41 +155,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
 
     const controller = new AbortController();
-    void profileService.getMe(controller.signal).then(
-      (me) => {
-        queryClient.setQueryData(profileKeys.me(), me);
-        resetUnauthorizedGuard();
-        setState({
-          status: 'authenticated',
-          me,
-          role: normalizeSystemRole(me.user.roles),
-          startupError: null,
-        });
-      },
-      (error: unknown) => {
-        const appError = toAppError(error);
-        if (appError.kind === 'aborted') {
-          return;
-        }
-        if (appError.kind === 'unauthorized') {
-          clearAuthToken();
-          queryClient.clear();
-          setState(ANONYMOUS_STATE);
-          return;
-        }
-        // Preserve stored token on transient startup errors so user can retry (ADR-01 §3).
-        setState({
-          status: 'unknown',
-          me: null,
-          role: null,
-          startupError: appError,
-        });
-      },
-    );
+    void Promise.resolve().then(() => {
+      if (!controller.signal.aborted) void restoreSession({ signal: controller.signal });
+    });
     return () => {
       controller.abort();
     };
-  }, [queryClient]);
+  }, [restoreSession]);
 
   useEffect(() => {
     const unregister = registerUnauthorizedHandler(() => {
@@ -230,8 +203,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const completeAuth = useCallback(
     async (token: string, options?: { remember?: boolean }): Promise<ProfileMeData> => {
       setAuthToken(token, { remember: options?.remember });
+      const epoch = getSessionEpoch();
       try {
-        const me = await profileService.getMe();
+        const me = await getMe();
+        if (epoch !== getSessionEpoch()) throw new Error('Session changed during sign-in.');
         queryClient.setQueryData(profileKeys.me(), me);
         resetUnauthorizedGuard();
         broadcastSessionEvent('signed-in');
@@ -243,9 +218,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         });
         return me;
       } catch (error) {
-        clearAuthToken();
-        queryClient.clear();
-        setState(ANONYMOUS_STATE);
+        if (epoch === getSessionEpoch()) {
+          clearAuthToken();
+          queryClient.clear();
+          setState(ANONYMOUS_STATE);
+        }
         throw error;
       }
     },
@@ -253,15 +230,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
+    const epoch = getSessionEpoch();
     try {
-      await authService.logout();
+      await logout();
     } catch {
       // Explicit sign-out always clears local credentials even on network/server failure (ADR-01).
     } finally {
-      clearAuthToken();
-      queryClient.clear();
-      broadcastSessionEvent('signed-out');
-      setState(ANONYMOUS_STATE);
+      if (epoch === getSessionEpoch()) {
+        clearAuthToken();
+        queryClient.clear();
+        broadcastSessionEvent('signed-out');
+        setState(ANONYMOUS_STATE);
+      }
     }
   }, [queryClient]);
 
@@ -281,6 +261,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     await restoreSession();
   }, [restoreSession]);
 
+  // A profile refresh must not return an authenticated user to the startup shell.
+  const refreshMe = useCallback(async () => {
+    if (!hasStoredToken()) return;
+    const epoch = getSessionEpoch();
+    const sequence = ++refreshSequence.current;
+    try {
+      const me = await getMe();
+      if (epoch !== getSessionEpoch() || sequence !== refreshSequence.current) return;
+      queryClient.setQueryData(profileKeys.me(), me);
+      setState((previous) =>
+        previous.status === 'authenticated'
+          ? { ...previous, me, role: normalizeSystemRole(me.user.roles) }
+          : previous,
+      );
+    } catch {
+      // Transient refresh failures do not undo a successful mutation or reset the shell.
+      // The HTTP client still handles an actual unauthorized response centrally.
+    }
+  }, [queryClient]);
+
   return (
     <SessionContext.Provider
       value={{
@@ -290,6 +290,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         role: state.role,
         startupError: state.startupError,
         retryRestore,
+        refreshMe,
         completeAuth,
         signOut,
         clearSessionAfterReset,

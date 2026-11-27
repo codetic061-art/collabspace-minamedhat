@@ -6,6 +6,7 @@ import {
   Button,
   ConfirmDialog,
   DropdownMenu,
+  Input,
   Modal,
   NativeSelect,
   Select,
@@ -17,6 +18,18 @@ import {
 import { expectNoA11yViolations } from '@/test/a11y';
 
 describe('Select and NativeSelect', () => {
+  it('associates standalone hints with each control', () => {
+    render(
+      <div>
+        <Input id="hint-input" hint="Input hint" />
+        <Select id="hint-select" hint="Select hint" options={[]} />
+        <NativeSelect id="hint-native" hint="Native hint" options={[]} />
+      </div>,
+    );
+    expect(document.getElementById('hint-input')).toHaveAccessibleDescription('Input hint');
+    expect(document.getElementById('hint-select')).toHaveAccessibleDescription('Select hint');
+    expect(document.getElementById('hint-native')).toHaveAccessibleDescription('Native hint');
+  });
   it('supports keyboard navigation, selection, Escape restore, and passes axe-core', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -60,6 +73,40 @@ describe('Select and NativeSelect', () => {
     expect(trigger).toHaveFocus();
 
     await expectNoA11yViolations(container);
+  });
+
+  it('associates standalone error messages with custom and native controls', () => {
+    render(
+      <div>
+        <Input id="standalone-input" error="Input is invalid." />
+        <Select
+          id="standalone-select"
+          options={[{ value: 'one', label: 'One' }]}
+          error="Select is invalid."
+        />
+        <NativeSelect
+          id="standalone-native-select"
+          options={[{ value: 'one', label: 'One' }]}
+          error="Native select is invalid."
+        />
+      </div>,
+    );
+
+    expect(document.getElementById('standalone-input')).toHaveAttribute(
+      'aria-describedby',
+      expect.stringContaining('standalone-input-error'),
+    );
+    expect(document.getElementById('standalone-select')).toHaveAttribute(
+      'aria-describedby',
+      expect.stringContaining('standalone-select-error'),
+    );
+    expect(document.getElementById('standalone-native-select')).toHaveAttribute(
+      'aria-describedby',
+      expect.stringContaining('standalone-native-select-error'),
+    );
+    expect(screen.getByText('Input is invalid.').closest('[role="alert"]')).not.toBeNull();
+    expect(screen.getByText('Select is invalid.').closest('[role="alert"]')).not.toBeNull();
+    expect(screen.getByText('Native select is invalid.').closest('[role="alert"]')).not.toBeNull();
   });
 });
 
@@ -105,6 +152,23 @@ describe('DropdownMenu', () => {
 });
 
 describe('Tabs', () => {
+  it('keeps a first enabled tab in the tab sequence when the active key is unavailable', () => {
+    render(
+      <Tabs
+        ariaLabel="Fallback tabs"
+        activeKey="missing"
+        onChange={() => {}}
+        items={[
+          { key: 'disabled', label: 'Disabled', disabled: true },
+          { key: 'available', label: 'Available' },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole('tab', { name: 'Disabled' })).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByRole('tab', { name: 'Available' })).toHaveAttribute('tabindex', '0');
+  });
+
   it('supports underline and segmented modes with ArrowLeft/ArrowRight navigation', async () => {
     const user = userEvent.setup();
 
@@ -283,6 +347,7 @@ describe('Modal and ConfirmDialog', () => {
     await user.click(trigger);
 
     const dialog = screen.getByRole('dialog', { name: 'Delete task "API Integration"?' });
+    expect(dialog).toHaveAttribute('aria-describedby');
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
 
     rerender(
@@ -324,6 +389,47 @@ describe('Modal and ConfirmDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
+  });
+
+  it('gives the most recently opened dialog ownership of focus and Escape', async () => {
+    const user = userEvent.setup();
+
+    function NestedModalHarness() {
+      const [outerOpen, setOuterOpen] = useState(false);
+      const [innerOpen, setInnerOpen] = useState(false);
+
+      return (
+        <div>
+          <Button onClick={() => setOuterOpen(true)}>Open outer</Button>
+          <Modal
+            isOpen={outerOpen}
+            onClose={() => setOuterOpen(false)}
+            title="Outer dialog"
+            footer={<Button onClick={() => setInnerOpen(false)}>Close inner</Button>}
+          >
+            <Button onClick={() => setInnerOpen(true)}>Open inner</Button>
+            <Modal isOpen={innerOpen} onClose={() => setInnerOpen(false)} title="Inner dialog">
+              <Button>Inner action</Button>
+            </Modal>
+          </Modal>
+        </div>
+      );
+    }
+
+    render(<NestedModalHarness />);
+    await user.click(screen.getByRole('button', { name: 'Open outer' }));
+    await user.click(screen.getByRole('button', { name: 'Open inner' }));
+
+    const outerDialog = screen.getByRole('dialog', { name: 'Outer dialog' });
+    const innerDialog = screen.getByRole('dialog', { name: 'Inner dialog' });
+    const outerTrigger = screen.getByRole('button', { name: 'Open inner' });
+
+    outerTrigger.focus();
+    expect(innerDialog.contains(document.activeElement)).toBe(true);
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'Inner dialog' })).not.toBeInTheDocument();
+    expect(outerDialog).toBeInTheDocument();
   });
 });
 

@@ -59,6 +59,33 @@ describe('httpClient normalization & envelopes (ID-19, ADR-05)', () => {
     expect(seenContentType).toContain('multipart/form-data');
   });
 
+  it('does not clear a newer session when an older request returns 401', async () => {
+    const onUnauthorized = vi.fn();
+    registerUnauthorizedHandler(onUnauthorized);
+    let release: () => void = () => {};
+    let markStarted: () => void = () => {};
+    const started = new Promise<void>((resolve) => {
+      markStarted = resolve;
+    });
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    mswServer.use(
+      http.get(`${BASE}/delayed`, async () => {
+        markStarted();
+        await held;
+        return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      }),
+    );
+    setAuthToken('old-session');
+    const result = requestJson('/delayed').catch((error: unknown) => error);
+    await started;
+    setAuthToken('new-session');
+    release();
+    expect(await result).toMatchObject({ appError: { kind: 'unauthorized', status: 401 } });
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
   it('supports E1-E4 envelopes and rejects non-envelope responses as unexpected', async () => {
     mswServer.use(
       http.get(`${BASE}/users`, () =>

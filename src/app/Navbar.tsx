@@ -1,9 +1,9 @@
 import { ChevronDown, LogOut, Menu, Settings, User, X } from 'lucide-react';
-import { useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router';
 import { useSession } from '@/features/auth';
 import { toSafeExternalUrl } from '@/shared/lib';
-import { Avatar, cn, DropdownMenu, type DropdownMenuItem } from '@/shared/ui';
+import { Avatar, cn, DropdownMenu, getInitials, type DropdownMenuItem } from '@/shared/ui';
 
 interface PrimaryNavItem {
   to: string;
@@ -42,41 +42,44 @@ export function Navbar() {
     };
   }, [drawerOpen]);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     setDrawerOpen(false);
     await signOut();
     navigate('/sign-in', { replace: true });
-  };
+  }, [navigate, signOut]);
 
   const displayName = user?.name ?? 'CollabSpace User';
   const displayRole = role ?? user?.roles[0] ?? 'Member';
 
-  const menuItems: DropdownMenuItem[] = [
-    {
-      id: 'profile',
-      label: 'Profile',
-      icon: <User className="h-4 w-4" aria-hidden="true" />,
-      onSelect: () => navigate('/profile'),
-    },
-    {
-      id: 'edit-profile',
-      label: 'Edit Profile',
-      icon: <Settings className="h-4 w-4" aria-hidden="true" />,
-      onSelect: () => navigate('/profile/settings'),
-    },
-    {
-      id: 'sign-out',
-      label: 'Sign out',
-      tone: 'danger',
-      icon: <LogOut className="h-4 w-4" aria-hidden="true" />,
-      onSelect: () => void handleSignOut(),
-    },
-  ];
+  const menuItems = useMemo<DropdownMenuItem[]>(
+    () => [
+      {
+        id: 'profile',
+        label: 'Profile',
+        icon: <User className="h-4 w-4" aria-hidden="true" />,
+        onSelect: () => navigate('/profile'),
+      },
+      {
+        id: 'edit-profile',
+        label: 'Edit Profile',
+        icon: <Settings className="h-4 w-4" aria-hidden="true" />,
+        onSelect: () => navigate('/profile/settings'),
+      },
+      {
+        id: 'sign-out',
+        label: 'Sign out',
+        tone: 'danger',
+        icon: <LogOut className="h-4 w-4" aria-hidden="true" />,
+        onSelect: () => void handleSignOut(),
+      },
+    ],
+    [handleSignOut, navigate],
+  );
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border-subtle bg-surface">
-      <div className="mx-auto flex h-navbar max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3">
+    <header className="relative sticky top-0 z-30 border-0 bg-surface after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-1 after:h-1 after:bg-[linear-gradient(180deg,rgba(9,30,66,0.13)_0%,rgba(9,30,66,0.13)_25%,rgba(9,30,66,0.08)_25.01%,rgba(9,30,66,0)_100%)]">
+      <div className="flex h-navbar items-center justify-between gap-4 px-4 sm:px-6 lg:px-16">
+        <div className="flex items-center gap-6">
           <button
             type="button"
             className="inline-flex min-h-touch min-w-touch items-center justify-center rounded-input text-heading hover:bg-surface-label lg:hidden cursor-pointer"
@@ -94,13 +97,16 @@ export function Navbar() {
 
           <Link
             to="/"
-            className="font-wordmark text-xl font-normal tracking-tight text-primary focus-visible:outline-2 focus-visible:outline-primary"
+            className="font-wordmark text-xl font-normal tracking-tight text-ink focus-visible:outline-2 focus-visible:outline-primary"
           >
             CollabSpace
           </Link>
         </div>
 
-        <nav aria-label="Primary" className="hidden lg:flex items-center gap-2">
+        <nav
+          aria-label="Primary"
+          className="hidden items-center gap-[19px] rounded-pill bg-surface-input pl-1 pr-2 py-1 lg:flex"
+        >
           {PRIMARY_NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
@@ -108,7 +114,7 @@ export function Navbar() {
               end={item.end}
               className={({ isActive }) =>
                 cn(
-                  'inline-flex min-h-touch items-center rounded-pill px-4 text-sm font-medium transition-colors motion-reduce:transition-none',
+                  'inline-flex items-center justify-center rounded-pill p-2.5 text-xs font-normal transition-colors motion-reduce:transition-none',
                   isActive
                     ? 'bg-primary text-surface'
                     : 'text-heading hover:bg-surface-label hover:text-ink',
@@ -133,12 +139,15 @@ export function Navbar() {
             trigger={(triggerProps) => (
               <button
                 type="button"
+                aria-label={`${getInitials(displayName)} ${displayName} ${displayRole} User menu`}
                 className="flex min-h-touch items-center gap-2.5 rounded-pill border border-border-subtle bg-surface px-2.5 py-1 text-left transition-colors hover:bg-surface-input cursor-pointer"
                 {...triggerProps}
               >
-                <Avatar name={displayName} src={toSafeExternalUrl(user?.avatar_url)} size="sm" />
+                <span aria-hidden="true">
+                  <Avatar name={displayName} src={toSafeExternalUrl(user?.avatar_url)} size="sm" />
+                </span>{' '}
                 <span className="hidden xl:flex flex-col leading-tight">
-                  <span className="text-sm font-medium text-ink">{displayName}</span>
+                  <span className="text-sm font-medium text-ink">{displayName}</span>{' '}
                   <span className="text-xs text-gray-500">{displayRole}</span>
                 </span>
                 <ChevronDown className="h-4 w-4 text-gray-500" aria-hidden="true" />

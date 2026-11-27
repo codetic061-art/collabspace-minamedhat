@@ -50,7 +50,7 @@ Applied globally on `/(.*)` over HTTPS:
 
 ### 3. Content Security Policy (phased rollout)
 
-- **Initial header on Preview (`WI-3` through Gate 2 verification):** **`Content-Security-Policy-Report-Only`** so any unintended violation surfaces in browser consoles and Playwright Layer 5 checks (`ID-20.5`, Testing Decisions Layer 5) without silently breaking development previews.
+- **Initial header on Preview (`WI-3` through Gate 2 verification):** **`Content-Security-Policy-Report-Only`** so any unintended violation surfaces in browser consoles and Playwright Layer 5 checks (`ID-20.5`, Testing Decisions Layer 5) without silently breaking development previews. The MVP does not configure `report-to` or `Reporting-Endpoints`; the report-only evidence source is the browser console plus the Playwright checks, not a server-side report collector.
 - **Promotion gate:** Once Layer 5 security tests and Gate 2 confirm **zero unexpected CSP violations** across all Tier 1 flows on Vercel Preview, switch the header key from `Content-Security-Policy-Report-Only` to enforcing **`Content-Security-Policy`** prior to Production deployment.
 - **Exact policy directives:**
   ```text
@@ -72,6 +72,8 @@ Applied globally on `/(.*)` over HTTPS:
   - `font-src 'self'`: Enabled by self-hosted Fontsource fonts (`ADR-09`).
   - **Future Turnstile extension (`ADR-13`):** Add `https://challenges.cloudflare.com` to `script-src` and `frame-src` **only** when backend `BR-5` ships and the Turnstile feature flag is enabled.
   - **Future Reverb extension (`A8`):** Add the `wss:` origin to `connect-src` only when real-time chat ships post-MVP.
+
+- **L-1 Production precondition:** The API origin currently listed in `img-src` is not proof that the avatar response uses that same host. Before switching to enforcing CSP or approving Production, verify the actual avatar host in a sanitized Preview check. If it differs, add only that approved HTTPS origin and rerun the Layer 5 checks; never broaden the directive with a wildcard.
 
 ### 4. Vercel environments & deployment governance (`AGENTS.md` §9–§10)
 

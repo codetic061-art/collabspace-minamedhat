@@ -95,6 +95,7 @@ export function AvatarStack({ items, max = 3, size = 'xs', className }: AvatarSt
 
   return (
     <div
+      role="group"
       className={cn('flex items-center -space-x-2', className)}
       aria-label={`${items.length} members`}
     >

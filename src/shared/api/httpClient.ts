@@ -1,5 +1,10 @@
 import { getPublicEnv } from '@/shared/config';
-import { getAuthToken, notifyUnauthorized, resolveSafeApiDownloadUrl } from '@/shared/lib';
+import {
+  getAuthToken,
+  getSessionEpoch,
+  notifyUnauthorized,
+  resolveSafeApiDownloadUrl,
+} from '@/shared/lib';
 import { ApiRequestError, parseRetryAfterHeader, type AppError } from './errors';
 
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -256,6 +261,7 @@ export async function requestEnvelope<TEnvelope extends object = Record<string, 
   const { VITE_API_BASE_URL } = getPublicEnv();
   const url = buildRequestUrl(VITE_API_BASE_URL, path, options.query);
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const sessionEpoch = getSessionEpoch();
   const response = await executeFetch(url, buildJsonInit(options), options.signal, timeoutMs);
   const parsed = await parseJsonSafe(response);
 
@@ -265,7 +271,7 @@ export async function requestEnvelope<TEnvelope extends object = Record<string, 
         response.status,
         parsed.data,
         response.headers,
-        Boolean(options.skipUnauthorizedHandler),
+        Boolean(options.skipUnauthorizedHandler) || sessionEpoch !== getSessionEpoch(),
       ),
     );
   }
@@ -343,6 +349,7 @@ export async function downloadBlob(
   const headers = new Headers();
   headers.set('Accept', 'application/json');
   const token = getAuthToken();
+  const sessionEpoch = getSessionEpoch();
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
@@ -357,7 +364,12 @@ export async function downloadBlob(
   if (!response.ok) {
     const parsed = await parseJsonSafe(response);
     throw new ApiRequestError(
-      normalizeHttpError(response.status, parsed.data, response.headers, false),
+      normalizeHttpError(
+        response.status,
+        parsed.data,
+        response.headers,
+        sessionEpoch !== getSessionEpoch(),
+      ),
     );
   }
 

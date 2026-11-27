@@ -193,7 +193,11 @@ jobs:
         env:
           PLAYWRIGHT_BASE_URL: ${{ steps.vercel.outputs.preview_url }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
-        run: npx playwright test e2e/preview-verify.spec.ts
+          WI11_ADMIN_EMAIL: ${{ secrets.WI11_ADMIN_EMAIL }}
+          WI11_ADMIN_PASSWORD: ${{ secrets.WI11_ADMIN_PASSWORD }}
+          WI11_PM_EMAIL: ${{ secrets.WI11_PM_EMAIL }}
+          WI11_PM_PASSWORD: ${{ secrets.WI11_PM_PASSWORD }}
+        run: npx playwright test e2e/preview-verify.spec.ts e2e/wi11-integrated.spec.ts e2e/wi11-real-read.spec.ts e2e/wi11-browser-coverage.spec.ts e2e/wi11-visual-states.spec.ts
 
       - name: Upload preview verification evidence
         if: always()
@@ -201,6 +205,5 @@ jobs:
         with:
           name: preview-evidence
           path: |
-            test-results/
             preview-shots/
           if-no-files-found: ignore

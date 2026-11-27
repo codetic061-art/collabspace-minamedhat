@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parsePublicEnv, zodSecurityConfig } from '@/shared/config';
+import { parsePublicEnv } from '@/shared/config';
+import { zodSecurityConfig } from '@/shared/config/zod';
 
 describe('parsePublicEnv', () => {
   it('enables Zod jitless mode so strict CSP without unsafe-eval never fails', () => {

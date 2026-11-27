@@ -139,6 +139,7 @@ describe('Card, Badge, StatusText, Avatar, Breadcrumb, Progress, Gauge', () => {
     );
     expect(screen.getByRole('img', { name: 'Overall task completion: 72%' })).toBeInTheDocument();
     expect(screen.getByText('+2')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: '4 members' })).toBeInTheDocument();
 
     await expectNoA11yViolations(container);
   });

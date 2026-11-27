@@ -64,44 +64,38 @@ export function createAppRoutes(): RouteObject[] {
             {
               index: true,
               lazy: async () => {
-                const { DashboardPlaceholderPage } = await import('./PlaceholderPages');
-                return { Component: DashboardPlaceholderPage };
+                const { loadDashboardPage } = await import('@/features/dashboard');
+                return loadDashboardPage();
               },
             },
             {
               path: '/projects',
               lazy: async () => {
-                const { ProjectsPlaceholderPage } = await import('./PlaceholderPages');
-                return { Component: ProjectsPlaceholderPage };
+                const { loadProjectsListPage } = await import('@/features/projects');
+                return loadProjectsListPage();
               },
             },
             {
               path: '/projects/:projectId',
               lazy: async () => {
-                const { ProjectDetailsPlaceholderPage } = await import('./PlaceholderPages');
-                return { Component: ProjectDetailsPlaceholderPage };
+                const { loadProjectDetailsPage } = await import('@/features/projects');
+                return loadProjectDetailsPage();
               },
             },
             {
               path: '/tasks',
               lazy: async () => {
-                const { TasksPlaceholderPage } = await import('./PlaceholderPages');
-                return { Component: TasksPlaceholderPage };
+                const { loadTasksPage } = await import('@/features/tasks');
+                return loadTasksPage();
               },
             },
             {
               path: '/profile',
-              lazy: async () => {
-                const { ProfilePlaceholderPage } = await import('./PlaceholderPages');
-                return { Component: ProfilePlaceholderPage };
-              },
+              lazy: async () => (await import('@/features/profile')).loadProfilePage(),
             },
             {
               path: '/profile/settings',
-              lazy: async () => {
-                const { ProfileSettingsPlaceholderPage } = await import('./PlaceholderPages');
-                return { Component: ProfileSettingsPlaceholderPage };
-              },
+              lazy: async () => (await import('@/features/profile')).loadProfileSettingsPage(),
             },
           ],
         },
