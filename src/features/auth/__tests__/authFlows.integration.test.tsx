@@ -191,7 +191,7 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
     expect(screen.queryByRole('navigation', { name: 'Mobile navigation' })).not.toBeInTheDocument();
 
     // User menu opens and Sign out clears token even if POST /auth/logout fails.
-    await user.click(screen.getByRole('button', { name: /Alex Morgan/i }));
+    await user.click(screen.getByRole('button', { name: 'User menu' }));
     expect(screen.getByRole('menuitem', { name: 'Profile' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Edit Profile' })).toBeInTheDocument();
     await user.click(screen.getByRole('menuitem', { name: 'Sign out' }));
