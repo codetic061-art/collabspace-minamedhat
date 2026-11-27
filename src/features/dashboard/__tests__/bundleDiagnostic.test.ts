@@ -6,7 +6,7 @@ vi.setConfig({ testTimeout: 120_000 });
 
 // prettier-ignore
 it('reports modules added to the entry bundle by the Dashboard route', async () => {
-  process.env.VITE_API_BASE_URL = 'https://collabspace.huma-volve.com/api/v1';
+  vi.stubEnv('VITE_API_BASE_URL', 'https://collabspace.huma-volve.com/api/v1');
   async function inspect(withDashboard: boolean) {
     const modules = new Map<string, number>();
     const inspectPlugin: Plugin = {
