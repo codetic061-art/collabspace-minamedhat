@@ -140,7 +140,9 @@ export function Navbar() {
                 className="flex min-h-touch items-center gap-2.5 rounded-pill border border-border-subtle bg-surface px-2.5 py-1 text-left transition-colors hover:bg-surface-input cursor-pointer"
                 {...triggerProps}
               >
-                <Avatar name={displayName} src={toSafeExternalUrl(user?.avatar_url)} size="sm" />
+                <span aria-hidden="true">
+                  <Avatar name={displayName} src={toSafeExternalUrl(user?.avatar_url)} size="sm" />
+                </span>
                 <span className="hidden xl:flex flex-col leading-tight">
                   <span className="text-sm font-medium text-ink">{displayName}</span>
                   <span className="text-xs text-gray-500">{displayRole}</span>
