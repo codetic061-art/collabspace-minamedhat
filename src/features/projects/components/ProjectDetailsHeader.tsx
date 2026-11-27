@@ -30,6 +30,7 @@ function computeTimelineProgress(
  */
 export function ProjectDetailsHeader({ project, canEdit, onEdit }: ProjectDetailsHeaderProps) {
   const { due_date_indicator: due } = project;
+  const completionPercent = Math.round(project.progress_percentage);
   const timelineProgress = computeTimelineProgress(
     due.total_days,
     due.days_remaining,
@@ -39,6 +40,12 @@ export function ProjectDetailsHeader({ project, canEdit, onEdit }: ProjectDetail
     ? 'Overdue'
     : `${due.days_remaining} ${due.days_remaining === 1 ? 'day' : 'days'} left`;
 
+  const renderProjectsLink = (label: string, className: string) => (
+    <Link to="/projects" className={className}>
+      {label}
+    </Link>
+  );
+
   return (
     <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="space-y-2">
@@ -46,9 +53,7 @@ export function ProjectDetailsHeader({ project, canEdit, onEdit }: ProjectDetail
           items={[
             {
               label: 'Projects',
-              renderLink: (label, className) => (
-                <Link to="/projects" className={className}>{label}</Link>
-              ),
+              renderLink: renderProjectsLink,
             },
             { label: project.name },
           ]}
@@ -56,9 +61,7 @@ export function ProjectDetailsHeader({ project, canEdit, onEdit }: ProjectDetail
 
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl sm:text-3xl font-semibold text-ink">{project.name}</h1>
-          <Badge variant="completion">
-            {Math.round(project.progress_percentage)}% Completed
-          </Badge>
+          <Badge variant="completion">{completionPercent}% Completed</Badge>
         </div>
       </div>
 

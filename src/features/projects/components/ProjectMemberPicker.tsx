@@ -77,6 +77,14 @@ export function ProjectMemberPicker({
     }
   };
 
+  const handlePrevPage = () => {
+    picker.setPage(Math.max(1, picker.currentPage - 1));
+  };
+
+  const handleNextPage = () => {
+    picker.setPage(Math.min(picker.lastPage, picker.currentPage + 1));
+  };
+
   return (
     <Field label="Add Members" labelVariant="top" error={error}>
       {(a11yProps) => (
@@ -195,7 +203,7 @@ export function ProjectMemberPicker({
                         variant="outline"
                         size="sm"
                         disabled={picker.currentPage <= 1 || picker.isFetching}
-                        onClick={() => picker.setPage(Math.max(1, picker.currentPage - 1))}
+                        onClick={handlePrevPage}
                         aria-label="Previous users page"
                         iconOnly
                       >
@@ -205,7 +213,7 @@ export function ProjectMemberPicker({
                         variant="outline"
                         size="sm"
                         disabled={picker.currentPage >= picker.lastPage || picker.isFetching}
-                        onClick={() => picker.setPage(Math.min(picker.lastPage, picker.currentPage + 1))}
+                        onClick={handleNextPage}
                         aria-label="Next users page"
                         iconOnly
                       >
