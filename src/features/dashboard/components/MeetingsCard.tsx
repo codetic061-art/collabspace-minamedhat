@@ -1,5 +1,5 @@
 import { CalendarDays } from 'lucide-react';
-import { formatDisplayDate, formatDisplayTime } from '@/shared/api/dates';
+import { formatDisplayDate, formatDisplayTime } from '@/shared/api';
 import { toSafeExternalUrl } from '@/shared/lib';
 import { AvatarStack, Skeleton } from '@/shared/ui';
 import type { DashboardQueryResult } from '../hooks/useDashboard';

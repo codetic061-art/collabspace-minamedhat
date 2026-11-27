@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { teamsQueries } from '@/shared/api/services/teams.service';
+import { teamsQueries } from '@/shared/api';
 
 /**
  * Loads the selected team's members on demand (`GET /teams/{team}`, `#teams-show`).

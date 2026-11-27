@@ -1,4 +1,4 @@
-import { formatDisplayDate } from '@/shared/api/dates';
+import { formatDisplayDate } from '@/shared/api';
 import { Badge, Skeleton, StatusText } from '@/shared/ui';
 import type { DashboardQueryResult } from '../hooks/useDashboard';
 import { normalizeDashboardPriority } from '../utils/priority';
