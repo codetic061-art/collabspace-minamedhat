@@ -161,7 +161,7 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/sign-in'));
     expect(router.state.location.search).toBe('?redirectTo=%2Fprojects%2F42');
 
-    await user.type(screen.getByLabelText(/Email Address/i), 'alex@example.test');
+    await user.type(await screen.findByLabelText(/Email Address/i), 'alex@example.test');
     await user.type(screen.getByLabelText('Password'), 'password123');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 
