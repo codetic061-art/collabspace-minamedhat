@@ -24,6 +24,8 @@ These changes crossed the shared-surface ownership boundary and must be recorded
 | `.github/workflows/ci.yml`, `.github/workflows/wi11-format-temp.yml`     | Add integrated Preview coverage, protect authenticated artifacts and run cloud formatting. | `f3b9dfc`, `f1ef63d`, `90fcf37`, `7d2f55e`, `9360c1e`, `5282865` | WI-3/WI-11; record the workflow ownership and sanitized-artifact review. |
 | `src/app/AppShell.tsx`, `src/app/Navbar.tsx`                             | Integrate the authenticated shell and accessible user-menu presentation.                   | `f3b9dfc`, `f1ef63d`, `f1e394e`, `7f42ea8`, `17f2c6e`, `bbcd278` | WI-6; record the owner review.                                           |
 | `src/features/auth/context/SessionContext.tsx`                           | Schedule session restoration safely and coordinate the stale-session guard.                | `8eb752b`, `54826c4`, `84a3a62`                                  | WI-6, with the shared session portion reviewed by WI-5.                  |
+| `src/shared/ui/ConfirmDialog.tsx`, `Input.tsx`, `Select.tsx`, `Tabs.tsx`, `AvatarStack.tsx` | Correct accessible descriptions, field errors, keyboard tab stops and avatar group semantics. | `aba110b`, `8cf8f21`, `479f0b4` | WI-4; regression checks in shared UI tests. |
+| `src/main.tsx` | Initialize Zod security configuration before application imports. | `aba110b` | WI-3/WI-5; retain configuration regression coverage. |
 
 ## Major feature criteria
 

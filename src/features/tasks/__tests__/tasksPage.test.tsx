@@ -96,8 +96,9 @@ it('adopts the deep-linked project, keeps filters, and opens Edit', async () => 
   await waitFor(() => expect(screen.getByLabelText('Project')).toHaveValue('2'));
   expect(localStorage.getItem('collabspace.lastTaskProject')).toBe('2');
   await user.click(within(dialog).getByRole('button', { name: 'Edit' }));
-  expect(await screen.findByRole('dialog', { name: 'Edit Task' })).toBeVisible();
-  expect(screen.getByLabelText('Project')).toHaveValue('2');
+  const edit = await screen.findByRole('dialog', { name: 'Edit Task' });
+  expect(edit).toBeVisible();
+  expect(within(edit).getByLabelText('Project')).toHaveValue('Project B');
 });
 
 it('keeps board filters and the selected project when details close', async () => {

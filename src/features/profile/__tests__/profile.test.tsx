@@ -128,13 +128,17 @@ describe('Profile', () => {
         }
       },
     );
-    const uploads: boolean[] = [];
-    mswServer.use(
-      http.post(`${base}/auth/profile`, async ({ request }) => {
-        uploads.push((await request.formData()).has('avatar'));
-        return HttpResponse.json({ success: true, data: me.user });
-      }),
-    );
+    const update = vi.spyOn(profileService, 'updateProfile').mockResolvedValue({
+      ...me.user,
+      status: 'active',
+      available_status: 'available',
+      roles: [],
+      permissions: [],
+      google_linked: false,
+      facebook_linked: false,
+      linkedin_linked: false,
+      updated_at: null,
+    });
     try {
       renderWithProviders(
         <MemoryRouter>
@@ -146,11 +150,14 @@ describe('Profile', () => {
       const input = screen.getByLabelText('Avatar');
       await userEvent.upload(input, new File(['image'], 'avatar.png', { type: 'image/png' }));
       await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-      await waitFor(() => expect(uploads).toHaveLength(1));
+      await waitFor(() => expect(update).toHaveBeenCalledTimes(1));
+      expect(update.mock.calls[0][0].avatar).toBeInstanceOf(File);
       await waitFor(() => expect(input).toHaveValue(''));
       await userEvent.click(screen.getByRole('button', { name: 'Save' }));
-      await waitFor(() => expect(uploads).toEqual([true, false]));
+      await waitFor(() => expect(update).toHaveBeenCalledTimes(2));
+      expect(update.mock.calls[1][0].avatar).toBeNull();
     } finally {
+      update.mockRestore();
       vi.unstubAllGlobals();
     }
   });

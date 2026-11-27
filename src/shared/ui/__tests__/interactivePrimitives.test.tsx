@@ -80,8 +80,11 @@ describe('Select and NativeSelect', () => {
       </div>,
     );
 
-    expect(screen.getByText('Input is invalid.')).toHaveAttribute('role', 'alert');
-    expect(screen.getByRole('combobox', { name: 'Select an option' })).toHaveAttribute(
+    expect(document.getElementById('standalone-input')).toHaveAttribute(
+      'aria-describedby',
+      expect.stringContaining('standalone-input-error'),
+    );
+    expect(document.getElementById('standalone-select')).toHaveAttribute(
       'aria-describedby',
       expect.stringContaining('standalone-select-error'),
     );
@@ -89,8 +92,9 @@ describe('Select and NativeSelect', () => {
       'aria-describedby',
       expect.stringContaining('standalone-native-select-error'),
     );
-    expect(screen.getByText('Select is invalid.')).toHaveAttribute('role', 'alert');
-    expect(screen.getByText('Native select is invalid.')).toHaveAttribute('role', 'alert');
+    expect(screen.getByText('Input is invalid.').closest('[role="alert"]')).not.toBeNull();
+    expect(screen.getByText('Select is invalid.').closest('[role="alert"]')).not.toBeNull();
+    expect(screen.getByText('Native select is invalid.').closest('[role="alert"]')).not.toBeNull();
   });
 });
 
@@ -373,6 +377,51 @@ describe('Modal and ConfirmDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
+  });
+
+  it('gives the most recently opened dialog ownership of focus and Escape', async () => {
+    const user = userEvent.setup();
+
+    function NestedModalHarness() {
+      const [outerOpen, setOuterOpen] = useState(false);
+      const [innerOpen, setInnerOpen] = useState(false);
+
+      return (
+        <div>
+          <Button onClick={() => setOuterOpen(true)}>Open outer</Button>
+          <Modal
+            isOpen={outerOpen}
+            onClose={() => setOuterOpen(false)}
+            title="Outer dialog"
+            footer={<Button onClick={() => setInnerOpen(false)}>Close inner</Button>}
+          >
+            <Button onClick={() => setInnerOpen(true)}>Open inner</Button>
+            <Modal
+              isOpen={innerOpen}
+              onClose={() => setInnerOpen(false)}
+              title="Inner dialog"
+            >
+              <Button>Inner action</Button>
+            </Modal>
+          </Modal>
+        </div>
+      );
+    }
+
+    render(<NestedModalHarness />);
+    await user.click(screen.getByRole('button', { name: 'Open outer' }));
+    await user.click(screen.getByRole('button', { name: 'Open inner' }));
+
+    const outerDialog = screen.getByRole('dialog', { name: 'Outer dialog' });
+    const innerDialog = screen.getByRole('dialog', { name: 'Inner dialog' });
+    const outerTrigger = screen.getByRole('button', { name: 'Open inner' });
+
+    outerTrigger.focus();
+    expect(innerDialog.contains(document.activeElement)).toBe(true);
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'Inner dialog' })).not.toBeInTheDocument();
+    expect(outerDialog).toBeInTheDocument();
   });
 });
 

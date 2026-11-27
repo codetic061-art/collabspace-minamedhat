@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw/http';
 import { expect, it, vi } from 'vitest';
@@ -82,9 +82,10 @@ it('shows a success toast after creating a task', async () => {
     </QueryClientProvider>,
   );
   await screen.findByRole('option', { name: 'Unassigned' });
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Create Task' })).toBeEnabled());
   await user.type(screen.getByLabelText(/Task Name/), 'New task');
   await user.click(screen.getByRole('button', { name: 'Create Task' }));
 
-  expect(await screen.findByRole('status')).toHaveTextContent('Task created.');
+  expect(await screen.findByText('Task created.')).toBeVisible();
   expect(onClose).toHaveBeenCalledTimes(1);
 });

@@ -100,12 +100,15 @@ describe('task board', () => {
     const select = within(card).getByLabelText('Status for Write tests');
     select.focus();
     expect(select).toHaveFocus();
-    await user.selectOptions(select, 'In Progress');
-    const progress = screen.getByRole('heading', { name: /In Progress/ }).closest('section');
-    expect(progress).not.toBeNull();
-    if (!progress) throw new Error('Missing In Progress column');
-    expect(within(progress).getByText('Write tests')).toBeInTheDocument();
-    release();
+    try {
+      await user.selectOptions(select, 'In Progress');
+      const progress = screen.getByRole('heading', { name: /In Progress/ }).closest('section');
+      expect(progress).not.toBeNull();
+      if (!progress) throw new Error('Missing In Progress column');
+      expect(within(progress).getByText('Write tests')).toBeInTheDocument();
+    } finally {
+      release();
+    }
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     const pending = screen.getByRole('heading', { name: /Pending/ }).closest('section');
     expect(pending).not.toBeNull();
@@ -175,10 +178,13 @@ describe('task board', () => {
     );
     const user = userEvent.setup();
     renderBoard();
-    await user.selectOptions(await screen.findByLabelText('Status for Write tests'), 'In Progress');
-    expect(screen.getByLabelText('Status for Write tests')).toBeDisabled();
-    expect(screen.getByLabelText('Status for Other task')).toBeEnabled();
-    release();
+    try {
+      await user.selectOptions(await screen.findByLabelText('Status for Write tests'), 'In Progress');
+      expect(screen.getByLabelText('Status for Write tests')).toBeDisabled();
+      expect(screen.getByLabelText('Status for Other task')).toBeEnabled();
+    } finally {
+      release();
+    }
     await waitFor(() => expect(screen.getByLabelText('Status for Write tests')).toBeEnabled());
   });
 });

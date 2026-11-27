@@ -11,6 +11,25 @@ const FOCUSABLE_SELECTOR = [
 
 const NON_INERT_TAGS = new Set(['SCRIPT', 'STYLE', 'DIALOG']);
 
+// Keep a process-local stack so nested dialogs do not compete for keyboard or
+// focus events. The most recently opened dialog owns the top layer.
+const openDialogs: HTMLDialogElement[] = [];
+
+function registerDialog(dialog: HTMLDialogElement): () => void {
+  openDialogs.push(dialog);
+
+  return () => {
+    const index = openDialogs.lastIndexOf(dialog);
+    if (index >= 0) {
+      openDialogs.splice(index, 1);
+    }
+  };
+}
+
+function isTopmostDialog(dialog: HTMLDialogElement): boolean {
+  return openDialogs[openDialogs.length - 1] === dialog;
+}
+
 function isVisibleFocusable(node: Element): node is HTMLElement {
   if (!(node instanceof HTMLElement)) {
     return false;
@@ -113,6 +132,7 @@ export function useModalDialog({
     const active = document.activeElement;
     const previousFocus = active instanceof HTMLElement ? active : null;
     const restoreInert = applyBackgroundInert(dialogEl);
+    const unregisterDialog = registerDialog(dialogEl);
 
     if (!dialogEl.open) {
       dialogEl.showModal?.();
@@ -123,6 +143,10 @@ export function useModalDialog({
     focusTarget.focus();
 
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (!isTopmostDialog(dialogEl)) {
+        return;
+      }
+
       if (event.key === 'Escape') {
         event.preventDefault();
         if (!latestRef.current.isSubmitting) {
@@ -137,6 +161,10 @@ export function useModalDialog({
     };
 
     const onCancel = (event: Event) => {
+      if (!isTopmostDialog(dialogEl)) {
+        return;
+      }
+
       event.preventDefault();
       if (!latestRef.current.isSubmitting) {
         latestRef.current.onClose();
@@ -144,12 +172,20 @@ export function useModalDialog({
     };
 
     const onClick = (event: globalThis.MouseEvent) => {
+      if (!isTopmostDialog(dialogEl)) {
+        return;
+      }
+
       if (event.target === dialogEl && !latestRef.current.isSubmitting) {
         latestRef.current.onClose();
       }
     };
 
     const onFocusIn = (event: FocusEvent) => {
+      if (!isTopmostDialog(dialogEl)) {
+        return;
+      }
+
       const target = event.target;
       if (target instanceof HTMLElement) {
         const insideDialog = dialogEl.contains(target);
@@ -171,6 +207,7 @@ export function useModalDialog({
       document.removeEventListener('focusin', onFocusIn);
       dialogEl.removeEventListener('cancel', onCancel);
       dialogEl.removeEventListener('click', onClick);
+      unregisterDialog();
       if (dialogEl.open) {
         dialogEl.close?.();
       }

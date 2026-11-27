@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type FormEventHandler } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSession } from '@/features/auth';
 import {
@@ -82,7 +82,7 @@ export function useProfileSettings(me: ProfileMeData) {
       about: user.about ?? '',
     },
   });
-  const submit = handleSubmit(async (values) => {
+  const submit: FormEventHandler<HTMLFormElement> = (event) => void handleSubmit(async (values) => {
     if (avatarError || validatingAvatar) return;
     try {
       await profileService.updateProfile({
@@ -107,7 +107,7 @@ export function useProfileSettings(me: ProfileMeData) {
       }
       applyServerValidationErrors(error, setError, settingsFields);
     }
-  });
+  })(event);
   async function remove() {
     if (removing) return;
     setRemoving(true);
