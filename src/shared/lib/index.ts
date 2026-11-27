@@ -20,6 +20,7 @@ export {
   hasRememberedToken,
   hasStoredToken,
   notifyUnauthorized,
+  getSessionEpoch,
   registerUnauthorizedHandler,
   resetUnauthorizedGuard,
   setAuthToken,

@@ -6,6 +6,7 @@ import { RouterProvider } from 'react-router/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppProviders } from '@/app/providers';
 import { createAppRoutes } from '@/app/router';
+import { SessionProvider, useSession } from '@/features/auth';
 import { downloadBlob, type UserResource } from '@/shared/api';
 import {
   broadcastSessionEvent,
@@ -71,6 +72,16 @@ function mountApp(initialPath: string) {
   };
 }
 
+function SessionRaceHarness() {
+  const { completeAuth, user } = useSession();
+  return (
+    <>
+      <button onClick={() => void completeAuth('new-session')}>Start new session</button>
+      <div>{user?.name ?? 'No user'}</div>
+    </>
+  );
+}
+
 describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
   beforeEach(() => {
     clearAuthToken();
@@ -91,6 +102,51 @@ describe('Auth & App shell workflows (Layer 3 + Layer 5)', () => {
     window.history.replaceState(null, '', '/');
     window.sessionStorage.clear();
     window.localStorage.clear();
+  });
+
+  it('ignores a stale startup restore after a newer sign-in', async () => {
+    setAuthToken('old-session');
+    let release: () => void = () => {};
+    let markStarted: () => void = () => {};
+    const started = new Promise<void>((resolve) => {
+      markStarted = resolve;
+    });
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    mswServer.use(
+      http.get(`${BASE}/auth/me`, async ({ request }) => {
+        if (request.headers.get('authorization') === 'Bearer old-session') {
+          markStarted();
+          await held;
+          return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+        return mockMeSuccess();
+      }),
+    );
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        element: (
+          <SessionProvider>
+            <SessionRaceHarness />
+          </SessionProvider>
+        ),
+      },
+    ]);
+    render(
+      <AppProviders queryClient={createTestQueryClient()}>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    );
+    await started;
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Start new session' }));
+    expect(await screen.findByText('Alex Morgan')).toBeVisible();
+    await act(async () => {
+      release();
+    });
+    await waitFor(() => expect(getAuthToken()).toBe('new-session'));
+    expect(screen.getByText('Alex Morgan')).toBeVisible();
   });
 
   it('shows neutral shell on reload, renders MVP Navbar, and clears on logout', async () => {

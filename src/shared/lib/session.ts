@@ -12,6 +12,7 @@ const SESSION_STORAGE_KEY = 'collabspace.auth.token';
 const BROADCAST_CHANNEL_NAME = 'collabspace-session';
 
 let memoryToken: string | null = null;
+let sessionEpoch = 0;
 let unauthorizedHandler: (() => void) | null = null;
 let unauthorizedGuardTriggered = false;
 
@@ -81,6 +82,11 @@ export function getAuthToken(): string | null {
   return null;
 }
 
+/** Identifies the current local session without exposing its credential. */
+export function getSessionEpoch(): number {
+  return sessionEpoch;
+}
+
 /** Indicates whether a token currently exists in memory or Web Storage. */
 export function hasStoredToken(): boolean {
   return getAuthToken() !== null;
@@ -100,6 +106,7 @@ export function setAuthToken(token: string, options: SetAuthTokenOptions = {}): 
   }
 
   memoryToken = normalized;
+  sessionEpoch += 1;
   unauthorizedGuardTriggered = false;
 
   const sessionStore = getSessionStorageSafe();
@@ -116,6 +123,7 @@ export function setAuthToken(token: string, options: SetAuthTokenOptions = {}): 
 
 /** Clears the Sanctum token from memory, `sessionStorage`, and `localStorage`. */
 export function clearAuthToken(): void {
+  sessionEpoch += 1;
   memoryToken = null;
   removeStorage(getSessionStorageSafe());
   removeStorage(getLocalStorageSafe());

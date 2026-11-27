@@ -20,6 +20,7 @@ import {
 import {
   broadcastSessionEvent,
   clearAuthToken,
+  getSessionEpoch,
   hasRememberedToken,
   hasStoredToken,
   normalizeSystemRole,
@@ -115,8 +116,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const restoreSession = useCallback(
     async ({ signal }: { signal?: AbortSignal } = {}): Promise<void> => {
+      const epoch = getSessionEpoch();
       try {
         const me = await profileService.getMe(signal);
+        if (signal?.aborted || epoch !== getSessionEpoch()) return;
         queryClient.setQueryData(profileKeys.me(), me);
         resetUnauthorizedGuard();
         setState({
@@ -126,6 +129,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           startupError: null,
         });
       } catch (error) {
+        if (signal?.aborted || epoch !== getSessionEpoch()) return;
         const appError = toAppError(error);
         if (appError.kind === 'aborted') {
           return;
@@ -154,41 +158,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
 
     const controller = new AbortController();
-    void profileService.getMe(controller.signal).then(
-      (me) => {
-        queryClient.setQueryData(profileKeys.me(), me);
-        resetUnauthorizedGuard();
-        setState({
-          status: 'authenticated',
-          me,
-          role: normalizeSystemRole(me.user.roles),
-          startupError: null,
-        });
-      },
-      (error: unknown) => {
-        const appError = toAppError(error);
-        if (appError.kind === 'aborted') {
-          return;
-        }
-        if (appError.kind === 'unauthorized') {
-          clearAuthToken();
-          queryClient.clear();
-          setState(ANONYMOUS_STATE);
-          return;
-        }
-        // Preserve stored token on transient startup errors so user can retry (ADR-01 §3).
-        setState({
-          status: 'unknown',
-          me: null,
-          role: null,
-          startupError: appError,
-        });
-      },
-    );
+    void restoreSession({ signal: controller.signal });
     return () => {
       controller.abort();
     };
-  }, [queryClient]);
+  }, [restoreSession]);
 
   useEffect(() => {
     const unregister = registerUnauthorizedHandler(() => {
@@ -230,8 +204,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const completeAuth = useCallback(
     async (token: string, options?: { remember?: boolean }): Promise<ProfileMeData> => {
       setAuthToken(token, { remember: options?.remember });
+      const epoch = getSessionEpoch();
       try {
         const me = await profileService.getMe();
+        if (epoch !== getSessionEpoch()) throw new Error('Session changed during sign-in.');
         queryClient.setQueryData(profileKeys.me(), me);
         resetUnauthorizedGuard();
         broadcastSessionEvent('signed-in');
@@ -243,9 +219,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         });
         return me;
       } catch (error) {
-        clearAuthToken();
-        queryClient.clear();
-        setState(ANONYMOUS_STATE);
+        if (epoch === getSessionEpoch()) {
+          clearAuthToken();
+          queryClient.clear();
+          setState(ANONYMOUS_STATE);
+        }
         throw error;
       }
     },
@@ -253,15 +231,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
+    const epoch = getSessionEpoch();
     try {
       await authService.logout();
     } catch {
       // Explicit sign-out always clears local credentials even on network/server failure (ADR-01).
     } finally {
-      clearAuthToken();
-      queryClient.clear();
-      broadcastSessionEvent('signed-out');
-      setState(ANONYMOUS_STATE);
+      if (epoch === getSessionEpoch()) {
+        clearAuthToken();
+        queryClient.clear();
+        broadcastSessionEvent('signed-out');
+        setState(ANONYMOUS_STATE);
+      }
     }
   }, [queryClient]);
 
