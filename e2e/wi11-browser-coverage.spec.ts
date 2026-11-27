@@ -90,7 +90,7 @@ test('checks non-chart routes, keyboard navigation and accessibility on Preview'
     ['/projects', 'All Projects'],
     ['/tasks', 'Tasks'],
     ['/profile', 'Preview User'],
-  ]) {
+  ] as const) {
     await page.goto(path);
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
     if (path === '/projects') {
