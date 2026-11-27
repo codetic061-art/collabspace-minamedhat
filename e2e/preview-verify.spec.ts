@@ -248,6 +248,10 @@ test('renders Projects routes on Preview with a simulated API', async ({ page })
     await page.screenshot({ path: `preview-shots/projects-${width}.png`, fullPage: true });
   }
   await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByRole('button', { name: /Add Project/i }).click();
+  await expect(page.getByRole('dialog', { name: 'New Project' })).toBeVisible();
+  await page.screenshot({ path: 'preview-shots/project-form.png', fullPage: true });
+  await page.getByRole('button', { name: /close dialog/i }).click();
   await page.goto('/projects/1');
   await expect(page.getByText('CollabSpace Alpha').first()).toBeVisible();
   await expect(page.getByText('Team Members', { exact: true })).toBeVisible();
