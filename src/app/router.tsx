@@ -7,7 +7,6 @@ import {
   loadSignUpPage,
   loadVerifyCodePage,
 } from '@/features/auth';
-import { loadDashboardPage } from '@/features/dashboard';
 import { SessionRoot } from './providers';
 import { RouteErrorBoundary } from './RouteErrorBoundary';
 
@@ -64,7 +63,10 @@ export function createAppRoutes(): RouteObject[] {
           children: [
             {
               index: true,
-              lazy: loadDashboardPage,
+              lazy: async () => {
+                const { loadDashboardPage } = await import('@/features/dashboard');
+                return loadDashboardPage();
+              },
             },
             {
               path: '/projects',
