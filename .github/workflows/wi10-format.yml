@@ -1,5 +1,5 @@
 name: WI-10 formatting
-on: workflow_dispatch
+on: push
 permissions:
   contents: read
 jobs:
@@ -19,3 +19,4 @@ jobs:
           path: |
             src/features/profile
             src/app/router.tsx
+
