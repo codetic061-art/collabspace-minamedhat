@@ -22,7 +22,7 @@ Registry verification on `2026-11-26` (`docs/research/react-architecture.md` §1
 
 ### 1. Runtime & package management policy
 
-- **Node.js engine:** Pin `"engines": { "node": ">=22.22.2" }` in `package.json` and run **Node 24 LTS** (e.g., `24.18.0`) in CI and Vercel builds.
+- **Node.js engine:** Pin `24.x` in `package.json` and run **Node 24 LTS** (e.g., `24.18.0`) in CI and Vercel builds. The verified library compatibility floor is `>=22.22.2`, but this project intentionally uses the stricter Node 24 policy.
 - **Exact direct version pinning:** Commit `.npmrc` with `save-exact=true` and commit `package-lock.json` so every agent and CI build installs identical direct dependency versions without surprise minor/patch drift.
 - **CI supply-chain gates (`security.md` §8, `ID-20.5`):** Every CI workflow runs:
   1. `npm ci` (frozen lockfile install)

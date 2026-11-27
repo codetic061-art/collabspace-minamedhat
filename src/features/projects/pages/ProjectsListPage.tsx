@@ -88,6 +88,20 @@ export function ProjectsListPage() {
         );
       }
 
+      if (result.currentPage > 1) {
+        return (
+          <EmptyState
+            title="No projects on this page"
+            message="There are no projects on this page."
+            action={
+              <Button variant="outline" onClick={() => setPage(result.currentPage - 1)}>
+                Previous page
+              </Button>
+            }
+          />
+        );
+      }
+
       return (
         <EmptyState
           title="No projects yet"

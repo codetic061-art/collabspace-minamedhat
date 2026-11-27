@@ -41,7 +41,7 @@ interface UserOptionRowProps {
 }
 
 function UserOptionRow({ user, isSelected, onSelect }: UserOptionRowProps) {
-  const subtitle = user.job_title ?? user.email;
+  const subtitle = user.job_title || null;
 
   return (
     <button
@@ -58,7 +58,7 @@ function UserOptionRow({ user, isSelected, onSelect }: UserOptionRowProps) {
         <Avatar name={user.name} src={toSafeExternalUrl(user.avatar_url)} size="sm" />
         <span className="min-w-0">
           <span className="block truncate font-medium text-ink">{user.name}</span>
-          <span className="block truncate text-xs text-body">{subtitle}</span>
+          {subtitle ? <span className="block truncate text-xs text-body">{subtitle}</span> : null}
         </span>
       </span>
       {isSelected ? (

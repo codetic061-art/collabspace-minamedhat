@@ -1,5 +1,5 @@
 import { ChevronDown, LogOut, Menu, Settings, User, X } from 'lucide-react';
-import { useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router';
 import { useSession } from '@/features/auth';
 import { toSafeExternalUrl } from '@/shared/lib';
@@ -42,36 +42,39 @@ export function Navbar() {
     };
   }, [drawerOpen]);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     setDrawerOpen(false);
     await signOut();
     navigate('/sign-in', { replace: true });
-  };
+  }, [navigate, signOut]);
 
   const displayName = user?.name ?? 'CollabSpace User';
   const displayRole = role ?? user?.roles[0] ?? 'Member';
 
-  const menuItems: DropdownMenuItem[] = [
-    {
-      id: 'profile',
-      label: 'Profile',
-      icon: <User className="h-4 w-4" aria-hidden="true" />,
-      onSelect: () => navigate('/profile'),
-    },
-    {
-      id: 'edit-profile',
-      label: 'Edit Profile',
-      icon: <Settings className="h-4 w-4" aria-hidden="true" />,
-      onSelect: () => navigate('/profile/settings'),
-    },
-    {
-      id: 'sign-out',
-      label: 'Sign out',
-      tone: 'danger',
-      icon: <LogOut className="h-4 w-4" aria-hidden="true" />,
-      onSelect: () => void handleSignOut(),
-    },
-  ];
+  const menuItems = useMemo<DropdownMenuItem[]>(
+    () => [
+      {
+        id: 'profile',
+        label: 'Profile',
+        icon: <User className="h-4 w-4" aria-hidden="true" />,
+        onSelect: () => navigate('/profile'),
+      },
+      {
+        id: 'edit-profile',
+        label: 'Edit Profile',
+        icon: <Settings className="h-4 w-4" aria-hidden="true" />,
+        onSelect: () => navigate('/profile/settings'),
+      },
+      {
+        id: 'sign-out',
+        label: 'Sign out',
+        tone: 'danger',
+        icon: <LogOut className="h-4 w-4" aria-hidden="true" />,
+        onSelect: () => void handleSignOut(),
+      },
+    ],
+    [handleSignOut, navigate],
+  );
 
   return (
     <header className="relative sticky top-0 z-30 border-0 bg-surface after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-1 after:h-1 after:bg-[linear-gradient(180deg,rgba(9,30,66,0.13)_0%,rgba(9,30,66,0.13)_25%,rgba(9,30,66,0.08)_25.01%,rgba(9,30,66,0)_100%)]">
@@ -94,7 +97,7 @@ export function Navbar() {
 
           <Link
             to="/"
-            className="font-wordmark text-xl font-normal tracking-tight text-primary focus-visible:outline-2 focus-visible:outline-primary"
+            className="font-wordmark text-xl font-normal tracking-tight text-ink focus-visible:outline-2 focus-visible:outline-primary"
           >
             CollabSpace
           </Link>

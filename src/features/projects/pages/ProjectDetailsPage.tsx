@@ -27,7 +27,7 @@ const OVERVIEW_TAB_ITEMS: readonly TabItem[] = [
 /**
  * Project Details page (`1:8753`, §3.5, §3.6, §12.6, M17):
  * displays Overview tab by default with header, Due Date card, role-gated Edit Project modal,
- * and Team Members roster. Tasks tab remains hidden until WI-9 lands; Teams/Files tabs are Tier 2.
+ * Team Members roster, and the public Tasks tab. Teams/Files tabs are Tier 2.
  */
 export function ProjectDetailsPage() {
   const { projectId: rawProjectId } = useParams();

@@ -36,6 +36,7 @@ export interface SessionContextValue {
   role: SystemRole | null;
   startupError: AppError | null;
   retryRestore: () => Promise<void>;
+  refreshMe: () => Promise<void>;
   completeAuth: (token: string, options?: { remember?: boolean }) => Promise<ProfileMeData>;
   signOut: () => Promise<void>;
   clearSessionAfterReset: () => void;
@@ -104,6 +105,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const locationRef = useRef(location);
   const statusRef = useRef(state.status);
+  const refreshSequence = useRef(0);
   useEffect(() => {
     locationRef.current = location;
     statusRef.current = state.status;
@@ -259,6 +261,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     await restoreSession();
   }, [restoreSession]);
 
+  // A profile refresh must not return an authenticated user to the startup shell.
+  const refreshMe = useCallback(async () => {
+    if (!hasStoredToken()) return;
+    const epoch = getSessionEpoch();
+    const sequence = ++refreshSequence.current;
+    try {
+      const me = await getMe();
+      if (epoch !== getSessionEpoch() || sequence !== refreshSequence.current) return;
+      queryClient.setQueryData(profileKeys.me(), me);
+      setState((previous) =>
+        previous.status === 'authenticated'
+          ? { ...previous, me, role: normalizeSystemRole(me.user.roles) }
+          : previous,
+      );
+    } catch {
+      // Transient refresh failures do not undo a successful mutation or reset the shell.
+      // The HTTP client still handles an actual unauthorized response centrally.
+    }
+  }, [queryClient]);
+
   return (
     <SessionContext.Provider
       value={{
@@ -268,6 +290,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         role: state.role,
         startupError: state.startupError,
         retryRestore,
+        refreshMe,
         completeAuth,
         signOut,
         clearSessionAfterReset,

@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { Paperclip } from 'lucide-react';
-import { useState } from 'react';
+import { CalendarDays, Paperclip } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useSession } from '@/features/auth';
 import {
   getErrorMessage,
+  formatDisplayDate,
   KANBAN_STATUS_ORDER,
   projectsQueries,
   tasksQueries,
@@ -13,22 +14,23 @@ import {
   type TaskStatus,
 } from '@/shared/api';
 import { hasCapability, toSafeExternalUrl } from '@/shared/lib';
-import { Avatar, BlockErrorState, Button, Skeleton, SkeletonRegion } from '@/shared/ui';
+import { Avatar, Badge, BlockErrorState, Button, Skeleton, SkeletonRegion } from '@/shared/ui';
+import { normalizeDashboardPriority } from '@/features/dashboard';
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
 import { TaskFormModal } from '../components/TaskFormModal';
 import { useTaskStatus } from '../hooks/useTaskStatus';
 
-const titles: Record<TaskStatus, string> = {
-  Pending: 'To-do',
-  'In Progress': 'In Progress',
-  'In Review': 'In Review',
-  Completed: 'Completed Tasks',
-};
 const tints: Record<TaskStatus, string> = {
   Pending: 'bg-surface-input',
   'In Progress': 'bg-primary-tint',
   'In Review': 'bg-pink-tint',
   Completed: 'bg-success-tint',
+};
+const dots: Record<TaskStatus, string> = {
+  Pending: 'bg-body',
+  'In Progress': 'bg-primary',
+  'In Review': 'bg-pink',
+  Completed: 'bg-success',
 };
 
 export function TaskBoard({ projectId }: { projectId: number }) {
@@ -43,6 +45,17 @@ export function TaskBoard({ projectId }: { projectId: number }) {
   const [team, setTeam] = useState('');
   const [form, setForm] = useState<{ status: TaskStatus; task: TaskResource | null } | null>(null);
   const statusMutation = useTaskStatus(projectId);
+  const [focusTask, setFocusTask] = useState<number | null>(null);
+  const selects = useRef(new Map<number, HTMLSelectElement>());
+  useEffect(() => {
+    if (focusTask === null || taskId !== null || form || statusMutation.pendingIds.has(focusTask))
+      return;
+    const select = selects.current.get(focusTask);
+    if (select && !select.disabled) {
+      select.focus();
+      setFocusTask(null);
+    }
+  }, [focusTask, statusMutation.pendingIds, board.data, taskId, form]);
   const openTask = (id: number | null) => {
     const next = new URLSearchParams(params);
     if (id === null) next.delete('taskId');
@@ -138,8 +151,9 @@ export function TaskBoard({ projectId }: { projectId: number }) {
               key={status}
               className="min-w-[304px] flex-1 snap-start overflow-hidden rounded-card border border-border-subtle bg-surface"
             >
-              <h2 className={`p-5 text-base font-semibold ${tints[status]}`}>
-                {titles[status]} <span className="font-normal">({tasks.length})</span>
+              <h2 className={`flex items-center gap-2 p-5 text-xs font-semibold ${tints[status]}`}>
+                <span aria-hidden="true" className={`h-2 w-2 rounded-full ${dots[status]}`} />
+                {status} <span className="font-normal">({tasks.length})</span>
               </h2>
               <div className="space-y-4 p-5">
                 {canCreate && (
@@ -165,7 +179,9 @@ export function TaskBoard({ projectId }: { projectId: number }) {
                       >
                         {task.name}
                       </button>
-                      <span>{task.priority}</span>
+                      <Badge variant={normalizeDashboardPriority(task.priority.toLowerCase()).variant}>
+                        {task.priority}
+                      </Badge>
                     </div>
                     {task.description && (
                       <p className="line-clamp-2 text-body">{task.description}</p>
@@ -188,20 +204,33 @@ export function TaskBoard({ projectId }: { projectId: number }) {
                         </span>
                       )}
                     </div>
-                    {task.due_date && <p>Due {task.due_date.slice(0, 10)}</p>}
+                    {task.due_date && (
+                      <p className="flex items-center gap-1">
+                        <CalendarDays size={14} aria-hidden="true" />
+                        {formatDisplayDate(task.due_date)}
+                      </p>
+                    )}
                     <label className="block">
                       Status
                       <select
+                        aria-label={`Status for ${task.name}`}
+                        ref={(node) => {
+                          if (node) selects.current.set(task.id, node);
+                          else selects.current.delete(task.id);
+                        }}
                         className="mt-1 w-full rounded-input border border-border-card bg-surface p-2"
                         value={task.status}
                         disabled={
-                          !hasCapability(role, 'change_task_status') || statusMutation.isPending
+                          !hasCapability(role, 'change_task_status') || statusMutation.pendingIds.has(task.id)
                         }
                         onChange={(event) => {
                           const value = KANBAN_STATUS_ORDER.find(
                             (item) => item === event.target.value,
                           );
-                          if (value) statusMutation.changeStatus(task, value);
+                          if (value) {
+                            setFocusTask(task.id);
+                            statusMutation.changeStatus(task, value);
+                          }
                         }}
                       >
                         {KANBAN_STATUS_ORDER.map((item) => (
@@ -228,7 +257,8 @@ export function TaskBoard({ projectId }: { projectId: number }) {
             setForm({ task, status: task.status });
           }}
           onStatus={statusMutation.changeStatus}
-          isStatusPending={statusMutation.isPending}
+          isStatusPending={statusMutation.pendingIds.has(taskId)}
+          statusMessage={statusMutation.message}
         />
       )}
       {form && (

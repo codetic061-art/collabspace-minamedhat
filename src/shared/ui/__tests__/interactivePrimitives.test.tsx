@@ -283,6 +283,7 @@ describe('Modal and ConfirmDialog', () => {
     await user.click(trigger);
 
     const dialog = screen.getByRole('dialog', { name: 'Delete task "API Integration"?' });
+    expect(dialog).toHaveAttribute('aria-describedby');
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
 
     rerender(

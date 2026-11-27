@@ -96,7 +96,7 @@ test('checks non-chart routes, keyboard navigation and accessibility on Preview'
     if (path === '/projects') {
       await expect(page.getByText('CollabSpace Alpha').first()).toBeVisible();
     } else if (path === '/tasks') {
-      await expect(page.getByRole('heading', { name: 'To-do (0)' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Pending (0)' })).toBeVisible();
     } else {
       await expect(page.getByText('Preview profile')).toBeVisible();
     }

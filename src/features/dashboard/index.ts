@@ -6,6 +6,8 @@
  * { index: true, lazy: loadDashboardPage }
  * ```
  */
+export { normalizeDashboardPriority } from './utils/priority';
+
 export async function loadDashboardPage() {
   const { DashboardPage } = await import('./pages/DashboardPage');
   return { Component: DashboardPage };

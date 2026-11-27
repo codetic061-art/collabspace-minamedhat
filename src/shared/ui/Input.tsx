@@ -79,6 +79,7 @@ export function Input({
         ) : null}
 
         <input
+          {...rest}
           ref={ref}
           id={effectiveId}
           required={effectiveRequired}
@@ -88,7 +89,6 @@ export function Input({
             'w-full min-w-0 bg-transparent py-2.5 text-sm text-ink placeholder:text-body focus:outline-none',
             className,
           )}
-          {...rest}
         />
 
         {trailingAdornment ? (
@@ -152,6 +152,7 @@ export function Textarea({
 
     return (
       <textarea
+        {...rest}
         ref={ref}
         id={effectiveId}
         rows={rows}
@@ -163,7 +164,6 @@ export function Textarea({
           effectiveInvalid ? 'border-danger focus:border-danger' : 'border-border-input',
           className,
         )}
-        {...rest}
       />
     );
   };

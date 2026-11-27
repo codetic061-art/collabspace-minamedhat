@@ -136,7 +136,7 @@ All paths are under `https://collabspace.huma-volve.com/api/v1`. Every request s
 | Aspect | Mapping |
 |---|---|
 | API | `GET /auth/me` (verified) returns:<br>• `user`: name, `job_title`, `about`, `avatar_url`, `created_at` (joined date)<br>• `stats`: `completed_tasks`, `total_tasks`, `hours_worked`<br>• `recent_activities[]`: `description`, `created_at`<br><br>`GET /auth/profile/tasks` (verified) uses P2 pagination and returns raw task models. `GET /activities` (spec) is an alternative activity feed. |
-| Mapping | Completed Tasks → `stats.completed_tasks`. Hours Worked → `stats.hours_worked`. About → `user.about`. Recent Activities → `recent_activities[]`. Tasks tab "To do" and "Done": To do = Pending, In Progress and In Review; Done = Completed (M22, A5). |
+| Mapping | Completed Tasks → `stats.completed_tasks`. Hours Worked → `stats.hours_worked`. About → `user.about`. Recent Activities → `recent_activities[]`. Tasks tab "To do" and "Done": To do = Pending, In Progress and In Review; Done = Completed (M22, A5). The endpoint is paginated, so the visible To do/Done grouping and counts are page-local unless the feature separately paginates each group. |
 | Roles | The signed-in user's own profile |
 
 ### Profile settings: `1:11983`

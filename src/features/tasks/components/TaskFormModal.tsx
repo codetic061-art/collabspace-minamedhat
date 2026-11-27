@@ -13,7 +13,7 @@ import {
   type TaskResource,
   type TaskStatus,
 } from '@/shared/api';
-import { Button, Input, Modal, NativeSelect, Textarea } from '@/shared/ui';
+import { Button, Input, Modal, NativeSelect, Textarea, useToast } from '@/shared/ui';
 
 const schema = z.object({
   name: z.string().trim().min(1, 'Task name is required.').max(255),
@@ -49,6 +49,7 @@ export function TaskFormModal({
   task: TaskResource | null;
   onClose: () => void;
 }) {
+  const { showToast } = useToast();
   const client = useQueryClient();
   const overview = useQuery(projectsQueries.overview(projectId));
   const teams = useQuery(projectsQueries.teams(projectId));
@@ -97,6 +98,10 @@ export function TaskFormModal({
       } else {
         await tasksService.createTask({ ...payload, project_id: projectId, assigned_to: assignee });
       }
+      showToast({
+        message: task ? 'Task updated.' : 'Task created.',
+        tone: 'success',
+      });
       onClose();
     } catch (error) {
       applyServerValidationErrors(error, setError, fields);

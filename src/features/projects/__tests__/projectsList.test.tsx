@@ -199,6 +199,22 @@ describe('ProjectsListPage (Layer 2)', () => {
     expect(hasExpectedQuery).toBe(true);
   });
 
+  it('preserves a typed trailing space across the search debounce', async () => {
+    const user = userEvent.setup();
+    mswServer.use(
+      http.get(`${API_BASE}/projects`, () =>
+        HttpResponse.json(makeP1ProjectsResponse([makeProjectListItem()])),
+      ),
+    );
+    const { router } = renderProjectsRoute('/projects', mswServer, 'Project Manager');
+    const input = await screen.findByLabelText('Search projects');
+    await user.type(input, 'alpha ');
+    await waitFor(() => expect(router.state.location.search).toContain('search=alpha'));
+    expect(input).toHaveValue('alpha ');
+    await user.type(input, 'beta');
+    await waitFor(() => expect(router.state.location.search).toContain('search=alpha+beta'));
+  });
+
   it('hides Add Project for Team Member and handles empty, 403, 5xx retry, and 401 states', async () => {
     const user = userEvent.setup();
     let attempt = 0;

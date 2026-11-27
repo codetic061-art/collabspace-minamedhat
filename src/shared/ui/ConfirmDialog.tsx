@@ -33,6 +33,7 @@ export function ConfirmDialog({
       isOpen={isOpen}
       onClose={onClose}
       title={title}
+      description={description}
       size="sm"
       isSubmitting={isConfirming}
       submittingLabel={confirmingLabel}
@@ -59,8 +60,6 @@ export function ConfirmDialog({
           </Button>
         </>
       }
-    >
-      <p className="text-sm leading-6 text-heading">{description}</p>
-    </Modal>
+    />
   );
 }

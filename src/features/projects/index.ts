@@ -5,9 +5,8 @@
  * - Replace `/projects` placeholder lazy loader with `loadProjectsListPage`
  * - Replace `/projects/:projectId` placeholder lazy loader with `loadProjectDetailsPage`
  *
- * Future Tasks tab boundary (`WI-9`):
- * Once `WI-9` exports its public board component from `@/features/tasks`,
- * `ProjectDetailsPage` will mount it inside a `'tasks'` tab receiving `ProjectTasksTabSlotProps`.
+ * The Tasks tab is mounted by `ProjectDetailsPage` through the public
+ * `@/features/tasks` entry point; this slot type remains for future composition.
  */
 export interface ProjectTasksTabSlotProps {
   projectId: number;

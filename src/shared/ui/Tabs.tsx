@@ -99,6 +99,7 @@ export function Tabs({
     <div
       role="tablist"
       aria-label={ariaLabel}
+      aria-orientation="horizontal"
       className={cn(
         variant === 'underline' &&
           'flex flex-wrap items-center gap-4 border-b border-border-neutral',

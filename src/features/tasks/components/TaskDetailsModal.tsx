@@ -25,11 +25,13 @@ import {
   Modal,
   NativeSelect,
   Skeleton,
+  useToast,
 } from '@/shared/ui';
 
 const statusOptions = KANBAN_STATUS_ORDER.map((value) => ({ value, label: value }));
 
 function AssigneeControl({ task }: { task: TaskResource }) {
+  const { showToast } = useToast();
   const client = useQueryClient();
   const overview = useQuery(projectsQueries.overview(task.project_id));
   const teams = useQuery(projectsQueries.teams(task.project_id));
@@ -38,6 +40,9 @@ function AssigneeControl({ task }: { task: TaskResource }) {
       tasksService.assignTask(task.id, { assigned_to: assignedTo }),
     onSettled: async () => {
       await client.invalidateQueries({ queryKey: tasksKeys.all });
+    },
+    onSuccess: () => {
+      showToast({ message: 'Task assignment updated.', tone: 'success' });
     },
   });
   const members = new Map<number, string>();
@@ -89,6 +94,7 @@ export function TaskDetailsModal({
   onEdit,
   onStatus,
   isStatusPending,
+  statusMessage,
 }: {
   taskId: number;
   projectId: number;
@@ -96,7 +102,9 @@ export function TaskDetailsModal({
   onEdit: (task: TaskResource) => void;
   onStatus: (task: TaskResource, status: TaskStatus) => void;
   isStatusPending: boolean;
+  statusMessage?: string;
 }) {
+  const { showToast } = useToast();
   const { role } = useSession();
   const client = useQueryClient();
   const query = useQuery(tasksQueries.detail(taskId));
@@ -109,6 +117,7 @@ export function TaskDetailsModal({
         client.invalidateQueries({ queryKey: tasksKeys.all }),
         client.invalidateQueries({ queryKey: projectsKeys.all }),
       ]);
+      showToast({ message: 'Task deleted.', tone: 'success' });
       onClose();
     },
   });
@@ -135,16 +144,24 @@ export function TaskDetailsModal({
             </div>
             <p>{task.description || 'No description'}</p>
             {hasCapability(role, 'change_task_status') ? (
-              <NativeSelect
-                label="Status"
-                options={statusOptions}
-                value={task.status}
-                disabled={isStatusPending}
-                onChange={(event) => {
-                  const next = KANBAN_STATUS_ORDER.find((status) => status === event.target.value);
-                  if (next) onStatus(task, next);
-                }}
-              />
+              <div className="space-y-2">
+                <NativeSelect
+                  label="Status"
+                  options={statusOptions}
+                  value={task.status}
+                  aria-disabled={isStatusPending}
+                  onChange={(event) => {
+                    if (isStatusPending) return;
+                    const next = KANBAN_STATUS_ORDER.find((status) => status === event.target.value);
+                    if (next) onStatus(task, next);
+                  }}
+                />
+                {statusMessage ? (
+                  <p role="alert" className="text-sm text-danger">
+                    {statusMessage}
+                  </p>
+                ) : null}
+              </div>
             ) : null}
             <dl className="grid gap-3 text-sm sm:grid-cols-2">
               <div>

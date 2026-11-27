@@ -48,10 +48,19 @@ function ProfileTasks() {
       {tasks.length === 0 && page === 1 ? (
         <EmptyState message="You have no assigned tasks." />
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
-          <TaskGroup title="To do" tasks={tasks.filter((task) => task.status !== 'Completed')} />
-          <TaskGroup title="Done" tasks={tasks.filter((task) => task.status === 'Completed')} />
-        </div>
+        <>
+          <p className="text-sm text-body">Task counts shown are for this page.</p>
+          <div className="grid gap-6 md:grid-cols-2">
+          <TaskGroup
+            title="To do (this page)"
+            tasks={tasks.filter((task) => task.status !== 'Completed')}
+          />
+          <TaskGroup
+            title="Done (this page)"
+            tasks={tasks.filter((task) => task.status === 'Completed')}
+          />
+          </div>
+        </>
       )}
       {query.data.lastPage > 1 && (
         <div className="flex items-center justify-center gap-4">

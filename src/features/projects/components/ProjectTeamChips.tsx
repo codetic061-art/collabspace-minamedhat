@@ -8,7 +8,11 @@ export interface ProjectTeamChipsProps {
 /** Renders up to two team name chips followed by a `+N` overflow chip (M19). */
 export function ProjectTeamChips({ teams }: ProjectTeamChipsProps) {
   if (teams.length === 0) {
-    return <span className="text-sm text-body">—</span>;
+    return (
+      <span className="text-sm text-body">
+        <span className="sr-only">No teams</span>—
+      </span>
+    );
   }
 
   const visibleTeams = teams.slice(0, 2);

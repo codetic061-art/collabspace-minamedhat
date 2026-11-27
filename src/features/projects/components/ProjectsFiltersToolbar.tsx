@@ -34,11 +34,11 @@ export function ProjectsFiltersToolbar({
 
   if (search !== prevSearch) {
     setPrevSearch(search);
-    setDraftSearch(search);
+    if (draftSearch.trim() !== search) setDraftSearch(search);
   }
 
   useEffect(() => {
-    if (draftSearch === search) {
+    if (draftSearch.trim() === search) {
       return;
     }
 

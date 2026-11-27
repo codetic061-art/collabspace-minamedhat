@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw/http';
 import { expect, it, vi } from 'vitest';
 import { mswServer } from '@/test/setup';
+import { ToastProvider } from '@/shared/ui';
 import { TaskFormModal } from '../components/TaskFormModal';
 
 const base = 'https://collabspace.huma-volve.com/api/v1';
@@ -40,7 +41,9 @@ it('deduplicates project members and preserves the input when the server rejects
   });
   render(
     <QueryClientProvider client={client}>
-      <TaskFormModal projectId={1} initialStatus="In Review" task={null} onClose={onClose} />
+      <ToastProvider disablePortal>
+        <TaskFormModal projectId={1} initialStatus="In Review" task={null} onClose={onClose} />
+      </ToastProvider>
     </QueryClientProvider>,
   );
   await screen.findByRole('option', { name: 'A Member' });
@@ -51,4 +54,37 @@ it('deduplicates project members and preserves the input when the server rejects
   expect(await screen.findByText('Name already exists.')).toBeInTheDocument();
   expect(screen.getByLabelText(/Task Name/)).toHaveValue('Existing task');
   expect(onClose).not.toHaveBeenCalled();
+});
+
+it('shows a success toast after creating a task', async () => {
+  mswServer.use(
+    http.get(`${base}/projects/1/overview`, () =>
+      HttpResponse.json({
+        success: true,
+        data: { name: 'Project', direct_members: [] },
+      }),
+    ),
+    http.get(`${base}/projects/1/teams`, () => HttpResponse.json({ success: true, data: [] })),
+    http.post(`${base}/tasks`, () =>
+      HttpResponse.json({ success: true, data: { id: 2 } }, { status: 201 }),
+    ),
+  );
+  const user = userEvent.setup();
+  const onClose = vi.fn();
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  render(
+    <QueryClientProvider client={client}>
+      <ToastProvider disablePortal>
+        <TaskFormModal projectId={1} initialStatus="Pending" task={null} onClose={onClose} />
+      </ToastProvider>
+    </QueryClientProvider>,
+  );
+  await screen.findByRole('option', { name: 'Unassigned' });
+  await user.type(screen.getByLabelText(/Task Name/), 'New task');
+  await user.click(screen.getByRole('button', { name: 'Create Task' }));
+
+  expect(await screen.findByRole('status')).toHaveTextContent('Task created.');
+  expect(onClose).toHaveBeenCalledTimes(1);
 });

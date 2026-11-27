@@ -1,209 +1,29 @@
-import { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
 import { useSession } from '@/features/auth';
-import {
-  applyServerValidationErrors,
-  getErrorMessage,
-  profileService,
-  toAppError,
-  type AvailabilityStatus,
-  type ProfileMeData,
-} from '@/shared/api';
+import type { ProfileMeData } from '@/shared/api';
 import { toSafeExternalUrl } from '@/shared/lib';
 import { Avatar, Button, Card, Field, Input, Skeleton, SkeletonRegion } from '@/shared/ui';
+import { PasswordCard } from './PasswordCard';
+import { useProfileSettings } from './useProfileSettings';
 
-interface SettingsValues {
-  name: string;
-  email: string;
-  phone: string;
-  available_status: AvailabilityStatus;
-  job_title: string;
-  years_of_experience: string;
-  current_project_id: string;
-  about: string;
-}
-interface PasswordValues {
-  current_password: string;
-  password: string;
-  password_confirmation: string;
-}
-const settingsFields = [
-  'name',
-  'email',
-  'phone',
-  'available_status',
-  'job_title',
-  'years_of_experience',
-  'current_project_id',
-  'about',
-] as const;
-const passwordFields = ['current_password', 'password', 'password_confirmation'] as const;
 const selectClass =
   'min-h-touch w-full rounded-pill border border-profile-border bg-surface px-4 text-sm';
 
-async function validateAvatar(file: File): Promise<string | null> {
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type))
-    return 'Choose a JPG, PNG, or WebP image.';
-  if (file.size > 2 * 1024 * 1024) return 'The image must be 2 MB or less.';
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const image = new Image();
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(
-        image.width > 4000 || image.height > 4000
-          ? 'The image must be at most 4000 × 4000 pixels.'
-          : null,
-      );
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      resolve('Choose a valid image.');
-    };
-    image.src = url;
-  });
-}
-
-function PasswordCard() {
-  const {
-    register,
-    handleSubmit,
-    setError,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<PasswordValues>();
-  const [saved, setSaved] = useState(false);
-  const submit = handleSubmit(async (values) => {
-    setSaved(false);
-    if (values.password !== values.password_confirmation) {
-      setError(
-        'password_confirmation',
-        { message: 'Passwords must match.' },
-        { shouldFocus: true },
-      );
-      return;
-    }
-    try {
-      await profileService.changePassword(values);
-      reset();
-      setSaved(true);
-    } catch (error) {
-      applyServerValidationErrors(error, setError, passwordFields);
-    }
-  });
-  return (
-    <section className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
-      <div>
-        <h2 className="text-xl font-semibold">Security</h2>
-        <p className="mt-2 text-sm text-body">Change your password here.</p>
-      </div>
-      <Card variant="settings" className="min-w-0 space-y-5">
-        <form onSubmit={submit} noValidate className="space-y-5">
-          <Input
-            label="Current password"
-            labelVariant="top"
-            type="password"
-            autoComplete="current-password"
-            error={errors.current_password?.message}
-            {...register('current_password', { required: 'Enter your current password.' })}
-          />
-          <Input
-            label="New password"
-            labelVariant="top"
-            type="password"
-            autoComplete="new-password"
-            error={errors.password?.message}
-            {...register('password', {
-              required: 'Enter a new password.',
-              minLength: { value: 8, message: 'Use at least 8 characters.' },
-            })}
-          />
-          <Input
-            label="Confirm new password"
-            labelVariant="top"
-            type="password"
-            autoComplete="new-password"
-            error={errors.password_confirmation?.message}
-            {...register('password_confirmation', { required: 'Confirm your new password.' })}
-          />
-          {errors.root?.serverError?.message && (
-            <p role="alert" className="text-sm text-danger">
-              {errors.root.serverError.message}
-            </p>
-          )}
-          {saved && <p role="status">Password changed.</p>}
-          <Button type="submit" isLoading={isSubmitting} loadingText="Saving...">
-            Change password
-          </Button>
-        </form>
-      </Card>
-    </section>
-  );
-}
-
 function SettingsForm({ me }: { me: ProfileMeData }) {
-  const { retryRestore } = useSession();
-  const { user, projects } = me;
-  const [avatar, setAvatar] = useState<File | null>(null);
-  const [avatarError, setAvatarError] = useState('');
-  const [validatingAvatar, setValidatingAvatar] = useState(false);
-  const avatarSelection = useRef(0);
-  const [removing, setRemoving] = useState(false);
   const {
+    user,
+    projects,
+    avatarError,
+    validatingAvatar,
+    avatarInput,
+    removing,
     register,
-    handleSubmit,
-    setError,
-    formState: { errors, isSubmitting },
-  } = useForm<SettingsValues>({
-    defaultValues: {
-      name: user.name,
-      email: user.email,
-      phone: user.phone ?? '',
-      available_status: user.available_status,
-      job_title: user.job_title ?? '',
-      years_of_experience: String(user.years_of_experience),
-      current_project_id: user.current_project_id ? String(user.current_project_id) : '',
-      about: user.about ?? '',
-    },
-  });
-  const submit = handleSubmit(async (values) => {
-    if (avatarError || validatingAvatar) return;
-    try {
-      await profileService.updateProfile({
-        name: values.name.trim(),
-        email: values.email.trim(),
-        phone: values.phone.trim(),
-        available_status: values.available_status,
-        job_title: values.job_title.trim(),
-        years_of_experience: Number(values.years_of_experience),
-        current_project_id: values.current_project_id ? Number(values.current_project_id) : null,
-        about: values.about.trim(),
-        avatar,
-      });
-      await retryRestore();
-    } catch (error) {
-      const appError = toAppError(error);
-      if (appError.kind === 'validation' && appError.errors.avatar?.[0]) {
-        setAvatarError(appError.errors.avatar[0]);
-      }
-      applyServerValidationErrors(error, setError, settingsFields);
-    }
-  });
-  async function remove() {
-    if (removing) return;
-    setRemoving(true);
-    setAvatarError('');
-    try {
-      await profileService.removeAvatar();
-      setAvatar(null);
-      await retryRestore();
-    } catch (error) {
-      setAvatarError(getErrorMessage(toAppError(error)));
-    } finally {
-      setRemoving(false);
-    }
-  }
+    errors,
+    isSubmitting,
+    submit,
+    remove,
+    selectAvatar,
+  } = useProfileSettings(me);
   return (
     <div className="space-y-10 lg:pt-12">
       <div className="flex items-center gap-5">
@@ -274,22 +94,11 @@ function SettingsForm({ me }: { me: ProfileMeData }) {
                 <input
                   {...props}
                   type="file"
+                  ref={avatarInput}
                   className="w-full min-w-0 max-w-full"
                   accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    setAvatar(null);
-                    setAvatarError('');
-                    const selection = ++avatarSelection.current;
-                    setValidatingAvatar(Boolean(file));
-                    if (file)
-                      void validateAvatar(file).then((message) => {
-                        if (selection !== avatarSelection.current) return;
-                        setValidatingAvatar(false);
-                        setAvatarError(message ?? '');
-                        if (!message) setAvatar(file);
-                      });
-                  }}
+                  disabled={isSubmitting || removing}
+                  onChange={(event) => selectAvatar(event.target.files?.[0])}
                 />
               )}
             </Field>
