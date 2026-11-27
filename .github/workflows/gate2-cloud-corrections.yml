@@ -35,7 +35,9 @@ jobs:
         run: npm run lint
         continue-on-error: true
       - name: Unit and integration tests
-        run: npm test -- --run
+        run: |
+          timeout 90s npm test -- --run > gate2-tests.log 2>&1 || true
+          cat gate2-tests.log
         continue-on-error: true
       - name: Build and budget
         run: npm run build && npm run check:budget

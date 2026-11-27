@@ -125,7 +125,9 @@ export function TaskDetailsModal({
                   aria-disabled={isStatusPending}
                   onChange={(event) => {
                     if (isStatusPending) return;
-                    const next = KANBAN_STATUS_ORDER.find((status) => status === event.target.value);
+                    const next = KANBAN_STATUS_ORDER.find(
+                      (status) => status === event.target.value,
+                    );
                     if (next) onStatus(task, next);
                   }}
                 />
