@@ -115,9 +115,7 @@ export function ProjectsTable({ projects, isRefreshing = false }: ProjectsTableP
               <dl className="grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <dt className="text-body">Start Date</dt>
-                  <dd className="font-medium text-ink">
-                    {formatDisplayDate(project.start_date)}
-                  </dd>
+                  <dd className="font-medium text-ink">{formatDisplayDate(project.start_date)}</dd>
                 </div>
                 <div>
                   <dt className="text-body">Deadline</dt>

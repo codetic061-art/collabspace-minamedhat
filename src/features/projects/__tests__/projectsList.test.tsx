@@ -190,9 +190,7 @@ describe('ProjectsListPage (Layer 2)', () => {
     expect(await screen.findByDisplayValue('Gamma')).toBeVisible();
     expect(screen.getByRole('combobox', { name: 'Filter by status' })).toHaveTextContent('On Hold');
     expect(
-      seenQueries.some(
-        (q) => q.search === 'Gamma' && q.status === 'On Hold' && q.sort === 'newest',
-      ),
+      seenQueries.some((q) => q.search === 'Gamma' && q.status === 'On Hold' && q.sort === 'newest'),
     ).toBe(true);
   });
 
@@ -270,8 +268,6 @@ describe('ProjectsListPage (Layer 2)', () => {
       ),
     );
     const unauthRender = renderProjectsRoute('/projects', 'Project Manager');
-    expect(
-      await unauthRender.findByRole('heading', { level: 1, name: 'Sign in' }),
-    ).toBeVisible();
+    expect(await unauthRender.findByRole('heading', { level: 1, name: 'Sign in' })).toBeVisible();
   }, 15000);
 });

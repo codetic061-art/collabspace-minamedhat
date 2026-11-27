@@ -15,12 +15,7 @@ export const PROJECT_STATUSES: readonly ProjectStatus[] = [
   'Cancelled',
 ];
 
-export const PROJECT_PRIORITIES: readonly ProjectPriority[] = [
-  'Low',
-  'Medium',
-  'High',
-  'Critical',
-];
+export const PROJECT_PRIORITIES: readonly ProjectPriority[] = ['Low', 'Medium', 'High', 'Critical'];
 
 const PROJECT_ACCENT_TONES: readonly IconCircleTone[] = [
   'violet',

@@ -18,10 +18,7 @@ import {
   type TeamResource,
 } from '@/shared/api';
 import { Button, Input, Modal, Select, Textarea, useToast, type SelectOption } from '@/shared/ui';
-import {
-  useCreateProjectMutation,
-  useUpdateProjectMutation,
-} from '../hooks/useProjectMutations';
+import { useCreateProjectMutation, useUpdateProjectMutation } from '../hooks/useProjectMutations';
 import { useTeamsPickerOptions } from '../hooks/useTeamsPickerOptions';
 import {
   projectCreateSchema,

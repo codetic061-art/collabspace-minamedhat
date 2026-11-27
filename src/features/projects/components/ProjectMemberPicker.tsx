@@ -63,9 +63,7 @@ export function ProjectMemberPicker({
   };
 
   const updateMemberRole = (userId: number, role: string) => {
-    onChange(
-      value.map((item) => (item.user_id === userId ? { ...item, role } : item)),
-    );
+    onChange(value.map((item) => (item.user_id === userId ? { ...item, role } : item)));
   };
 
   const removeMember = (userId: number) => {
@@ -149,9 +147,7 @@ export function ProjectMemberPicker({
                       onRetry={() => void picker.refetch()}
                     />
                   ) : picker.users.length === 0 ? (
-                    <p className="py-4 text-center text-sm text-body">
-                      No matching users found.
-                    </p>
+                    <p className="py-4 text-center text-sm text-body">No matching users found.</p>
                   ) : (
                     picker.users.map((user) => {
                       const isSelected = selectedIds.has(user.id);
@@ -168,11 +164,7 @@ export function ProjectMemberPicker({
                           )}
                         >
                           <span className="flex min-w-0 items-center gap-2.5">
-                            <Avatar
-                              name={user.name}
-                              src={toSafeExternalUrl(user.avatar_url)}
-                              size="sm"
-                            />
+                            <Avatar name={user.name} src={toSafeExternalUrl(user.avatar_url)} size="sm" />
                             <span className="min-w-0">
                               <span className="block truncate font-medium text-ink">
                                 {user.name}
@@ -216,9 +208,7 @@ export function ProjectMemberPicker({
                         variant="outline"
                         size="sm"
                         disabled={picker.currentPage >= picker.lastPage || picker.isFetching}
-                        onClick={() =>
-                          picker.setPage(Math.min(picker.lastPage, picker.currentPage + 1))
-                        }
+                        onClick={() => picker.setPage(Math.min(picker.lastPage, picker.currentPage + 1))}
                         aria-label="Next users page"
                         iconOnly
                       >
@@ -257,9 +247,7 @@ export function ProjectMemberPicker({
                         maxLength={100}
                         disabled={disabled}
                         value={member.role}
-                        onChange={(event) =>
-                          updateMemberRole(member.user_id, event.target.value)
-                        }
+                        onChange={(event) => updateMemberRole(member.user_id, event.target.value)}
                         className="min-h-touch w-full sm:w-40 rounded-input border border-border-input bg-surface px-2.5 py-1.5 text-xs text-ink placeholder:text-body focus:border-primary focus:outline-none"
                       />
                       <button

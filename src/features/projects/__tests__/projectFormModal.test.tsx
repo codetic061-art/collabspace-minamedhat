@@ -257,9 +257,9 @@ describe('ProjectFormModal create and edit flows (Layer 2)', () => {
 
     // First save hits 403 -> keeps dialog open and values preserved.
     await user.click(within(dialog).getByRole('button', { name: 'Save Changes' }));
-    expect(
-      await within(dialog).findByRole('alert'),
-    ).toHaveTextContent("You don't have permission to do this.");
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+      "You don't have permission to do this.",
+    );
     expect(nameInput).toHaveValue('CollabSpace Alpha v2');
 
     // Second save succeeds and sends UpdateProjectRequest without members.

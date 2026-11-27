@@ -65,10 +65,7 @@ export function ProjectTeamMembersCard({
 
     if (teamsError && directMembers.length === 0) {
       return (
-        <BlockErrorState
-          message={getErrorMessage(toAppError(teamsError))}
-          onRetry={onRetryTeams}
-        />
+        <BlockErrorState message={getErrorMessage(toAppError(teamsError))} onRetry={onRetryTeams} />
       );
     }
 
@@ -93,11 +90,7 @@ export function ProjectTeamMembersCard({
               className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
             >
               <div className="flex min-w-0 items-center gap-3">
-                <Avatar
-                  name={member.name}
-                  src={toSafeExternalUrl(member.avatarUrl)}
-                  size="md"
-                />
+                <Avatar name={member.name} src={toSafeExternalUrl(member.avatarUrl)} size="md" />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-ink">{member.name}</p>
                   <p className="truncate text-xs text-body">{member.roleLabel}</p>

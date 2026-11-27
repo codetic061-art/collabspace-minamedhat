@@ -9,7 +9,11 @@ export interface ProjectDetailsHeaderProps {
   onEdit: () => void;
 }
 
-function computeTimelineProgress(totalDays: number, daysRemaining: number, isOverdue: boolean): number {
+function computeTimelineProgress(
+  totalDays: number,
+  daysRemaining: number,
+  isOverdue: boolean,
+): number {
   if (isOverdue) {
     return 100;
   }
@@ -24,11 +28,7 @@ function computeTimelineProgress(totalDays: number, daysRemaining: number, isOve
  * Project Details header (`1:8753`, §3.5, §12.6):
  * breadcrumb, title + completion pill, role-gated Edit Project button, and Due Date card.
  */
-export function ProjectDetailsHeader({
-  project,
-  canEdit,
-  onEdit,
-}: ProjectDetailsHeaderProps) {
+export function ProjectDetailsHeader({ project, canEdit, onEdit }: ProjectDetailsHeaderProps) {
   const { due_date_indicator: due } = project;
   const timelineProgress = computeTimelineProgress(
     due.total_days,
@@ -58,9 +58,7 @@ export function ProjectDetailsHeader({
 
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl sm:text-3xl font-semibold text-ink">{project.name}</h1>
-          <Badge variant="completion">
-            {Math.round(project.progress_percentage)}% Completed
-          </Badge>
+          <Badge variant="completion">{Math.round(project.progress_percentage)}% Completed</Badge>
         </div>
       </div>
 

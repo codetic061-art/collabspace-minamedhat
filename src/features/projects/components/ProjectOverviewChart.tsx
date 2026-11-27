@@ -19,9 +19,7 @@ export interface ProjectOverviewChartProps {
  */
 export function ProjectOverviewChart({ data }: ProjectOverviewChartProps) {
   if (data.length === 0) {
-    return (
-      <p className="py-12 text-center text-sm text-body">No chart data available yet.</p>
-    );
+    return <p className="py-12 text-center text-sm text-body">No chart data available yet.</p>;
   }
 
   return (
@@ -38,7 +36,11 @@ export function ProjectOverviewChart({ data }: ProjectOverviewChartProps) {
               <stop offset="95%" stopColor="var(--color-teal)" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-neutral)" vertical={false} />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="var(--color-border-neutral)"
+            vertical={false}
+          />
           <XAxis
             dataKey="month"
             tick={{ fontSize: 12, fill: 'var(--color-body)' }}

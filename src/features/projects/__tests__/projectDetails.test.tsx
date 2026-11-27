@@ -103,7 +103,11 @@ describe('ProjectDetailsPage (Layer 2)', () => {
     mswServer.use(
       http.get(`${API_BASE}/projects/99/overview`, () =>
         HttpResponse.json(
-          { success: false, message: 'No query results for model [App\\Models\\Project] 99', errors: null },
+          {
+            success: false,
+            message: 'No query results for model [App\\Models\\Project] 99',
+            errors: null,
+          },
           { status: 404 },
         ),
       ),
