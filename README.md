@@ -1,8 +1,10 @@
+[Live application](https://collabspace-minamedhat.vercel.app/)
+
 # CollabSpace
 
 CollabSpace is a responsive collaboration application for monitoring projects, managing tasks and maintaining a team profile. The Tier 1 implementation connects to the existing CollabSpace REST API and applies role-based capabilities throughout the interface.
 
-[Live application](https://collabspace-minamedhat.vercel.app/) · [Project report](docs/FINAL_PROJECT_REPORT.md) · [Acceptance evidence](docs/wi11-acceptance.md)
+[Project report](docs/FINAL_PROJECT_REPORT.md) · [Acceptance evidence](docs/wi11-acceptance.md)
 
 ## Features
 
